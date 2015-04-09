@@ -10,5 +10,7 @@ Framework for loading genomic information, broken down into species, contig/chro
 
 ###DemeterBlast
 *Compares each gene in a genome to those of other genomes in database
+
 *Of hits, combines those within some number of bases (to identify hits in multi-gene islands)
+
 *Output of genes, species and islands identified as HGT
