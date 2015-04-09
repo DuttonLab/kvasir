@@ -1,5 +1,11 @@
 #Demeter
 
+Dependencies:
+* Python 2.7
+* MongoDB
+  * pymongo
+* BioPython
+
 ### Identification of horizontal gene transfer between sequenced microbial genomes
 
 ####DataImport:
