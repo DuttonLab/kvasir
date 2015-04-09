@@ -7,10 +7,6 @@ import DataTypes as Data
 from Bio import SeqIO
 import re
 
-def get_species_name(path_to_genbank):
-    name = re.search(r"(\w+)\.gb", path_to_genbank)
-    return name.group(1)
-
 def import_data(some_genbank):
     with open(some_genbank, 'r') as open_file:
         current_species = Data.Species(get_species_name(some_genbank))
@@ -28,6 +24,10 @@ def import_data(some_genbank):
         #for gene in current_species.genes:
             #print current_species.genes[gene].get_faa()
             
+def get_species_name(path_to_genbank):
+    name = re.search(r"(\w+)\.gb", path_to_genbank)
+    return name.group(1)
+
 def write_database(species):
     from pymongo import MongoClient
     db = MongoClient().demeter_test_db
