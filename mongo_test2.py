@@ -7,17 +7,20 @@ from __future__ import print_function
 from pymongo import MongoClient
 import subprocess
 
-def create_mongo_database(database_name):
-    subprocess.call("mongod --dbpath ~/computation/db", shell=True)
+def create_mongo_database(database_name, path_to_database):
+    mongod = subprocess.Popen(
+        "mongod --dbpath {0}".format(path_to_database),
+        shell=True
+    )
     client = MongoClient()
     db = client[database_name]
     collection = db['test_collection']
-    collection.insert_one({'something':'something else'})
+    collection.insert_one({'something new':'here\'s something else'})
     print('err... what\'s up?')
-    subprocess.call("mongod --shutdown")
+    mongod.terminate()
 
 
-create_mongo_database('test4_database')
+create_mongo_database('test5_database', '~/computation/db')
     
 #db = MongoClient().demeter_test_db
 #
