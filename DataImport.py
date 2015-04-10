@@ -12,14 +12,19 @@ import re
 from subprocess import Popen
 import os
 
+# Initial function to call. Opens and parses genbank file and creates Species objects
+# (see DataTypes.py) filled with Gene objects.
 def import_data(some_genbank, mongo_db_name, path_to_database):
     with open(some_genbank, 'r') as open_file:
         current_species = Data.Species(get_species_name(some_genbank))
         print 'Working on importing {0}'.format(current_species.species_name)
 
+        # Each "record" in genbank file is read, corresponds to individual contigs
         for record in SeqIO.parse(open_file, 'gb'):
             current_species.add_contig(record.description)
-                    
+
+            # Within each record may be a number of CDS's annotated, this section
+            # pulls their descriptions and builds Gene objects        
             for feature in record.features:
                 if feature.type == 'CDS':
                     cds = Data.Gene(
@@ -28,24 +33,34 @@ def import_data(some_genbank, mongo_db_name, path_to_database):
                         feature.qualifiers['translation'][0],
                         )
                     print 'Adding {0} to import'.format(cds.annotation)
+                    
+                    # Adds gene objects to Species object created above
                     current_species.add_gene(cds)
         
+        # Calls function (below) to build and populate MongoDB
         write_database(current_species, mongo_db_name, path_to_database)
             
 def get_species_name(path_to_genbank):
     name = re.search(r"(\w+)\.gb", path_to_genbank)
     return name.group(1)
 
+# Takes Species object built in import_data and adds it to MongoDB. Each database
+# may take multiple Species collections, which will be filled with individual gene
+# records.
 def write_database(species, mongo_db_name, path_to_database):
     from pymongo import MongoClient
+    
+    # Begins mongod server
     print 'opening mongod'
     mongod = Popen(
         ["mongod", "--dbpath", os.path.expanduser(path_to_database)],
     )
 
+    # Connects to mongod server and connects to database specified in import_data.
+    # Collections are documents that contain individual species. This will append
+    # data if species collection already exists
     client = MongoClient()
     db = client[mongo_db_name]
-    
     species_collection = db[species.species_name]
 
     for gene in species.genes:
@@ -55,17 +70,20 @@ def write_database(species, mongo_db_name, path_to_database):
             'annotation':gene.annotation,
             'translation':gene.aa_seq,
         }
+        
         print 'adding {0} to {1} database'.format(gene_record['annotation'], gene_record['species'])
         species_collection.insert_one(gene_record)
+    
+    # It's necessary to close the mongod server or databases may become corrupted
     print 'closing mongod'
     mongod.terminate()
 
 #For testing:
-import_data('/Users/KBLaptop/computation/hgt/seqs/genomes/haloFixed.gb', 'mongo_test_again', '~/computation/db/')
+#import_data('/Users/KBLaptop/computation/hgt/seqs/genomes/haloFixed.gb', 'mongo_test_again', '~/computation/db/')
 
-#if __name__ == "__main__":
-#    import sys
-#    try:
-#        main(sys.argv[1], sys.argv[2], sys.argv[3])
-#    else:
-#        print 'Well that didn\'t work... Make you you enter a genbank file, a database name and a path to the database'
+if __name__ == "__main__":
+    import sys
+    try:
+        import_data(sys.argv[1], sys.argv[2], sys.argv[3])
+    else:
+        print 'Well that didn\'t work... Make you you enter a genbank file, a database name and a path to the database'
