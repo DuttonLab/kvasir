@@ -3,11 +3,19 @@
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
 # CC-BY
 
-def make_blast_db(mongo_db_name):
+def make_blast_db(mongo_db_name, path_to_database):
     from pymongo import MongoClient
-    import subprocess
+    from subprocess import Popen
+    import os
+ 
+    mongod = Popen(
+        ["mongod", "--dbpath", os.path.expanduser(path_to_database)],
+    )
+
     client = MongoClient()
     db = client[mongo_db_name]
+    
+    collection = db['test_collection']
 
     all_species = db.collection_names(False)
     output_faa = '{0}.faa'.format(mongo_db_name)
@@ -24,13 +32,18 @@ def make_blast_db(mongo_db_name):
                 )
     
     
-        subprocess.call('makeblastdb -in {0} -dbtype "prot" -out {1} -title {1}'.format(
-            output_faa,
-            mongo_db_name,
-            ), shell=True
-        )
+        Popen(
+            ['makeblastdb',
+            '-in', output_faa,
+            '-dbtype', 'prot',
+            '-out', mongo_db_name,
+            '-title', mongo_db_name
+            ]
+        ).wait()
 
-        subprocess.call('rm {0}'.format(output_faa), shell=True)
+        Popen(['rm', '{0}'.format(output_faa)]).wait()
+
+    mongod.terminate()
 
 
-make_blast_db('demeter_test_db')
+make_blast_db('mongo_test_again', '~/computation/db/')

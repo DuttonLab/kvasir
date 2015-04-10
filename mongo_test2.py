@@ -6,21 +6,19 @@
 from __future__ import print_function
 from pymongo import MongoClient
 import subprocess
+import os
 
-def create_mongo_database(database_name, path_to_database):
+def create_mongo_database(database_name, path_to_database): 
     mongod = subprocess.Popen(
-        "mongod --dbpath {0}".format(path_to_database),
-        shell=True
+        ["mongod", "--dbpath", os.path.expanduser(path_to_database)],
     )
     client = MongoClient()
     db = client[database_name]
     collection = db['test_collection']
-    collection.insert_one({'something new':'here\'s something else'})
-    print('err... what\'s up?')
     mongod.terminate()
 
 
-create_mongo_database('test5_database', '~/computation/db')
+create_mongo_database('test5_database', '../../computation/db')
     
 #db = MongoClient().demeter_test_db
 #
