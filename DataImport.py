@@ -81,9 +81,6 @@ def write_database(species, mongo_db_name, path_to_database):
 #For testing:
 #import_data('/Users/KBLaptop/computation/hgt/seqs/genomes/haloFixed.gb', 'mongo_test_again', '~/computation/db/')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import sys
-    try:
-        import_data(sys.argv[1], sys.argv[2], sys.argv[3])
-    else:
-        print 'Well that didn\'t work... Make you you enter a genbank file, a database name and a path to the database'
+    import_data(sys.argv[1], sys.argv[2], sys.argv[3])

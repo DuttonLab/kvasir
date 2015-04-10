@@ -58,5 +58,6 @@ def make_blast_db(mongo_db_name, path_to_database):
     # Always have to close mongod
     mongod.terminate()
 
-
-make_blast_db('mongo_test_again', '~/computation/db/')
+if __name__ == '__main__':
+    import sys
+    import_data(sys.argv[1], sys.argv[2])
