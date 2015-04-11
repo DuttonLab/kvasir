@@ -3,61 +3,57 @@
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
 # CC-BY
 
-'''This script is designed to read a mongo database created with DataImport,
-create a faa file, build a BLAST database with that file, then delete the 
-faa file'''
+from pymongo import MongoClient
+from subprocess import Popen
+import os
 
-def make_blast_db(mongo_db_name, path_to_database):
-    from pymongo import MongoClient
-    from subprocess import Popen
-    import os
- 
-    # Open and connect to Mongod server. Also opens database (which should have
-    # have been created with DataImport.py)
-    mongod = Popen(
-        ["mongod", "--dbpath", os.path.expanduser(path_to_database)],
-    )
+#from Bio.Blast import NCBIWWW
+#result_handle = NCBIWWW.qblast("blastn", "nt", "8332116")
+#
+#print result_handle.read()
 
-    client = MongoClient()
-    db = client[mongo_db_name]
-    collection = db['test_collection']
+#save_file = open("my_blast.xml", "w")
+#save_file.write(result_handle.read())
+#save_file.close()
+#result_handle.close()
 
-    # Reads database and makes list of all collections (representing species)
-    all_species = db.collection_names(False)
-    # Handle for temporary .faa file that will contain all CDS for all species
-    output_faa = '{0}.faa'.format(mongo_db_name)
+from Bio.Blast.Applications import NcbiblastxCommandline
 
-    # For each collection (species) in the database, reads each gene record and
-    # appends the gene and its aa sequence in FASTA format. The .faa file will 
-    # contain records for all species stored in the database
-    with open(output_faa, 'w+') as output_handle:
-        for species in all_species:
-            current_species_collection = db[species]
-            for gene in current_species_collection.find():
-                output_handle.write('>{0} | {1} | {2}\n{3}\n'.format(
-                    gene['species'],
-                    gene['locus_tag'],
-                    gene['annotation'],
-                    gene['translation'],
-                    )
-                )
-    
-        # calls makeblastdb from shell
-        Popen(
-            ['makeblastdb',
-            '-in', output_faa,
-            '-dbtype', 'prot',
-            '-out', mongo_db_name,
-            '-title', mongo_db_name
-            ]
-        ).wait() # waits for this operation to terminate before moving on
+#blast_handle = NcbiblastxCommandline(
+#    query="/Users/KBLaptop/computation/hgt/seqs/genomes/breviFixed.faa",
+#    db='mongo_test_again',
+#    evalue=0.001,
+#    outfmt=5,
+#    out="test2.xml"
+#    )
+#print blast_handle
+#stdout, stderr = blast_handle()
 
-    # Removes temporary .faa file
-    os.remove(output_faa)
+result_handle = open("test2.xml")
 
-    # Always have to close mongod
-    mongod.terminate()
+from Bio.Blast import NCBIXML
+blast_records = NCBIXML.parse(result_handle)
 
-if __name__ == '__main__':
-    import sys
-    import_data(sys.argv[1], sys.argv[2])
+#for blast_record in blast_records:
+#    print blast_record.query
+#    print blast_record.database
+
+for blast_record in blast_records:
+    for alignment in blast_record.alignments:
+        for hsp in alignment.hsps:
+            #if hsp.expect < 0.04:
+                print('****Alignment****')
+                print('sequence:', alignment.title)
+                print('length:', alignment.length)
+                print('e value:', hsp.expect)
+                print(hsp.query[0:75] + '...')
+                print(hsp.match[0:75] + '...')
+                print(hsp.sbjct[0:75] + '...')
+
+#blastx_cline = NcbiblastxCommandline(query="opuntia.fasta", db="nr", evalue=0.001, outfmt=5, out="opuntia.xml")
+#blastx_cline
+#NcbiblastxCommandline(cmd='blastx', out='opuntia.xml', outfmt=5, query='opuntia.fasta',
+#db='nr', evalue=0.001)
+#>>> print(blastx_cline)
+#blastx -out opuntia.xml -outfmt 5 -query opuntia.fasta -db nr -evalue 0.001
+#>>> stdout, stderr = blastx_cline()
