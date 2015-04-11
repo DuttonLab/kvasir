@@ -3,3 +3,7 @@
 *.phr
 *.pin
 *.psq
+*.xml
+
+./tmp
+

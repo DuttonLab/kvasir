@@ -17,38 +17,38 @@ import os
 #save_file.close()
 #result_handle.close()
 
-from Bio.Blast.Applications import NcbiblastxCommandline
+from Bio.Blast.Applications import NcbiblastpCommandline
 
-#blast_handle = NcbiblastxCommandline(
-#    query="/Users/KBLaptop/computation/hgt/seqs/genomes/breviFixed.faa",
-#    db='mongo_test_again',
-#    evalue=0.001,
-#    outfmt=5,
-#    out="test2.xml"
-#    )
-#print blast_handle
-#stdout, stderr = blast_handle()
+blast_handle = NcbiblastpCommandline(
+    query="micro_test.faa",
+    db='mongo_test_again',
+    evalue=0.1,
+    outfmt=5,
+    out="test2.xml"
+    )
+print blast_handle
+stdout, stderr = blast_handle()
 
-result_handle = open("test2.xml")
-
-from Bio.Blast import NCBIXML
-blast_records = NCBIXML.parse(result_handle)
+#result_handle = open("test2.xml")
+#
+#from Bio.Blast import NCBIXML
+#blast_records = NCBIXML.parse(result_handle)
 
 #for blast_record in blast_records:
 #    print blast_record.query
 #    print blast_record.database
 
-for blast_record in blast_records:
-    for alignment in blast_record.alignments:
-        for hsp in alignment.hsps:
-            #if hsp.expect < 0.04:
-                print('****Alignment****')
-                print('sequence:', alignment.title)
-                print('length:', alignment.length)
-                print('e value:', hsp.expect)
-                print(hsp.query[0:75] + '...')
-                print(hsp.match[0:75] + '...')
-                print(hsp.sbjct[0:75] + '...')
+#for blast_record in blast_records:
+#    for alignment in blast_record.alignments:
+#        for hsp in alignment.hsps:
+#            #if hsp.expect < 0.04:
+#                print('****Alignment****')
+#                print('sequence:', alignment.title)
+#                print('length:', alignment.length)
+#                print('e value:', hsp.expect)
+#                print(hsp.query[0:75] + '...')
+#                print(hsp.match[0:75] + '...')
+#                print(hsp.sbjct[0:75] + '...')
 
 #blastx_cline = NcbiblastxCommandline(query="opuntia.fasta", db="nr", evalue=0.001, outfmt=5, out="opuntia.xml")
 #blastx_cline
