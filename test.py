@@ -7,10 +7,6 @@ import os
 import sys
 import atexit
 
-
-from subprocess import Popen
-import atexit
-
 started = []
 
 def auto_popen(*args, **kw):
@@ -19,9 +15,11 @@ def auto_popen(*args, **kw):
     return p
 
 def testing():
-    mongod = auto_popen(["mongod", "--dbpath", '/Users/KBLaptop/computation/db/'], shell=True)
-
+    mongod = auto_popen(
+            ["mongod", "--dbpath", '/Users/KBLaptop/computation/db/'],
+        )
     print mongod.pid
+    
     client = MongoClient()
     db = client['location_import_test']
     collection = db['test_collection']
@@ -32,13 +30,17 @@ def testing():
         current_species_collection = db[species]
         for gene in current_species_collection.find():
             print gene['locus_taag']
-            pass
 
+    print mongod.pid
     mongod.terminate()
 
 def cleanup():
+    print 'Hi there'
     for proc in started:
+        print proc
+        print proc.poll()
         if proc.poll() is not None:
+            print 'hello'
             try: proc.kill()
             except: pass
 
