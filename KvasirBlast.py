@@ -3,57 +3,101 @@
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
 # CC-BY
 
+from __future__ import print_function
 from pymongo import MongoClient
 from subprocess import Popen
+from Bio.Blast import NCBIXML
+from Bio.Blast.Applications import NcbiblastpCommandline
+from pymongo import MongoClient
 import os
 
-#from Bio.Blast import NCBIWWW
-#result_handle = NCBIWWW.qblast("blastn", "nt", "8332116")
-#
-#print result_handle.read()
+def kvasir_blast(mongo_db_name, path_to_database, blast_database):
 
-#save_file = open("my_blast.xml", "w")
-#save_file.write(result_handle.read())
-#save_file.close()
-#result_handle.close()
-
-from Bio.Blast.Applications import NcbiblastpCommandline
-
-blast_handle = NcbiblastpCommandline(
-    query="micro_test.faa",
-    db='mongo_test_again',
-    evalue=0.1,
-    outfmt=5,
-    out="test2.xml"
+    mongod = Popen(
+        ["mongod", "--dbpath", os.path.expanduser(path_to_database)],
     )
-print blast_handle
-stdout, stderr = blast_handle()
 
-#result_handle = open("test2.xml")
-#
-#from Bio.Blast import NCBIXML
-#blast_records = NCBIXML.parse(result_handle)
+    client = MongoClient()
+    db = client[mongo_db_name]
 
-#for blast_record in blast_records:
-#    print blast_record.query
-#    print blast_record.database
+    all_species = db.collection_names(False)
+    print(all_species)
 
-#for blast_record in blast_records:
-#    for alignment in blast_record.alignments:
-#        for hsp in alignment.hsps:
-#            #if hsp.expect < 0.04:
-#                print('****Alignment****')
-#                print('sequence:', alignment.title)
-#                print('length:', alignment.length)
-#                print('e value:', hsp.expect)
-#                print(hsp.query[0:75] + '...')
-#                print(hsp.match[0:75] + '...')
-#                print(hsp.sbjct[0:75] + '...')
+    for species in all_species:
+        current_species_collection = db[species]
+        print(current_species_collection)
+        output_faa = '{0}.faa'.format(mongo_db_name)
 
-#blastx_cline = NcbiblastxCommandline(query="opuntia.fasta", db="nr", evalue=0.001, outfmt=5, out="opuntia.xml")
-#blastx_cline
-#NcbiblastxCommandline(cmd='blastx', out='opuntia.xml', outfmt=5, query='opuntia.fasta',
-#db='nr', evalue=0.001)
-#>>> print(blastx_cline)
-#blastx -out opuntia.xml -outfmt 5 -query opuntia.fasta -db nr -evalue 0.001
-#>>> stdout, stderr = blastx_cline()
+        for gene in current_species_collection.find():
+            with open(output_faa, 'w+') as output_handle:
+                output_handle.write('{0}\n{1}\n'.format(
+                    gene['locus_tag'],
+                    gene['translation'],
+                    )
+                )
+
+            blast_handle = NcbiblastpCommandline(
+                query=output_faa,
+                db=mongo_db_name,
+                evalue=0.001,
+                outfmt=5,
+                out="blast_out_tmp.xml",
+                max_hsps=20
+                )
+            print(blast_handle)
+            stdout, stderr = blast_handle()
+
+            #blast_records = NCBIXML.parse('blast_out_tmp.xml')
+            #print('hi there!', blast_records)
+            #for blast_record in blast_records:
+            #    for alignment in blast_record.alignments:
+            #        for hsp in alignment.hsps:
+            #            if hsp.positives / alignment.length > 0.9:
+            #                print('****Alignment****')
+            #                print('sequence:', alignment.title)
+            #                print('length:', alignment.length)
+            #                print('e value:', hsp.expect)
+            #                print(hsp.query[0:75] + '...')
+            #                print(hsp.match[0:75] + '...')
+            #                print(hsp.sbjct[0:75] + '...')
+            #            else:
+            #                print('That one didn\'t match!')
+
+            #os.remove('blast_out_tmp.xml')
+            os.remove(output_faa)
+
+    mongod.terminate()
+
+def dont_use_this():
+    blast_handle = NcbiblastpCommandline(
+        query="/Users/KBLaptop/computation/hgt/seqs/genomes/brachy_IMG.faa",
+        db='mongo_test_again',
+        evalue=0.001,
+        outfmt=5,
+        out="test.xml"
+        )
+    print(blast_handle)
+    stdout, stderr = blast_handle()
+
+    result_handle = open("test.xml")
+
+    blast_records = NCBIXML.parse(result_handle)
+
+    for blast_record in blast_records:
+        print(blast_record.query)
+        print(blast_record.database)
+
+    for blast_record in blast_records:
+        for alignment in blast_record.alignments:
+            for hsp in alignment.hsps:
+                if hsp.positives / alignment.length > 0.9:
+                    print('****Alignment****')
+                    print('sequence:', alignment.title)
+                    print('length:', alignment.length)
+                    print('e value:', hsp.expect)
+                    print(hsp.query[0:75] + '...')
+                    print(hsp.match[0:75] + '...')
+                    print(hsp.sbjct[0:75] + '...')
+
+kvasir_blast('mongo_test_again', '../db/', 'mongo_test_again')
+

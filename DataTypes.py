@@ -25,6 +25,9 @@ class Gene(object):
     def add_description(self, description):
         self.description = description
 
+    def add_location(self, gene_location):
+        self.location = gene_location
+
     #def get_fna(self):
     #    try:
     #        species_name = self.Species.species_name

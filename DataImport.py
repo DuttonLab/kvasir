@@ -3,8 +3,10 @@
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
 # CC-BY
 
-'''This script is designed to import data from a genbank file and
-write it to a mongoDB database.'''
+'''
+This script is designed to import data from a genbank file and
+write it to a mongoDB database.
+'''
 
 import DataTypes as Data
 from Bio import SeqIO
@@ -32,6 +34,7 @@ def import_data(some_genbank, mongo_db_name, path_to_database):
                         feature.qualifiers['product'][0],
                         feature.qualifiers['translation'][0],
                         )
+                    cds.add_location(feature.location)
                     print 'Adding {0} to import'.format(cds.annotation)
                     
                     # Adds gene objects to Species object created above
@@ -79,7 +82,7 @@ def write_database(species, mongo_db_name, path_to_database):
     mongod.terminate()
 
 #For testing:
-#import_data('/Users/KBLaptop/computation/hgt/seqs/genomes/haloFixed.gb', 'mongo_test_again', '~/computation/db/')
+import_data('/Users/KBLaptop/computation/hgt/seqs/genomes/haloFixed.gb', 'location_import_test', '~/computation/db/')
 
 if __name__ == '__main__':
     import sys
