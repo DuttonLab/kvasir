@@ -31,29 +31,30 @@ def make_blast_db(mongo_db_name, path_to_database):
     # For each collection (species) in the database, reads each gene record and
     # appends the gene and its aa sequence in FASTA format. The .faa file will 
     # contain records for all species stored in the database
-    with open(output_faa, 'w+') as output_handle:
-        for species in all_species:
-            current_species_collection = db[species]
-            for gene in current_species_collection.find():
-                output_handle.write('>lcl|{0}|{1}_{2} {3}\n{4}\n'.format(
-                    mongo_db_name
-                    gene['species'],
-                    gene['locus_tag'],
-                    gene['annotation'],
-                    gene['translation'],
+    try:    
+        with open(output_faa, 'w+') as output_handle:
+            for species in all_species:
+                current_species_collection = db[species]
+                for gene in current_species_collection.find():
+                    output_handle.write('>lcl|{0}|{1}_{2} {3}\n{4}\n'.format(
+                        mongo_db_name
+                        gene['species'],
+                        gene['locus_tag'],
+                        gene['annotation'],
+                        gene['translation'],
+                        )
                     )
-                )
-    
-        # calls makeblastdb €from shell
-        Popen(
-            ['makeblastdb',
-            '-in', output_faa,
-            '-dbtype', 'prot',
-            '-out', mongo_db_name,
-            '-title', mongo_db_name,
-            '-parse_seqids'
-            ]
-        ).wait() # waits for this operation to terminate before moving on
+        
+            # calls makeblastdb €from shell
+            Popen(
+                ['makeblastdb',
+                '-in', output_faa,
+                '-dbtype', 'prot',
+                '-out', mongo_db_name,
+                '-title', mongo_db_name,
+                '-parse_seqids'
+                ]
+            ).wait() # waits for this operation to terminate before moving on
 
     # Removes temporary .faa file
     os.remove(output_faa)
