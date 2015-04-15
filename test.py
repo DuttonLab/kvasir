@@ -2,14 +2,25 @@
 
 from pymongo import MongoClient
 from subprocess import Popen
+from subprocess import _active
 import os
 import sys
 import atexit
 
-def testing():   
-    mongod = Popen(
-            ["mongod", "--dbpath", '/Users/KBLaptop/computation/db/'],
-        )
+
+from subprocess import Popen
+import atexit
+
+started = []
+
+def auto_popen(*args, **kw):
+    p = Popen(*args, **kw)
+    started.append(p)
+    return p
+
+def testing():
+    mongod = auto_popen(["mongod", "--dbpath", '/Users/KBLaptop/computation/db/'], shell=True)
+
     print mongod.pid
     client = MongoClient()
     db = client['location_import_test']
@@ -26,11 +37,10 @@ def testing():
     mongod.terminate()
 
 def cleanup():
-    for proc in subprocess._active[:]:
-        try: 
-            proc.terminate()
-        except: 
-            pass
+    for proc in started:
+        if proc.poll() is not None:
+            try: proc.kill()
+            except: pass
 
-testing()
 atexit.register(cleanup)
+testing()
