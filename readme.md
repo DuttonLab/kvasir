@@ -1,4 +1,4 @@
-#Demeter
+#Kvasir
 
 Dependencies:
 * Python 2.7
