@@ -1,0 +1,1105 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"mong",
+				"mongod"
+			],
+			[
+				"blast",
+				"blast_records"
+			],
+			[
+				"bla",
+				"blast_out_tmp"
+			],
+			[
+				"c",
+				"current_species_collection"
+			],
+			[
+				"mo",
+				"mongo_test_again"
+			],
+			[
+				"mongo",
+				"mongo_test_again"
+			],
+			[
+				"N",
+				"NcbiblastxCommandline"
+			],
+			[
+				"re",
+				"result_handle"
+			],
+			[
+				"spe",
+				"species_name"
+			],
+			[
+				"if",
+				"ifmain	if __name__ == '__main__'"
+			],
+			[
+				"path",
+				"path_to_database"
+			],
+			[
+				"pa",
+				"path_to_database"
+			],
+			[
+				"ou",
+				"output_faa"
+			],
+			[
+				"m",
+				"mongo_db_name"
+			],
+			[
+				"su",
+				"subprocess"
+			],
+			[
+				"mon",
+				"mongo_db_name"
+			],
+			[
+				"def",
+				"def	Function"
+			],
+			[
+				"gene",
+				"gene_record"
+			],
+			[
+				"spec",
+				"species"
+			],
+			[
+				"de",
+				"def	Function"
+			],
+			[
+				"desc",
+				"description"
+			],
+			[
+				"defi",
+				"definition"
+			],
+			[
+				"crea",
+				"create_population"
+			],
+			[
+				"ge",
+				"genes_for_individual"
+			],
+			[
+				"g",
+				"genes_for_individual"
+			],
+			[
+				"ind",
+				"indiv"
+			],
+			[
+				"loc",
+				"locus_a_allele"
+			],
+			[
+				"current",
+				"current"
+			],
+			[
+				"in",
+				"individual1"
+			],
+			[
+				"al",
+				"allele"
+			],
+			[
+				"anc",
+				"ancestor"
+			],
+			[
+				"tars",
+				"Tarsiiformes"
+			],
+			[
+				"s",
+				"Strepsirrhini"
+			],
+			[
+				"get",
+				"get_lca"
+			],
+			[
+				"tr",
+				"troglodytes"
+			],
+			[
+				"tax",
+				"taxonomy_list"
+			],
+			[
+				"sp",
+				"species"
+			],
+			[
+				"ta",
+				"tax_dict"
+			],
+			[
+				"rec",
+				"records"
+			],
+			[
+				"file",
+				"file_convertase"
+			],
+			[
+				"output",
+				"outputFile"
+			],
+			[
+				"try",
+				"try	Try/Except"
+			],
+			[
+				"hmm",
+				"hmmName"
+			],
+			[
+				"pfam",
+				"pfamParse"
+			],
+			[
+				"pro",
+				"proteinNo"
+			],
+			[
+				"hypo",
+				"hypotheticals"
+			],
+			[
+				"hy",
+				"hypotheticals"
+			],
+			[
+				"curr",
+				"currentGroup"
+			],
+			[
+				"query",
+				"queryInGroup"
+			],
+			[
+				"quer",
+				"queryGroup"
+			],
+			[
+				"hi",
+				"hitNum"
+			],
+			[
+				"bar",
+				"barCodeCounter"
+			],
+			[
+				"bra",
+				"braCount"
+			],
+			[
+				"art",
+				"artCount"
+			],
+			[
+				"parent",
+				"ParentSpecies"
+			],
+			[
+				"Pare",
+				"ParentSpecies"
+			],
+			[
+				"bc",
+				"bcCounts"
+			],
+			[
+				"som",
+				"someFile"
+			],
+			[
+				"Art",
+				"artCount"
+			],
+			[
+				"open",
+				"openFile"
+			],
+			[
+				"fi",
+				"fileLines"
+			],
+			[
+				"ope",
+				"openFile"
+			],
+			[
+				"fil",
+				"fileName"
+			],
+			[
+				"seq",
+				"seqFile"
+			],
+			[
+				"h",
+				"href	Attr"
+			],
+			[
+				"l",
+				"li	Tag"
+			],
+			[
+				"ba",
+				"background-color"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "MakeBlastDB.py",
+			"settings":
+			{
+				"buffer_size": 2230,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "##!/usr/bin/env python\n\nfrom pymongo import MongoClient\nfrom subprocess import Popen\nimport os\nimport atexit\n\nmongod = Popen(\n        [\"mongod\", \"--dbpath\", '/Users/KBLaptop/computation/db/'],\n    )\nprint mongod.pid\nclient = MongoClient()\ndb = client['location_import_test']\ncollection = db['test_collection']\n\nall_species = db.collection_names(False)\n    \nfor species in all_species:\n    current_species_collection = db[species]\n    for gene in current_species_collection.find():\n        print gene['locus_tag']\n        pass\n      \nmongod.terminate()\n",
+			"file": "test.py",
+			"file_size": 555,
+			"file_write_time": 130735970020000000,
+			"settings":
+			{
+				"buffer_size": 552,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "DataTypes.py",
+			"settings":
+			{
+				"buffer_size": 1534,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "KvasirBlast.py",
+			"settings":
+			{
+				"buffer_size": 3528,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"Packages/Python/Python.sublime-build",
+					""
+				],
+				[
+					"Packages/Python/Python.sublime-build",
+					"Syntax Check"
+				]
+			],
+			[
+				"Packages/Python/Python.sublime-build",
+				""
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 375.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"pac",
+				"Package Control: Install Package"
+			],
+			[
+				"sni",
+				"Snippet: if __name__ == '__main__'"
+			],
+			[
+				"snip if",
+				"Snippet: if __name__ == '__main__'"
+			],
+			[
+				"Snippet: en",
+				"Snippet: #!/usr/bin/env"
+			],
+			[
+				"packa",
+				"Package Control: Remove Package"
+			],
+			[
+				"pack",
+				"Package Control: Upgrade/Overwrite All Packages"
+			],
+			[
+				"hy",
+				"Hyperlink Helper: Wrap Word / Selection as Link"
+			],
+			[
+				"snip",
+				"Snippet: html"
+			],
+			[
+				"pac in",
+				"Package Control: Install Package"
+			],
+			[
+				"zf ac",
+				"Snippet: ZURB Foundation 5 Accordion"
+			],
+			[
+				"snip found",
+				"Snippet: ZURB Foundation 5 Buttons"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"packe",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 480.0
+	},
+	"console":
+	{
+		"height": 319.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/KBLaptop/computation/kvasir"
+	],
+	"file_history":
+	[
+		"/Users/KBLaptop/.bash_profile",
+		"/Users/KBLaptop/computation/slurm_template.sh",
+		"/Users/KBLaptop/computation/kvasir/DataImport.py",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/haloFixed.gb",
+		"/Users/KBLaptop/computation/kvasir/.git/COMMIT_EDITMSG",
+		"/Users/KBLaptop/computation/kvasir/.gitignore",
+		"/Users/KBLaptop/computation/kvasir/blast_out_tmp.xml",
+		"/Users/KBLaptop/computation/kvasir/test.xml",
+		"/Users/KBLaptop/computation/kvasir/test.py",
+		"/Users/KBLaptop/bin/subl",
+		"/Users/KBLaptop/computation/bothco/.git/COMMIT_EDITMSG",
+		"/Users/KBLaptop/computation/README.MD",
+		"/Users/KBLaptop/computation/kvasir/micro_test.faa",
+		"/Users/KBLaptop/computation/kvasir/KvasirBlast.py",
+		"/Users/KBLaptop/computation/kvasir/test3.xml",
+		"/Users/KBLaptop/computation/kvasir/test2.xml",
+		"/Users/KBLaptop/computation/kvasir/MakeBlastDB.py",
+		"/Users/KBLaptop/computation/kvasir/mongo_test2.py",
+		"/Users/KBLaptop/computation/kvasir/DataTypes.py",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/breviFixed.gb",
+		"/Users/KBLaptop/Desktop/ssh_key.txt",
+		"/Users/KBLaptop/.gitconfig",
+		"/Users/KBLaptop/computation/kvasir/make_blast_db.sh",
+		"/Users/KBLaptop/computation/kvasir/mongo_test.py",
+		"/Users/KBLaptop/computation/kvasir/demeter_test_db.faa",
+		"/Users/KBLaptop/computation/demeter/DataImport.py",
+		"/Users/KBLaptop/computation/demeter/mongo_to_blast_db.py",
+		"/Users/KBLaptop/computation/demeter/readme.md",
+		"/Users/KBLaptop/computation/demeter/DemeterBlast.py",
+		"/Users/KBLaptop/computation/demeter/codernity_test.py",
+		"/Users/KBLaptop/computation/demeter/DataTypes.py",
+		"/Users/KBLaptop/googleDrive/work/duttonLab/otherCode/barCodeID.md",
+		"/Users/KBLaptop/computation/kbonham@login.rc.fas.harvard.edu/docs/manual.html",
+		"/Users/KBLaptop/Desktop/CF Mtg.mdown",
+		"/Users/KBLaptop/computation/hgt/seqs/hgtContigs.fna",
+		"/Users/KBLaptop/Desktop/cfs.csv",
+		"/Users/KBLaptop/Downloads/cite.txt",
+		"/Users/KBLaptop/Library/Containers/com.evernote.Evernote/Data/Library/Application Support/com.evernote.Evernote/accounts/www.evernote.com/3668711/external-edits/C97301F5-0CDE-4C0B-A468-BF944C8EC6A0/glycerol stocks - JB strains.txt",
+		"/Users/KBLaptop/computation/hgt/out/groupsList2.csv",
+		"/Users/KBLaptop/computation/hgt/.git/COMMIT_EDITMSG",
+		"/Users/KBLaptop/computation/genomes/annotated/sphingo_IMG.gbk",
+		"/Users/KBLaptop/computation/HGTector/config.txt",
+		"/Users/KBLaptop/computation/python_for_biologists/chapter3.py",
+		"/Users/KBLaptop/computation/python_for_biologists/chapter2.py",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/fixBrevi.py",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/haloFixed.faa",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/fixHalo.py",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/Halomonas_JB37.gb",
+		"/Users/KBLaptop/computation/hgt/seqs/arthro_IMG.gb",
+		"/Users/KBLaptop/computation/hgt/scripts/gbFaaConvertase.py",
+		"/Users/KBLaptop/computation/hgt/scripts/groupBlast.py",
+		"/Users/KBLaptop/computation/hgt/scripts/gbkstart.py",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/arthro_IMG.faa",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/brachy_IMG.faa",
+		"/Users/KBLaptop/computation/hgt/scripts/pfamParser.py",
+		"/Users/KBLaptop/computation/hgt/out/pfamParsed.csv",
+		"/Users/KBLaptop/computation/hgt/seqs/shortReads/psychroDRAFT_JB062712_ACTTGA_L001_R1_001_paired_contig_45.45.fasta",
+		"/Users/KBLaptop/computation/hgt/out/pfamOut.csv",
+		"/Users/KBLaptop/Library/Application Support/Sublime Text 3/Packages/User/intro.sublime-snippet",
+		"/Users/KBLaptop/computation/hgt/scripts/getGroups.py",
+		"/Users/KBLaptop/computation/hgt/out/arthro.faa",
+		"/Users/KBLaptop/computation/hgt/scripts/arthro.faa",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/arthro_IMG.gb.faa",
+		"/Users/KBLaptop/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/breviFixed.gb.faa",
+		"/Users/KBLaptop/computation/hgt/seqs/groups/group 1.gb",
+		"/Users/KBLaptop/computation/hgt/README.md",
+		"/Users/KBLaptop/computation/hgt/scripts/extractLong.py",
+		"/Users/KBLaptop/computation/hgt/scripts/extractShort.py",
+		"/Users/KBLaptop/computation/hgt/seqs/allHGTreads.fna",
+		"/Users/KBLaptop/computation/hgt/out/allxall.csv",
+		"/Users/KBLaptop/computation/hgt/out/arthro_IMG.faa",
+		"/Users/KBLaptop/computation/hgt/scripts/gbkToFaa.py",
+		"/Users/KBLaptop/computation/hgt/scripts/gbkToFasta.py",
+		"/Users/KBLaptop/computation/hgt/scripts/gbkToFastpv2.py",
+		"/Users/KBLaptop/computation/hgt/scripts/renameDict.py",
+		"/Users/KBLaptop/computation/hgt/scripts/shortReadNames.py",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/sphingo_IMG.gb",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/pseudo_IMG.gb",
+		"/Users/KBLaptop/computation/hgt/seqs/allHGTreads.fasta",
+		"/Users/KBLaptop/computation/hgt/seqs/hgtContigs.fasta",
+		"/Users/KBLaptop/Desktop/MacQIIME_1.8.0-20140103_OS10.6/README.txt",
+		"/Users/KBLaptop/computation/hgt/scripts/removeFromFileName.py",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/vibrio_IMG.gb",
+		"/Users/KBLaptop/computation/hgt/out/pfamFamilyCounter.py",
+		"/Users/KBLaptop/computation/hgt/scripts/test.py",
+		"/Users/KBLaptop/computation/hgt/out/allProteins.fasta",
+		"/Users/KBLaptop/computation/hgt/out/group 1.gb_proteins.fasta",
+		"/Users/KBLaptop/computation/hgt/scripts/gbkToFastp.py",
+		"/Users/KBLaptop/computation/hgt/out/group 10_proteins.fasta",
+		"/Users/KBLaptop/computation/hgt/out/group 22_proteins.fasta",
+		"/Users/KBLaptop/computation/hgt/out/group 1_proteins.fasta",
+		"/Users/KBLaptop/computation/hgt/out/None_proteins.fasta",
+		"/Users/KBLaptop/computation/hgt/out/['group 1']_proteins.fasta",
+		"/Library/Frameworks/Python.framework/Versions/3.4/Resources/English.lproj/Documentation/index.html",
+		"/Applications/Python 3.4/Update Shell Profile.command",
+		"/Users/KBLaptop/Desktop/meadBatch3",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/brevi_IMG.gb",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/brachy_IMG.gb",
+		"/Users/KBLaptop/computation/hgt/seqs/shortReads/full_Brachy_100.fasta",
+		"/Users/KBLaptop/computation/hgt/seqs/test/gbk/arthro_IMG.gbk",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/Halomonas_JB37.gbk",
+		"/Users/KBLaptop/computation/hgt/seqs/test/gbk/brevi_IMG.gbk",
+		"/Users/KBLaptop/computation/hgt/scripts/gbkstart",
+		"/Users/KBLaptop/computation/hgt/seqs/test/gbk/arthro_IMG.gbk.faa",
+		"/Users/KBLaptop/computation/hgt/scripts/NC_005213_converted.faa",
+		"/Users/KBLaptop/googleDrive/work/duttonLab/data/seq/jbutton data/Brevibacterium_JB5.gbk",
+		"/Users/KBLaptop/Downloads/arthro_IMG.gb",
+		"/Users/KBLaptop/computation/hgt/out/groupsList.csv",
+		"/Users/KBLaptop/computation/hgt/seqs/shortReads/BrachyDRAFT_JB062712_TTAGGC_L001_R1_001_paired_contig_100.100.fasta",
+		"/Users/KBLaptop/computation/hgt/scripts/groupBlastXML.py",
+		"/Users/KBLaptop/computation/hgt/out/test.xml",
+		"/Users/KBLaptop/computation/hgt/out/test.csv",
+		"/Users/KBLaptop/computation/hgt/scripts/groupBlastTSV.py",
+		"/Users/KBLaptop/computation/hgt/out/allxall.xml",
+		"/Users/KBLaptop/computation/hgt/out/results.dat",
+		"/Users/KBLaptop/computation/hgt/scripts/readsDataFrame.py",
+		"/Users/KBLaptop/computation/otherHGT/hgt/scripts/readsDataFrame.py",
+		"/Users/KBLaptop/computation/otherHGT/hgt/scripts/reads",
+		"/Users/KBLaptop/googleDrive/work/duttonLab/data/hgt/.git/COMMIT_EDITMSG",
+		"/Users/KBLaptop/googleDrive/work/duttonLab/data/hgt/.git/Icon",
+		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/multiBlast.py",
+		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/readsDataFrame.py",
+		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/readCounts.csv",
+		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/results.dat",
+		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/test/pseudo_8.fasta",
+		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/extractLong.py",
+		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/extractShort.py"
+	],
+	"find":
+	{
+		"height": 23.0
+	},
+	"find_in_files":
+	{
+		"height": 95.0,
+		"where_history":
+		[
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"[",
+			"([\\S \\s]+)\\s{4}([\\S \\s]+)",
+			"xylo",
+			"myces",
+			"pseudom",
+			"roque",
+			"propion",
+			"geotrichum",
+			"hafni",
+			"01561",
+			"^\\W+gene.+\\n.+\\n",
+			"gene",
+			"\\t{5}\\s",
+			"EEMEQLVRREYKDGFVMASEEMEQLVRREYKDGF",
+			"GCCCCGGGGGATTTTTTTTGCATC",
+			"174",
+			"MASEEMEQLVRREYKDGFV",
+			"MASEEMEQLVRREYKDGFVTDIESDTLPPGLDENTIAFISNKKG\nEPEWMLEWRLDAYRQWLKMKAPSWAHLDYPPIDYQSISYFSAPKRPEDGPQSLDEVDP\nKLLETYEKLGIPLHERAALAGVAVDAVFDSVSVTTTFKKELGEAGVIFCSISEAIRDY\nPELIKQYLGTVVPVADNYFAALNSAVFTDGSFVFVPEGVTCPMELSTYFRINAANTGQ\nFERTLIICESRAQVSYLEGCTAPMRDENQLHAAVVELVALDDAYIKYSTVQNWYPGDE\nNGVGGIYNFVTKRGDCRGDRS",
+			"db_x",
+			"dbxre",
+			"39",
+			"cdsRecords",
+			"\\h+",
+			"\\h",
+			"\\s",
+			"\\s\\s+",
+			"\"",
+			"MDGFTGFKSATAEELPDAAAVM",
+			"MDGFTGFKSATA",
+			"MDGFTGFKSATAEELPDAAAVMDPFHVVRLAGDALDQCRRRVQQ\n                     ELHGHRGRKDDPLYRARRTLHTGAGLLTDKQQTRLQELFVLEEHVPVEATWGIYQRMI\n                     AAYREKDRSLGRAAMEALIDAVSQDVPAGLDELRKLGRTLKARATDVLAYFERPGTSN\n                     GPTEAINGRLEHLRGSALGFRNLTNYIARSLLESGGFRPQLHPHL",
+			"vpnatfd",
+			"(locus_tag)",
+			"(CDS\\s+\\S+\\n)",
+			"replace",
+			"(CDS\\s+\\S+\\n)",
+			"(complement\\S+)\\n",
+			"locus_",
+			"\"",
+			"_extraction",
+			"\\S+TGACCA\\S+contig_(\\d+)",
+			"\\S+CGATGT\\S+contig_(\\d+)",
+			"(\\S+)DRAFT\\S+contig_(\\d+)\\S+",
+			"halo",
+			"\\S+CGATGT\\S+contig_(\\d+)",
+			"\\S+CGATGT\\S+contig_(\\d+)?\\S+",
+			"(\\S+)DRAFT\\S+contig_(\\d+)\\S+",
+			"(\\S+)TGACCA\\S+contig_(\\d+)?\\S",
+			"(\\S+)TGACCA\\S+contig_(\\d+)",
+			"(\\S+)TGACCA\\S+contig_(\\d+)?(\\S+)",
+			"(\\S+)TGACCA\\S+contig_(\\d+)?\\S+",
+			"\\S+CGATGT\\S+contig_(\\d+)",
+			"(\\S+)DRAFT\\S+contig_(\\d+)\\S+",
+			"_extraction",
+			"\\S+CGATGT\\S+contig_(\\d+)",
+			"(\\S+)TGACCA\\S+contig_(\\d+)",
+			"(\\S+)DRAFT\\S+contig_(\\d+)\\S+",
+			"\\S+TGACCA\\S+contig_(\\d+)?\\S+",
+			"\\S+_TGACCA_\\S+contig_(\\d+)?\\S+",
+			"\\S+_TGACCA_\\S+contig_(\\d)+?\\S+",
+			"\\S+_CGA\\S+contig_(\\d)+?\\S+",
+			"\\S+_TGACCA_\\S+contig_(\\d)+?\\S+",
+			"(\\S+)DRAFT\\S+contig_(\\d+)\\S+",
+			"{\\S+}DRAFT",
+			"{S+}DRAFT",
+			"iteration>",
+			"BlastOutput",
+			"reads",
+			"test",
+			"/test",
+			":TGA",
+			":ACA",
+			":TTA",
+			":TAGCTT",
+			":CAG",
+			">HWI-ST1233:94:C0YE6ACXX:1:2102:19524:52246",
+			":acagtg_",
+			":acagtg",
+			"acagtg",
+			"CGATGT",
+			"/test",
+			"/reads",
+			"/test",
+			"com",
+			"&rsquo;",
+			"<p>",
+			"class",
+			"id=",
+			"id",
+			"construction",
+			"highli",
+			"student_portal",
+			"header",
+			"resu",
+			"home"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": true,
+		"replace_history":
+		[
+			"<a href=\"\\2\">\\1</a>",
+			"\\1",
+			"",
+			"                     ",
+			"\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s\\s",
+			"\\s{21}",
+			"cds_records",
+			"\\t",
+			"_",
+			"\\t",
+			"'",
+			"/\\1",
+			"\\1\\t\\t\\t\\t\\t\\ locus_tag=\"00000\"\\n",
+			"\\1\\n\\t\\t\\t\\t\\t\\ locus_tag=\"00000\"\\n",
+			"\\1\\n\\t\\t\\t\\t\\t\\slocus_tag=\"00000\"\\n",
+			"\\1\\n\\t\\t\\t\\t\\tlocus_tag=\"00000\"\\n",
+			"\\1\\nlocus_tag=\"00000\"\\n",
+			"{1}\\nlocus_tag=\"00000\"",
+			"'",
+			"",
+			"halo\\1",
+			"brevi\\1",
+			"\\1\\2",
+			"brevi\\1",
+			"brevi\\2",
+			"halo\\2",
+			"brevi\\1",
+			"\\1\\2",
+			"/1/2",
+			"",
+			"brevi\\1",
+			"halo\\1",
+			"halo\\2",
+			"halo\\1",
+			"\\1\\2",
+			"halo\\1",
+			"\\1",
+			"halo\\1",
+			"brevi\\1",
+			"halo\\1",
+			"\\1\\2",
+			"test",
+			"reads",
+			"/reads",
+			"/test",
+			"/reads"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "MakeBlastDB.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2230,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1490,
+								1490
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "test.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 552,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								509,
+								509
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "DataTypes.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1534,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								836,
+								836
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 3,
+					"file": "KvasirBlast.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3528,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1455,
+								1455
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 82.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			],
+			[
+				1,
+				0,
+				2,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			0.461500769343,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 532.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "Kvasir.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"git",
+				".gitignore"
+			],
+			[
+				"tes",
+				"test.xml"
+			],
+			[
+				"kv",
+				"KvasirBlast.py"
+			],
+			[
+				"make",
+				"MakeBlastDB.py"
+			],
+			[
+				"ma",
+				"make_blast_db.sh"
+			],
+			[
+				"mo",
+				"mongo_test.py"
+			],
+			[
+				"",
+				"DataTypes.py"
+			],
+			[
+				"da",
+				"DataImport.py"
+			],
+			[
+				"read",
+				"readme.md"
+			],
+			[
+				"dai",
+				"DataImport.py"
+			],
+			[
+				"mong",
+				"mongo_to_blast_db.py"
+			],
+			[
+				"hal",
+				"seqs/genomes/haloFixed.gb"
+			],
+			[
+				"fix",
+				"seqs/genomes/fixHalo.py"
+			],
+			[
+				"halo",
+				"seqs/genomes/haloFixed.gb"
+			],
+			[
+				"gbfix",
+				"seqs/genomes/breviFixed.gb"
+			],
+			[
+				"bregb",
+				"seqs/genomes/breviFixed.gb"
+			],
+			[
+				"a.gb",
+				"seqs/arthro_IMG.gb"
+			],
+			[
+				"pfam",
+				"out/pfamParsed.csv"
+			],
+			[
+				"ex",
+				"scripts/extractShort.py"
+			],
+			[
+				"pfa",
+				"out/pfamOut.csv"
+			],
+			[
+				"allhg",
+				"seqs/allHGTreads.fna"
+			],
+			[
+				"arth",
+				"out/arthro_IMG.faa"
+			],
+			[
+				"rena",
+				"scripts/renameDict.py"
+			],
+			[
+				"reads",
+				"readsDataFrame.py"
+			],
+			[
+				"dict",
+				"renameDict.py"
+			],
+			[
+				"shor",
+				"shortReadNames.py"
+			],
+			[
+				"file",
+				"Ch4/files_start.py"
+			],
+			[
+				"loo",
+				"Ch2/loops_finished.py"
+			],
+			[
+				"cond",
+				"Ch2/conditionals_finished.py"
+			],
+			[
+				"va",
+				"Ch2/variables_start.py"
+			],
+			[
+				"var",
+				"Ch2/variables_start.py"
+			],
+			[
+				"fun",
+				"Ch2/functions_start.py"
+			],
+			[
+				"varia",
+				"Ch2/variables_start.py"
+			],
+			[
+				"sn",
+				"ExampleSnippets.txt"
+			],
+			[
+				"hell",
+				"Ch2/helloworld_start.py"
+			],
+			[
+				"exa",
+				"ExampleSnippets.txt"
+			],
+			[
+				"spr",
+				"_scripts/SpryTabbedPanels.css"
+			],
+			[
+				"spot",
+				"spotlight.htm"
+			],
+			[
+				"in",
+				"~/Desktop/Exercise Files/roux_website/index.htm"
+			],
+			[
+				"foun",
+				"annofme_foundation/css/foundation.css"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 1,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 210.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+		"max_columns": 3
+	}
+}
