@@ -27,4 +27,4 @@ def dedupe(mongo_db_name):
                 current_species_collection.remove({'_id':dupe})
 
 # For testing
-dedupe('refactor_test')
+
