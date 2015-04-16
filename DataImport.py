@@ -73,8 +73,8 @@ def write_database(species, mongo_db_name):
         species_collection.insert_one(gene_record)
 
 #For testing:
-import_data('/Users/KBLaptop/computation/hgt/seqs/genomes/haloFixed.gb', 'location_import_test', '~/computation/db/')
+#import_data('/Users/KBLaptop/computation/hgt/seqs/genomes/haloFixed.gb', 'location_import_test')
 
 if __name__ == '__main__':
     import sys
-    import_data(sys.argv[1], sys.argv[2], sys.argv[3])
+    import_data(sys.argv[1], sys.argv[2])

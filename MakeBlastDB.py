@@ -21,7 +21,7 @@ def make_blast_db(mongo_db_name):
     # Reads database and makes list of all collections (representing species)
     all_species = db.collection_names(False)
     # Handle for temporary .faa file that will contain all CDS for all species
-    output_faa = '{0}.faa'.format(mongo_db_name)
+    output_faa = './tmp/{0}.faa'.format(mongo_db_name)
 
     # For each collection (species) in the database, reads each gene record and
     # appends the gene and its aa sequence in FASTA format. The .faa file will 
@@ -31,8 +31,8 @@ def make_blast_db(mongo_db_name):
             for species in all_species:
                 current_species_collection = db[species]
                 for gene in current_species_collection.find():
-                    output_handle.write('>lcl|{0}|{1}_{2} {3}\n{4}\n'.format(
-                        mongo_db_name
+                    output_handle.write('>gnl|{0}|{1}_{2}| {3}\n{4}\n'.format(
+                        mongo_db_name,
                         gene['species'],
                         gene['locus_tag'],
                         gene['annotation'],
@@ -40,23 +40,22 @@ def make_blast_db(mongo_db_name):
                         )
                     )
         
-            # calls makeblastdb €from shell
+            # calls makeblastdb from shell
             Popen(
                 ['makeblastdb',
                 '-in', output_faa,
                 '-dbtype', 'prot',
-                '-out', mongo_db_name,
+                '-out', './tmp/{0}'.format(mongo_db_name),
                 '-title', mongo_db_name,
                 '-parse_seqids'
                 ]
             ).wait() # waits for this operation to terminate before moving on
+    except Exception as e: 
+        print e
 
     # Removes temporary .faa file
-    os.remove(output_faa)
-
-    # Always have to close mongod
-    mongod.terminate()
+    #os.remove(output_faa)
 
 if __name__ == '__main__':
     import sys
-    import_data(sys.argv[1])
+    make_blast_db(sys.argv[1])
