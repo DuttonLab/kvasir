@@ -3,19 +3,18 @@
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
 # CC-BY
 
+'''
+Must have Mongod running, in terminal: `mongod --dbpath path/to/db`
+'''
+
 from __future__ import print_function
 from pymongo import MongoClient
 from subprocess import Popen
 from Bio.Blast import NCBIXML
 from Bio.Blast.Applications import NcbiblastpCommandline
-from pymongo import MongoClient
 import os
 
-def kvasir_blast(mongo_db_name, path_to_database, blast_database):
-
-    mongod = Popen(
-        ["mongod", "--dbpath", os.path.expanduser(path_to_database)],
-    )
+def kvasir_blast(mongo_db_name, blast_database):
 
     client = MongoClient()
     db = client[mongo_db_name]
@@ -66,7 +65,6 @@ def kvasir_blast(mongo_db_name, path_to_database, blast_database):
             #os.remove('blast_out_tmp.xml')
             os.remove(output_faa)
 
-    mongod.terminate()
 
 def dont_use_this():
     blast_handle = NcbiblastpCommandline(
@@ -99,5 +97,4 @@ def dont_use_this():
                     print(hsp.match[0:75] + '...')
                     print(hsp.sbjct[0:75] + '...')
 
-kvasir_blast('mongo_test_again', '../db/', 'mongo_test_again')
 

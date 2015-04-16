@@ -6,20 +6,15 @@
 '''
 This script is designed to read a mongo database created with DataImport,
 create a faa file, build a BLAST database with that file, then delete the 
-faa file
+faa file. Must have Mongod running, in terminal: `mongod --dbpath path/to/db`
 '''
 
-def make_blast_db(mongo_db_name, path_to_database):
+def make_blast_db(mongo_db_name):
     from pymongo import MongoClient
     from subprocess import Popen
     import os
- 
-    # Open and connect to Mongod server. Also opens database (which should have
-    # have been created with DataImport.py)
-    mongod = Popen(
-        ["mongod", "--dbpath", os.path.expanduser(path_to_database)],
-    )
 
+    # Previous Mongod instance should be running
     client = MongoClient()
     db = client[mongo_db_name]
 
@@ -64,4 +59,4 @@ def make_blast_db(mongo_db_name, path_to_database):
 
 if __name__ == '__main__':
     import sys
-    import_data(sys.argv[1], sys.argv[2])
+    import_data(sys.argv[1])
