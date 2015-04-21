@@ -4,6 +4,34 @@
 		"selected_items":
 		[
 			[
+				"out",
+				"output_errors"
+			],
+			[
+				"cu",
+				"current_tags"
+			],
+			[
+				"c",
+				"current_species_collection"
+			],
+			[
+				"cus",
+				"current_tags"
+			],
+			[
+				"curr",
+				"current_tag"
+			],
+			[
+				"curre",
+				"current_id"
+			],
+			[
+				"tr",
+				"try_exit"
+			],
+			[
 				"mong",
 				"mongod"
 			],
@@ -14,10 +42,6 @@
 			[
 				"bla",
 				"blast_out_tmp"
-			],
-			[
-				"c",
-				"current_species_collection"
 			],
 			[
 				"mo",
@@ -140,10 +164,6 @@
 				"get_lca"
 			],
 			[
-				"tr",
-				"troglodytes"
-			],
-			[
 				"tax",
 				"taxonomy_list"
 			],
@@ -190,10 +210,6 @@
 			[
 				"hy",
 				"hypotheticals"
-			],
-			[
-				"curr",
-				"currentGroup"
 			],
 			[
 				"query",
@@ -276,37 +292,10 @@
 	"buffers":
 	[
 		{
-			"file": "MakeBlastDB.py",
-			"settings":
-			{
-				"buffer_size": 2230,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"contents": "##!/usr/bin/env python\n\nfrom pymongo import MongoClient\nfrom subprocess import Popen\nimport os\nimport atexit\n\nmongod = Popen(\n        [\"mongod\", \"--dbpath\", '/Users/KBLaptop/computation/db/'],\n    )\nprint mongod.pid\nclient = MongoClient()\ndb = client['location_import_test']\ncollection = db['test_collection']\n\nall_species = db.collection_names(False)\n    \nfor species in all_species:\n    current_species_collection = db[species]\n    for gene in current_species_collection.find():\n        print gene['locus_tag']\n        pass\n      \nmongod.terminate()\n",
-			"file": "test.py",
-			"file_size": 555,
-			"file_write_time": 130735970020000000,
-			"settings":
-			{
-				"buffer_size": 552,
-				"line_ending": "Unix"
-			}
-		},
-		{
 			"file": "DataTypes.py",
 			"settings":
 			{
 				"buffer_size": 1534,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "KvasirBlast.py",
-			"settings":
-			{
-				"buffer_size": 3528,
 				"line_ending": "Unix"
 			}
 		}
@@ -415,26 +404,34 @@
 	],
 	"file_history":
 	[
+		"/Users/KBLaptop/computation/kvasir/MakeBlastDB.py",
+		"/Users/KBLaptop/computation/kvasir/mongo_deduplicate.py",
+		"/Users/KBLaptop/computation/kvasir/tmp/arthro_IMG.faa",
+		"/Users/KBLaptop/computation/kvasir/test.py",
+		"/Users/KBLaptop/computation/kvasir/KvasirBlastForCluster.py",
+		"/Users/KBLaptop/computation/kvasir/random.py",
 		"/Users/KBLaptop/.bash_profile",
-		"/Users/KBLaptop/computation/slurm_template.sh",
-		"/Users/KBLaptop/computation/kvasir/DataImport.py",
-		"/Users/KBLaptop/computation/hgt/seqs/genomes/haloFixed.gb",
+		"/Users/KBLaptop/computation/kvasir/remove_from_mongo.py",
 		"/Users/KBLaptop/computation/kvasir/.git/COMMIT_EDITMSG",
+		"/Users/KBLaptop/computation/kvasir/DataImport.py",
+		"/Users/KBLaptop/computation/kvasir/KvasirBlast.py",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/Halomonas_JB37.gb",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/breviFixed.gb",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/haloFixed.gb",
+		"/Users/KBLaptop/computation/hgt/seqs/genomes/brachy_IMG.gb",
+		"/Users/KBLaptop/computation/kvasir/tmp/refactor_test.faa",
 		"/Users/KBLaptop/computation/kvasir/.gitignore",
+		"/Users/KBLaptop/computation/slurm_template.sh",
 		"/Users/KBLaptop/computation/kvasir/blast_out_tmp.xml",
 		"/Users/KBLaptop/computation/kvasir/test.xml",
-		"/Users/KBLaptop/computation/kvasir/test.py",
 		"/Users/KBLaptop/bin/subl",
 		"/Users/KBLaptop/computation/bothco/.git/COMMIT_EDITMSG",
 		"/Users/KBLaptop/computation/README.MD",
 		"/Users/KBLaptop/computation/kvasir/micro_test.faa",
-		"/Users/KBLaptop/computation/kvasir/KvasirBlast.py",
 		"/Users/KBLaptop/computation/kvasir/test3.xml",
 		"/Users/KBLaptop/computation/kvasir/test2.xml",
-		"/Users/KBLaptop/computation/kvasir/MakeBlastDB.py",
 		"/Users/KBLaptop/computation/kvasir/mongo_test2.py",
 		"/Users/KBLaptop/computation/kvasir/DataTypes.py",
-		"/Users/KBLaptop/computation/hgt/seqs/genomes/breviFixed.gb",
 		"/Users/KBLaptop/Desktop/ssh_key.txt",
 		"/Users/KBLaptop/.gitconfig",
 		"/Users/KBLaptop/computation/kvasir/make_blast_db.sh",
@@ -462,7 +459,6 @@
 		"/Users/KBLaptop/computation/hgt/seqs/genomes/fixBrevi.py",
 		"/Users/KBLaptop/computation/hgt/seqs/genomes/haloFixed.faa",
 		"/Users/KBLaptop/computation/hgt/seqs/genomes/fixHalo.py",
-		"/Users/KBLaptop/computation/hgt/seqs/genomes/Halomonas_JB37.gb",
 		"/Users/KBLaptop/computation/hgt/seqs/arthro_IMG.gb",
 		"/Users/KBLaptop/computation/hgt/scripts/gbFaaConvertase.py",
 		"/Users/KBLaptop/computation/hgt/scripts/groupBlast.py",
@@ -513,7 +509,6 @@
 		"/Applications/Python 3.4/Update Shell Profile.command",
 		"/Users/KBLaptop/Desktop/meadBatch3",
 		"/Users/KBLaptop/computation/hgt/seqs/genomes/brevi_IMG.gb",
-		"/Users/KBLaptop/computation/hgt/seqs/genomes/brachy_IMG.gb",
 		"/Users/KBLaptop/computation/hgt/seqs/shortReads/full_Brachy_100.fasta",
 		"/Users/KBLaptop/computation/hgt/seqs/test/gbk/arthro_IMG.gbk",
 		"/Users/KBLaptop/computation/hgt/seqs/genomes/Halomonas_JB37.gbk",
@@ -536,17 +531,11 @@
 		"/Users/KBLaptop/computation/otherHGT/hgt/scripts/reads",
 		"/Users/KBLaptop/googleDrive/work/duttonLab/data/hgt/.git/COMMIT_EDITMSG",
 		"/Users/KBLaptop/googleDrive/work/duttonLab/data/hgt/.git/Icon",
-		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/multiBlast.py",
-		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/readsDataFrame.py",
-		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/readCounts.csv",
-		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/results.dat",
-		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/test/pseudo_8.fasta",
-		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/extractLong.py",
-		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/extractShort.py"
+		"/Users/KBLaptop/Google Drive/Work/Dutton Lab/Data/HGT/codeStuff/multiBlast.py"
 	],
 	"find":
 	{
-		"height": 23.0
+		"height": 37.0
 	},
 	"find_in_files":
 	{
@@ -561,6 +550,8 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"03517",
+			"BRACHY_IMG_BRACHYDRAFT_03517",
 			"[",
 			"([\\S \\s]+)\\s{4}([\\S \\s]+)",
 			"xylo",
@@ -718,69 +709,16 @@
 	"groups":
 	[
 		{
+			"sheets":
+			[
+			]
+		},
+		{
 			"selected": 0,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "MakeBlastDB.py",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2230,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1490,
-								1490
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "test.py",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 552,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								509,
-								509
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
 					"file": "DataTypes.py",
 					"semi_transient": false,
 					"settings":
@@ -792,8 +730,8 @@
 						"selection":
 						[
 							[
-								836,
-								836
+								400,
+								400
 							]
 						],
 						"settings":
@@ -804,42 +742,6 @@
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 3,
-					"type": "text"
-				}
-			]
-		},
-		{
-			"selected": 0,
-			"sheets":
-			[
-				{
-					"buffer": 3,
-					"file": "KvasirBlast.py",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3528,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1455,
-								1455
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 82.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -876,7 +778,7 @@
 		"cols":
 		[
 			0.0,
-			0.461500769343,
+			0.668522491904,
 			1.0
 		],
 		"rows":
@@ -888,7 +790,7 @@
 	"menu_visible": true,
 	"output.exec":
 	{
-		"height": 532.0
+		"height": 328.0
 	},
 	"output.find_results":
 	{
@@ -907,6 +809,10 @@
 		"last_filter": "",
 		"selected_items":
 		[
+			[
+				"imp",
+				"DataImport.py"
+			],
 			[
 				"git",
 				".gitignore"
@@ -1081,14 +987,18 @@
 	},
 	"select_symbol":
 	{
-		"height": 0.0,
+		"height": 375.0,
 		"last_filter": "",
 		"selected_items":
 		[
+			[
+				"gen",
+				"add_gene"
+			]
 		],
-		"width": 0.0
+		"width": 378.0
 	},
-	"selected_group": 1,
+	"selected_group": 0,
 	"settings":
 	{
 	},
