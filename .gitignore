@@ -5,6 +5,6 @@
 *.pin
 *.psq
 *.xml
-*.sublime
-./tmp
+*.sublime-project
+*.sublime-workspace
 
