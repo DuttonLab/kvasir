@@ -38,7 +38,7 @@ def kvasir_blast(mongo_db_name, blast_database):
             blast_handle = NcbiblastpCommandline(
                 query=output_faa,
                 db=mongo_db_name,
-                evalue=0.001,
+                evalue='1e-50',
                 outfmt=5,
                 out="blast_out_tmp.xml",
                 max_hsps=20
