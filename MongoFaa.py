@@ -12,7 +12,7 @@ def make_fasta_from_mongodb(mongo_db_name):
 
     for species in all_species:
         current_species_collection = db[species]
-        with open('./tmp/{0}'.format(species), 'w+') as output_handle:
+        with open('./tmp/{0}.faa'.format(species), 'w+') as output_handle:
 
             for gene in current_species_collection.find():
                 output_handle.write('>gnl|{0}|{1}_{2}| {3}\n{4}\n'.format(
@@ -24,4 +24,6 @@ def make_fasta_from_mongodb(mongo_db_name):
                             )
                         )
 
-make_fasta_from_mongodb('refactor_test')
+if __name__ == '__main__':
+    import sys
+    make_fasta_from_mongodb(sys.argv[1])
