@@ -58,8 +58,16 @@ def get_species_name(path_to_genbank):
     name = re.search(r"(\w+)\.gb", path_to_genbank)
     return name.group(1)
 
+def import_folder(genbank_folder, mongo_db_name):
+    import os
+    for a_file in os.listdir(genbank_folder):
+        current_file = os.path.join(genbank_folder, a_file)
+        import_data(current_file, mongo_db_name)
+
+
+
 #For testing:
-import_data('/Users/KBLaptop/computation/genomes/arthro_piece.gb', 'prot-nucl')
+import_folder('/Users/KBLaptop/computation/genomes/', 'prot-nucl')
 
 #if __name__ == '__main__':
 #    import sys

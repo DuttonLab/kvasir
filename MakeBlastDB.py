@@ -36,7 +36,7 @@ def make_blast_db(mongo_db_name):
                         gene['species'],
                         gene['locus_tag'],
                         gene['annotation'],
-                        gene['translation'],
+                        gene['aa_seq'],
                         )
                     )
         
