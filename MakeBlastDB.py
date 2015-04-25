@@ -5,11 +5,11 @@
 
 '''
 This script is designed to read a mongo database created with DataImport,
-create a faa file, build a BLAST database with that file, then delete the 
-faa file. Must have Mongod running, in terminal: `mongod --dbpath path/to/db`
+create a fasta file, build a BLAST database with that file, then delete the 
+fasta file. Must have Mongod running, in terminal: `mongod --dbpath path/to/db`
 '''
 
-def make_blast_db(mongo_db_name):
+def make_blast_db(mongo_db_name, seq_type='nucl'):
     from pymongo import MongoClient
     from subprocess import Popen
     import os
@@ -20,31 +20,40 @@ def make_blast_db(mongo_db_name):
 
     # Reads database and makes list of all collections (representing species)
     all_species = db.collection_names(False)
-    # Handle for temporary .faa file that will contain all CDS for all species
-    output_faa = './tmp/{0}.faa'.format(mongo_db_name)
+    # Handle for temporary .fasta file that will contain all CDS for all species
+    output_fasta = './tmp/{0}.fasta'.format(mongo_db_name)
 
     # For each collection (species) in the database, reads each gene record and
-    # appends the gene and its aa sequence in FASTA format. The .faa file will 
+    # appends the gene and its aa sequence in FASTA format. The .fasta file will 
     # contain records for all species stored in the database
     try:    
-        with open(output_faa, 'w+') as output_handle:
+        with open(output_fasta, 'w+') as output_handle:
+
             for species in all_species:
                 current_species_collection = db[species]
                 for gene in current_species_collection.find():
+                    if seq_type == 'nucl':
+                        seq = gene['dna']
+                    elif seq_type == 'prot':
+                        seq = gene['aa_seq']
+                    else:
+                        print 'That\'s not a valid sequence type, use "nucl" or "prot"'
+                        break
+
                     output_handle.write('>gnl|{0}|{1}_{2}| {3}\n{4}\n'.format(
                         mongo_db_name,
                         gene['species'],
                         gene['locus_tag'],
                         gene['annotation'],
-                        gene['aa_seq'],
+                        seq,
                         )
                     )
         
             # calls makeblastdb from shell
             Popen(
                 ['makeblastdb',
-                '-in', output_faa,
-                '-dbtype', 'prot',
+                '-in', output_fasta,
+                '-dbtype', seq_type,
                 '-out', './tmp/{0}'.format(mongo_db_name),
                 '-title', mongo_db_name,
                 '-parse_seqids'
@@ -53,8 +62,8 @@ def make_blast_db(mongo_db_name):
     except Exception as e: 
         print e
 
-    # Removes temporary .faa file
-    #os.remove(output_faa)
+    # Removes temporary .fasta file
+    os.remove(output_fasta)
 
 if __name__ == '__main__':
     import sys
