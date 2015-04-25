@@ -1,6 +1,7 @@
 .DS_store
 
 mongo_diagnostics.py
+*.fasta
 *.faa
 *.phr
 *.pin
