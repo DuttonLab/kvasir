@@ -23,23 +23,23 @@ def make_fasta_from_mongodb(mongo_db_name, seq_type='nucl'):
                 else:
                     print 'That\'s not a valid sequence type, use "nucl" or "prot"'
                     break
-                output_handle.write('>gnl|{0}|{1}_{2}| {3}\n{4}\n'.format(
-                            mongo_db_name,
-                            gene['species'],
-                            gene['locus_tag'],
-                            gene['annotation'],
-                            seq,
-                            )
-                        )
+               
+                output_handle.write('>gnl|{0}|{1}_{2}| {3}\n{4}\n'.format(mongo_db_name,
+                    gene['species'],
+                    gene['locus_tag'],
+                    gene['annotation'],
+                    seq,
+                    )
+                )
 
 #testing
-#make_fasta_from_mongodb('all_genomes')
+make_fasta_from_mongodb('all_genomes')
 
-if __name__ == '__main__':
-    import sys
-    if sys.argv[2] == 'nucl':
-        make_fasta_from_mongodb(sys.argv[1])
-    elif sys.argv[2] == 'prot'
-        make_fasta_from_mongodb(sys.argv[1], 'prot')
-    else:
-        print 'Did you use "prot" or "nucl" for your sequence type?'
+#if __name__ == '__main__':
+#    import sys
+#    if sys.argv[2] == 'nucl':
+#        make_fasta_from_mongodb(sys.argv[1])
+#    elif sys.argv[2] == 'prot'
+#        make_fasta_from_mongodb(sys.argv[1], 'prot')
+#    else:
+#        print 'Did you use "prot" or "nucl" for your sequence type?'
