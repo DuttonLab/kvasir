@@ -41,7 +41,9 @@ with open('./tmp/arthro_all.xml', 'r') as result_handle:
                         hit_collection = species_db[str(hit_match.group(1))]
                         for entry in hit_collection.find({'locus_tag':hit_match.group(2)}):
                             hits_collection.insert_one({
+                                'query_name':str(query_species),
                                 'query_id':query_entry['_id'],
+                                'hit_species':hit_collection,
                                 'hit_id':entry['_id']
                             })
 
