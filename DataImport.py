@@ -9,14 +9,16 @@ write it to a mongoDB database. Must have Mongod running, in terminal:
 `mongod --dbpath path/to/db`
 '''
 
-import DataTypes as Data
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC
-import re
+
 from pymongo import MongoClient
 
 def import_data(some_genbank, mongo_db_name):
+    from Bio import SeqIO
+    from Bio.Seq import Seq
+    from Bio.Alphabet import IUPAC
     client = MongoClient()
     db = client[mongo_db_name]
 
@@ -56,6 +58,7 @@ def import_data(some_genbank, mongo_db_name):
 
 
 def get_species_name(path_to_genbank):
+    import re
     name = re.search(r"(\w+)\.gb", path_to_genbank)
     return name.group(1)
 
