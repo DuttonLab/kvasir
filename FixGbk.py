@@ -52,5 +52,5 @@ def check_dupe_locus_tags(some_genbank):
 #        print sys.stderr
 
 #for testing
-add_locus_tag("/Users/KBLaptop/googleDrive/work/Dutton Lab shared documents/Projects/HGT/genome_assemblies/RAST_annotated/1663.18_Arthrobacter.gbk")
-#check_dupe_locus_tags("/Users/KBLaptop/googleDrive/work/Dutton Lab shared documents/Projects/HGT/genome_assemblies/RAST_annotated/1663.18_Arthrobacter.gbk")
+#add_locus_tag("/Users/KBLaptop/googleDrive/work/Dutton Lab shared documents/Projects/HGT/genome_assemblies/RAST_annotated/1663.18_Arthrobacter.gbk")
+check_dupe_locus_tags("/Users/KBLaptop/googleDrive/work/Dutton Lab shared documents/Projects/HGT/genome_assemblies/RAST_annotated/1663.18_Arthrobacter.gbk")

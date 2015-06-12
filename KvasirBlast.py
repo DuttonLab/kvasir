@@ -11,7 +11,7 @@ from __future__ import print_function
 from pymongo import MongoClient
 from subprocess import Popen
 from Bio.Blast import NCBIXML
-from Bio.Blast.Applications import NcbiblastpCommandline
+from Bio.Blast.Applications import NcbiblastnCommandline
 import os
 
 def kvasir_blast(mongo_db_name, blast_database):
@@ -35,10 +35,10 @@ def kvasir_blast(mongo_db_name, blast_database):
                     )
                 )
 
-            blast_handle = NcbiblastpCommandline(
+            blast_handle = NcbiblastnCommandline(
                 query=output_faa,
                 db=mongo_db_name,
-                evalue='1e-50',
+                pident=99,
                 outfmt=5,
                 out="blast_out_tmp.xml",
                 max_hsps=20
@@ -65,6 +65,7 @@ def kvasir_blast(mongo_db_name, blast_database):
             #os.remove('blast_out_tmp.xml')
             os.remove(output_faa)
 
+kvasir_blast('all_genomes', )
 
 def dont_use_this():
     blast_handle = NcbiblastpCommandline(

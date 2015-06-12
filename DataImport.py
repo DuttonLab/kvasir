@@ -9,16 +9,12 @@ write it to a mongoDB database. Must have Mongod running, in terminal:
 `mongod --dbpath path/to/db`
 '''
 
-from Bio import SeqIO
-from Bio.Seq import Seq
-from Bio.Alphabet import IUPAC
-
-from pymongo import MongoClient
-
 def import_data(some_genbank, mongo_db_name):
+    from pymongo import MongoClient
     from Bio import SeqIO
     from Bio.Seq import Seq
     from Bio.Alphabet import IUPAC
+    
     client = MongoClient()
     db = client[mongo_db_name]
 
