@@ -51,22 +51,21 @@ def make_blast_db(mongo_db_name, seq_type='nucl'):
                 )
     
         # calls makeblastdb from shell
-        #print "making a database!"
-        #Popen(
-        #    ['makeblastdb',
-        #    '-in', output_fasta,
-        #    '-dbtype', seq_type,
-        #    '-out', mongo_db_name,
-        #    '-title', mongo_db_name,
-        #    '-parse_seqids'
-        #    ]
-        #).wait() # waits for this operation to terminate before moving on
+        print "making a database!"
+        Popen(
+            ['makeblastdb',
+            '-in', output_fasta,
+            '-dbtype', seq_type,
+            '-out', mongo_db_name,
+            '-title', mongo_db_name,
+            ]
+        ).wait() # waits for this operation to terminate before moving on
 
     # Removes temporary .fasta file
-    #os.remove(output_fasta)
+    os.remove(output_fasta)
 
 #for testing
-make_blast_db('all_genomes')
+#make_blast_db('all_genomes')
 
 #if __name__ == '__main__':
 #    import sys

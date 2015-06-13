@@ -25,7 +25,7 @@ def kvasir_blast(mongo_db_name, blast_database):
     for species in all_species:
         current_species_collection = db[species]
         print(current_species_collection)
-        output_faa = '{0}.faa'.format(mongo_db_name)
+        output_faa = './tmp/{0}.faa'.format(mongo_db_name)
 
         for gene in current_species_collection.find():
             with open(output_faa, 'w+') as output_handle:
@@ -46,26 +46,27 @@ def kvasir_blast(mongo_db_name, blast_database):
             print(blast_handle)
             stdout, stderr = blast_handle()
 
-            #blast_records = NCBIXML.parse('blast_out_tmp.xml')
-            #print('hi there!', blast_records)
-            #for blast_record in blast_records:
-            #    for alignment in blast_record.alignments:
-            #        for hsp in alignment.hsps:
-            #            if hsp.positives / alignment.length > 0.9:
-            #                print('****Alignment****')
-            #                print('sequence:', alignment.title)
-            #                print('length:', alignment.length)
-            #                print('e value:', hsp.expect)
-            #                print(hsp.query[0:75] + '...')
-            #                print(hsp.match[0:75] + '...')
-            #                print(hsp.sbjct[0:75] + '...')
-            #            else:
-            #                print('That one didn\'t match!')
+            blast_records = NCBIXML.parse('blast_out_tmp.xml')
+            print('hi there!', blast_records)
+            for blast_record in blast_records:
+                for alignment in blast_record.alignments:
+                    for hsp in alignment.hsps:
+                        if hsp.positives / alignment.length > 0.9:
+                            print('****Alignment****')
+                            print('sequence:', alignment.title)
+                            print('length:', alignment.length)
+                            print('e value:', hsp.expect)
+                            print(hsp.query[0:75] + '...')
+                            print(hsp.match[0:75] + '...')
+                            print(hsp.sbjct[0:75] + '...')
+                        else:
+                            print('That one didn\'t match!')
 
-            #os.remove('blast_out_tmp.xml')
             os.remove(output_faa)
+            os.remove('blast_out_tmp.xml')
+            
 
-kvasir_blast('all_genomes', )
+
 
 def dont_use_this():
     blast_handle = NcbiblastpCommandline(

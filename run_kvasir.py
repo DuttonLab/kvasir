@@ -5,17 +5,25 @@
 
 import DataImport
 import FixGbk
-import MongoFasta
 import MakeBlastDB
 import KvasirBlast
 import os
+import sys
 
+print 'Here we go!'
 gbk_folder = sys.argv[1]
 mongo_db_name = sys.argv[2]
 
-try:
-    DataImport.import_folder(gbk_folder, mongo_db_name)
-    pass
-except KeyError, e:
-    print "Genbank files don't have locus_tag, fixing"
-    raise e
+print 'Checking and importing files...'
+for the_file in os.listdir(gbk_folder):
+    path_to_file = '{0}{1}'.format(gbk_folder, the_file)
+    if not the_file.startswith('.'):
+        if not os.path.isdir(path_to_file):
+            print 'Checking {0}'.format(the_file)
+            FixGbk.check_dupe_locus_tags(path_to_file)
+
+            print 'Importing {0}'.format(the_file)
+            DataImport.import_file('{0}{1}'.format(gbk_folder, the_file), mongo_db_name)
+
+MakeBlastDB.make_blast_db(mongo_db_name)
+

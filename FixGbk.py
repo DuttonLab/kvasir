@@ -35,7 +35,12 @@ def check_dupe_locus_tags(some_genbank):
         for record in genome:
             for feature in record.features:
                 if feature.type == 'CDS':
-                    tag = feature.qualifiers['locus_tag']
+                    try:
+                        tag = feature.qualifiers['locus_tag']
+                    except KeyError, e:
+                        print "Genbank file doesn't have locus_tag, fixing"
+                        add_locus_tag(some_genbank)
+
                     if tag in locus_tag_list:
                         print 'duplicate locus_tag detected: {0}'.format(tag)
                         if duplicate_flag == -1:
@@ -50,7 +55,6 @@ def check_dupe_locus_tags(some_genbank):
 #    try:
 #        add_locus_tag(sys.argv[1])
 #        print sys.stderr
-
 #for testing
 #add_locus_tag("/Users/KBLaptop/googleDrive/work/Dutton Lab shared documents/Projects/HGT/genome_assemblies/RAST_annotated/1663.18_Arthrobacter.gbk")
-check_dupe_locus_tags("/Users/KBLaptop/googleDrive/work/Dutton Lab shared documents/Projects/HGT/genome_assemblies/RAST_annotated/1663.18_Arthrobacter.gbk")
+#check_dupe_locus_tags("/Users/KBLaptop/googleDrive/work/Dutton Lab shared documents/Projects/HGT/genome_assemblies/RAST_annotated/1663.18_Arthrobacter.gbk")

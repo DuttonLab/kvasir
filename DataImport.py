@@ -9,7 +9,7 @@ write it to a mongoDB database. Must have Mongod running, in terminal:
 `mongod --dbpath path/to/db`
 '''
 
-def import_data(some_genbank, mongo_db_name):
+def import_file(some_genbank, mongo_db_name):
     from pymongo import MongoClient
     from Bio import SeqIO
     from Bio.Seq import Seq
@@ -64,7 +64,7 @@ def import_folder(genbank_folder, mongo_db_name):
     for a_file in os.listdir(genbank_folder):
         current_file = os.path.join(genbank_folder, a_file)
         print 'importing {0}!'.format(current_file)
-        import_data(current_file, mongo_db_name)
+        import_file(current_file, mongo_db_name)
 
 #For testing:
 #import_folder('/Users/KBLaptop/computation/genomes/', 'prot-nucl')
@@ -76,6 +76,6 @@ if __name__ == '__main__':
         print 'Looks like {0} is a directory!'.format(sys.argv[1])
         import_folder(sys.argv[1], sys.argv[2])
     elif os.path.isdir(sys.argv[1]) is False:
-        import_data(sys.argv[1], sys.argv[2])
+        import_file(sys.argv[1], sys.argv[2])
     else:
         print 'Something\'s really wrong here...'

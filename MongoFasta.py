@@ -6,13 +6,14 @@
 from pymongo import MongoClient
 
 def make_fasta_from_mongodb(mongo_db_name, seq_type='nucl'):
+    from pymongo import MongoClient
     client = MongoClient()
     db = client[mongo_db_name]
     all_species = db.collection_names(False)
-    print all_species
+    #print all_species
     for species in all_species:
         current_species_collection = db[species]
-        print current_species_collection
+        #print current_species_collection
         with open('./tmp/{0}.fasta'.format(species), 'w+') as output_handle:
 
             for gene in current_species_collection.find():
@@ -33,7 +34,7 @@ def make_fasta_from_mongodb(mongo_db_name, seq_type='nucl'):
                 )
 
 #testing
-make_fasta_from_mongodb('all_genomes')
+#make_fasta_from_mongodb('all_genomes')
 
 #if __name__ == '__main__':
 #    import sys
