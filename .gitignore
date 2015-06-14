@@ -3,11 +3,12 @@
 mongo_diagnostics.py
 *.fasta
 *.faa
-*.phr
-*.pin
-*.psq
+*.nhr
+*.nin
+*.nsq
 *.xml
 *.sublime-project
 *.sublime-workspace
+*.pyc
 
 ./tmp/*
