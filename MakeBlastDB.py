@@ -21,7 +21,7 @@ def make_blast_db(mongo_db_name, seq_type='nucl'):
     # Reads database and makes list of all collections (representing species)
     all_species = db.collection_names(False)
     # Handle for temporary .fasta file that will contain all CDS for all species
-    output_fasta = './tmp/{0}.fasta'.format(mongo_db_name)
+    output_fasta = 'kvasir/{0}.fasta'.format(mongo_db_name)
 
     # For each collection (species) in the database, reads each gene record and
     # appends the gene and its aa sequence in FASTA format. The .fasta file will 
@@ -56,7 +56,7 @@ def make_blast_db(mongo_db_name, seq_type='nucl'):
             ['makeblastdb',
             '-in', output_fasta,
             '-dbtype', seq_type,
-            '-out', mongo_db_name,
+            '-out', 'kvasir/{0}'.format(mongo_db_name),
             '-title', mongo_db_name,
             ]
         ).wait() # waits for this operation to terminate before moving on
@@ -65,9 +65,8 @@ def make_blast_db(mongo_db_name, seq_type='nucl'):
     os.remove(output_fasta)
 
 #for testing
-#make_blast_db('all_genomes')
+#make_blast_db(sys.argv[1])
 
 #if __name__ == '__main__':
 #    import sys
 #    make_blast_db(sys.argv[1])
-#

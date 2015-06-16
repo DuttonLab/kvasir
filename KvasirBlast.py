@@ -7,7 +7,7 @@
 Must have Mongod running, in terminal: `mongod --dbpath path/to/db`
 '''
 
-def kvasir_blast(mongo_db_name, blast_database):
+def blast(mongo_db_name, blast_database):
     from pymongo import MongoClient
     from subprocess import Popen
     from Bio.Blast import NCBIXML
@@ -59,7 +59,7 @@ def kvasir_blast(mongo_db_name, blast_database):
         os.remove('./tmp/blast_out_tmp.xml')
             
 #for testing
-kvasir_blast('pipe_test', 'pipe_test')
+#kvasir_blast('pipe_test', 'pipe_test')
 
 
 

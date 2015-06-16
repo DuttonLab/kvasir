@@ -5,10 +5,10 @@
 
 from Bio import SeqIO
 from Bio.Seq import Seq
+import os
 
 def add_locus_tag(some_genbank):
     import re
-
     with open(some_genbank, 'r') as open_file:
         
         lt_counter = 0
@@ -19,37 +19,44 @@ def add_locus_tag(some_genbank):
             for feature in record.features:
                 if feature.type == 'CDS':
                     if 'locus_tag' in feature.qualifiers:
+                        print 'locus_tag {0} is good!'.format(feature.qualifiers['locus_tag'])
                         pass
                     else:
                         lt_counter += 1
                         feature.qualifiers['locus_tag'] = 'kb_{0}'.format(str(lt_counter).zfill(5))
+                        'No locus_tag found for CDS, adding {0}'.format(feature.qualifiers['locus_tag'])
             new_genome.append(record)
 
-        SeqIO.write(new_genome, '{0}_fixed.gbk'.format(some_genbank[:-4]), 'gb')
+        with open(os.path.abspath('kvasir/{0}_validated.gbk'.format(some_genbank[:-4])), 'w+') as output_handle:
+            SeqIO.write(new_genome, output_handle, 'gb')
+            return os.path.abspath('kvasir/{0}_validated.gbk'.format(some_genbank[:-4]))
 
 def check_dupe_locus_tags(some_genbank):
     with open(some_genbank, 'r') as open_file:
         genome = SeqIO.parse(open_file, 'gb')
+        
         locus_tag_list = []
+        new_genome = []
+
         duplicate_flag = -1
+        lt_counter = 0
+
+
         for record in genome:
             for feature in record.features:
                 if feature.type == 'CDS':
-                    try:
-                        tag = feature.qualifiers['locus_tag']
-                    except KeyError, e:
-                        print "Genbank file doesn't have locus_tag, fixing"
-                        add_locus_tag(some_genbank)
-
+                    tag = feature.qualifiers['locus_tag']
                     if tag in locus_tag_list:
                         print 'duplicate locus_tag detected: {0}'.format(tag)
+                        
                         if duplicate_flag == -1:
                             duplicate_flag == 1
                     else:
                         locus_tag_list.append(tag)
+
         if duplicate_flag == -1:
             print 'No duplicate locus_tag found!'
-
+            
 #if __name__ == '__main__':
 #    import sys
 #    try:
