@@ -26,6 +26,8 @@ def dedupe(mongo_db_name):
                     print dupe
                     current_species_collection.remove({'_id':dupe})
 
-if __name__ == '__main__':
-    import sys
-    dedupe(sys.argv[1])
+dedupe('pipe_test')
+
+#if __name__ == '__main__':
+#    import sys
+#    dedupe(sys.argv[1])
