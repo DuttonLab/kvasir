@@ -11,4 +11,4 @@ mongo_diagnostics.py
 *.sublime-workspace
 *.pyc
 
-./tmp/*
+./tmp/
