@@ -21,45 +21,47 @@ def blast(mongo_db_name, blast_database):
 
     for species in all_species:
         current_species_collection = db[species]
-        query_fasta = './tmp/{0}.fna'.format(species)
-
+        
         for gene in current_species_collection.find():
+
+            query_fasta = 'kvasir/{0}.fna'.format(species)
             with open(query_fasta, 'w+') as query_handle:
-                query_handle.write('>{0}|{1}\n{2}\n'.format(
+                query_handle.write('>{0}\n{2}\n'.format(
                     gene['_id'],
-                    gene['locus_tag'],
                     gene['dna_seq'],
                     )
                 )
 
-        blast_handle = NcbiblastnCommandline(
-            query=query_fasta,
-            db=mongo_db_name,
-            perc_identity=99,
-            outfmt=5,
-            out="./tmp/blast_out_tmp.xml",
-            max_hsps=20
-            )
-        print blast_handle
-        stdout, stderr = blast_handle()
+            blast_handle = NcbiblastnCommandline(
+                query=query_fasta,
+                db='kvasir/{0}'.format(mongo_db_name),
+                perc_identity=99,
+                outfmt=5,
+                out="./kvasir/blast_out_tmp.xml",
+                max_hsps=20
+                )
+            print blast_handle
+            stdout, stderr = blast_handle()
 
-        with open('./tmp/blast_out_tmp.xml', 'r') as result_handle:
-            blast_records = NCBIXML.parse(result_handle)
-            for blast_record in blast_records:
-                print blast_record
-                for alignment in blast_record.alignments:
-                    print alignment
-                    for hsp in alignment.hsps:
-                        print 'e value: ' + str(hsp.expect)
-                        print(hsp.query[0:75] + '...')
-                        print(hsp.match[0:75] + '...')
-                        print(hsp.sbjct[0:75] + '...')  
+            with open('kvasir/blast_out_tmp.xml', 'r') as result_handle:
+                blast_records = NCBIXML.parse(result_handle)
+                for blast_record in blast_records:
+                    for alignment in blast_record.alignments:
+                        print alignment
+                        for hsp in alignment.hsps:
+                            print hsp.query
+                            #print 'e value: ' + str(hsp.expect)
+                            #print(hsp.query[0:75] + '...')
+                            #print(hsp.match[0:75] + '...')
+                            #print(hsp.sbjct[0:75] + '...')  
 
-        os.remove(query_fasta)
-        os.remove('./tmp/blast_out_tmp.xml')
+            os.remove(query_fasta)
+            os.remove('kvasir/blast_out_tmp.xml')
             
 #for testing
 #kvasir_blast('pipe_test', 'pipe_test')
 
-
+if __name__ == '__main__':
+    import sys
+    blast(sys.argv[1], sys.argv[1])
 

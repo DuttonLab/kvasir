@@ -17,16 +17,17 @@ def testing(mongo_db_name, blast_database):
     db = client[mongo_db_name]
 
     all_species = db.collection_names(False)
-    print all_species
+    #print all_species
 
     for species in all_species:
         current_species_collection = db[species]
-        print current_species_collection
-        output_faa = './tmp/{0}.faa'.format(mongo_db_name)
+        #print current_species_collection
 
         for gene in current_species_collection.find():
-            print gene['locus_tag']
-            print gene
-            
+            print gene['new_field']
+            current_species_collection.update_one(
+                {'locus_tag':gene['locus_tag']},
+                {'$set' : {"new_field":1}},
+                upsert=True)
 
-testing('pipe_test', 'pipe_test')
+testing('import_test', '/Users/KBLaptop/googleDrive/work/Dutton Lab shared documents/Projects/HGT/genome_assemblies/RAST_annotated/kvasir/import_test')
