@@ -27,8 +27,11 @@ def testing(mongo_db_name, blast_database):
             if record['hits']:
                 print record['species']
                 print record['locus_tag']
+                
                 for hit in record['hits']:
-                    print '{0}: {1}'.format(hit['hit_species'], hit['hit_tag'])
+                    hit_db_record = current_species_collection.find_one({'_id':ObjectId(hit['hit_id'])})
+                    print hit_db_record
+                    print hit['hit_id']
         
 
         #for gene in current_species_collection.find():
