@@ -11,9 +11,10 @@
 #            print the_file
 
 def testing(mongo_db_name, blast_database):
-    from pymongo import MongoClient
+    import pymongo
+    from bson.objectid import ObjectId
 
-    client = MongoClient()
+    client = pymongo.MongoClient()
     db = client[mongo_db_name]
 
     all_species = db.collection_names(False)
@@ -21,13 +22,21 @@ def testing(mongo_db_name, blast_database):
 
     for species in all_species:
         current_species_collection = db[species]
-        #print current_species_collection
+        print current_species_collection
+        for record in current_species_collection.find():
+            if record['hits']:
+                print record['species']
+                print record['locus_tag']
+                for hit in record['hits']:
+                    print '{0}: {1}'.format(hit['hit_species'], hit['hit_tag'])
+        
 
-        for gene in current_species_collection.find():
-            print gene['new_field']
-            current_species_collection.update_one(
-                {'locus_tag':gene['locus_tag']},
-                {'$set' : {"new_field":1}},
-                upsert=True)
+        #for gene in current_species_collection.find():
+        #    print gene['_id']
+            #print gene['new_field']
+            #current_species_collection.update_one(
+            #    {'locus_tag':gene['locus_tag']},
+            #    {'$set' : {"new_field":1}},
+            #    upsert=True)
 
-testing('import_test', '/Users/KBLaptop/googleDrive/work/Dutton Lab shared documents/Projects/HGT/genome_assemblies/RAST_annotated/kvasir/import_test')
+testing('blast_fix', '/Users/KBLaptop/googleDrive/work/Dutton Lab shared documents/Projects/HGT/genome_assemblies/RAST_annotated/kvasir/blast_fix')

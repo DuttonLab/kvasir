@@ -12,8 +12,10 @@ def blast(mongo_db_name, blast_database):
     from subprocess import Popen
     from Bio.Blast import NCBIXML
     from Bio.Blast.Applications import NcbiblastnCommandline
+    from bson.objectid import ObjectId
     import os
-    
+    import re
+
     client = MongoClient()
     db = client[mongo_db_name]
 
@@ -21,39 +23,71 @@ def blast(mongo_db_name, blast_database):
 
     for species in all_species:
         current_species_collection = db[species]
+        query_fasta = 'kvasir/{0}.fna'.format(species)
         
-        for gene in current_species_collection.find():
-
-            query_fasta = 'kvasir/{0}.fna'.format(species)
-            with open(query_fasta, 'w+') as query_handle:
-                query_handle.write('>{0}\n{2}\n'.format(
-                    gene['_id'],
-                    gene['dna_seq'],
+        with open(query_fasta, 'w+') as query_handle:
+            for query in current_species_collection.find():
+                query_handle.write('>{0}\n{1}\n'.format(
+                    query['_id'],
+                    query['dna_seq']
                     )
                 )
 
-            blast_handle = NcbiblastnCommandline(
-                query=query_fasta,
-                db='kvasir/{0}'.format(mongo_db_name),
-                perc_identity=99,
-                outfmt=5,
-                out="./kvasir/blast_out_tmp.xml",
-                max_hsps=20
-                )
-            print blast_handle
-            stdout, stderr = blast_handle()
+        blast_handle = NcbiblastnCommandline(
+            query=query_fasta,
+            db='kvasir/{0}'.format(mongo_db_name),
+            perc_identity=99,
+            outfmt=5,
+            out="./kvasir/blast_out_tmp.xml",
+            max_hsps=20
+            )
+        #print blast_handle
+        stdout, stderr = blast_handle()
 
-            with open('kvasir/blast_out_tmp.xml', 'r') as result_handle:
-                blast_records = NCBIXML.parse(result_handle)
-                for blast_record in blast_records:
-                    for alignment in blast_record.alignments:
-                        print alignment
-                        for hsp in alignment.hsps:
-                            print hsp.query
-                            #print 'e value: ' + str(hsp.expect)
-                            #print(hsp.query[0:75] + '...')
-                            #print(hsp.match[0:75] + '...')
-                            #print(hsp.sbjct[0:75] + '...')  
+        with open('kvasir/blast_out_tmp.xml', 'r') as result_handle:
+            blast_records = NCBIXML.parse(result_handle)
+            for blast_record in blast_records:
+                
+                db_query = current_species_collection.find_one({'_id':ObjectId(blast_record.query)})
+                hits_list = []
+
+                for alignment in blast_record.alignments:
+                    hit_parse = re.search(r'(\w+)\|(\w+)\|(\w+)', alignment.hit_def)
+                    hit_id = hit_parse.group(1)
+                    hit_species = hit_parse.group(2)
+                    hit_tag = hit_parse.group(3)
+                    
+                    if db_query['species'] == hit_species:
+                        pass
+                    else:
+                        if db_query['locus_tag'] == hit_tag:
+                            pass
+                        else:
+                            hits_list.append({
+                                'hit_species':hit_species,
+                                'hit_tag':hit_tag,
+                                'hit_id':hit_id,
+                                })
+                
+                current_species_collection.update_one(
+                    {'_id':ObjectId(blast_record.query)},
+                    {'$set':{'hits':hits_list}},
+                    upsert=True
+                    )
+
+                            #print 'Query: {0}_{1}\nHit:{2}_{3}'.format(
+                            #                                        db_query['species'],
+                            #                                        db_query['locus_tag'],
+                            #                                        hit_species, 
+                            #                                        hit_tag
+                            #                                        )
+                            #for hsp in alignment.hsps:
+                            #    pass
+                                #print hsp.query
+                                #print 'e value: ' + str(hsp.expect)
+                                #print(hsp.query[0:75] + '...')
+                                #print(hsp.match[0:75] + '...')
+                                #print(hsp.sbjct[0:75] + '...')  
 
             os.remove(query_fasta)
             os.remove('kvasir/blast_out_tmp.xml')
