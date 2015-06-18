@@ -41,10 +41,9 @@ def make_blast_db(mongo_db_name, seq_type='nucl'):
                     break
 
 
-                output_handle.write('>{0}|{1}|{2}\n{3}\n'.format(
-                    gene['_id'],
+                output_handle.write('>{0}|{1}\n{2}\n'.format(
                     gene['species'],
-                    gene['locus_tag'],
+                    gene['_id'],
                     seq,
                     )
                 )

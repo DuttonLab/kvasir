@@ -23,7 +23,7 @@ if not os.path.isdir(new_folder):
 print 'Checking and importing files...'
 for the_file in os.listdir(gbk_folder):
     path_to_file = '{0}/{1}'.format(gbk_folder, the_file)
-    if the_file.endswith('.gbk'):
+    if the_file.endswith('.gb'):
         print 'Checking {0}'.format(the_file)
         validated_file = FixGbk.add_locus_tag(path_to_file)
 
@@ -31,6 +31,4 @@ for the_file in os.listdir(gbk_folder):
         DataImport.import_file(validated_file, mongo_db_name)
 
 MakeBlastDB.make_blast_db(mongo_db_name)
-
-#KvasirBlast.blast(mongo_db_name, mongo_db_name)
-
+KvasirBlast.blast(mongo_db_name, mongo_db_name)

@@ -26,7 +26,7 @@ def import_file(some_genbank, mongo_db_name):
 
         # Each "record" in genbank file is read, corresponds to individual contigs
         for record in SeqIO.parse(open_file, 'gb'):
-            current_contig = record.description
+            current_contig = get_contig(record.description)
        
             for feature in record.features:
                 if feature.type == 'CDS':
@@ -55,8 +55,13 @@ def import_file(some_genbank, mongo_db_name):
 
 def get_species_name(path_to_genbank):
     import re
-    name = re.search(r"(\w+)\.gb", path_to_genbank)
+    name = re.search(r"(\w+)_\w+_\w+_validated\.gb", path_to_genbank)
     return name.group(1)
+
+def get_contig(record_description):
+    import re
+    parse_contig = re.search(r'contig_\d+|NODE_\d+', record_description)
+    return parse_contig.group(0)
 
 def import_folder(genbank_folder, mongo_db_name):
     import os
