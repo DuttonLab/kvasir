@@ -6,15 +6,32 @@ Dependencies:
   * pymongo
 * BioPython
 
-### Identification of horizontal gene transfer between sequenced microbial genomes
+###Identification of horizontal gene transfer between sequenced microbial genomes
+
+##Running Kvasir
+With dependencies installed, fire up a Mongod instance. In the terminal:
+
+`mongod --dbpath path/to/db`
+
+Run Kvasir by invoking run_kvasir.py in your working directory:
+
+`python run_kvasir.py /path/to/gb_files name_of_mongoDB`
+
 
 ####DataImport:
-Import genbank-formated annotated genomes into database
+* Imports genbank-formated annotated genomes into Mongo database.
+* .gb files require "locus_tag" feature. If your genomes don't have it, FixGbk.py shoul take care of it for you
+* Mongo database has "collections" and "documents" - a different collection is generated for each species (each separate genbank file) and documents representing each CDS. 
+    * CDS documents are like pythone dictionaries, and contain entries for species, DNA and amino acid protein sequences, contig and location info, and annotation information.
+    * each document is assigned a uniqe `_id` attribute withing the species, so every gene is uniquely identified by a `(species, _id)` tuple
 
-####DataTypes
-Framework for loading genomic information, broken down into species, contig/chromasome, gene, and groups of related genes (HGT_island)
+###MakeBlastDb
+Generates a multi-fasta file containing every gene in the mongo database, generates a BLASTable database, then deletes the temprorary file
 
 ####KsavirBlast
-* Compares each gene in a genome to those of other genomes in database
-* Of hits, combines those within some number of bases (to identify hits in multi-gene islands)
-* Output of genes, species and islands identified as HGT
+* For each species, generates a temporary fasta file and BLASTs against every other gene in the database
+* BLAST generates and xml document, which is parsed for unique hits
+* new "hits" entry is added to each gene document in MongoDB, which contains a list of `(species, _id)` tuples for each hit (these are used in the next script to gather info about hits)
+
+##Outputs
+Still a work in progress. So far, have a bunch of output formates working... will detail later.

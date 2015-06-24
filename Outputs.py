@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 # by Kevin Bonham, PhD (2015)
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
 # CC-BY
@@ -74,7 +74,7 @@ def output_islands(db, species):
                 pass
             elif entry_1.contig != entry_2.contig:
                 pass
-            elif abs(entry_1.location_start - entry_2.location_end) <= 1000:
+            elif abs(entry_1.location_start - entry_2.location_end) <= 5000:
                 entry_recorded = 1
                 islands.append([entry_1.identifier, entry_2.identifier])
         if entry_recorded == -1:
@@ -93,7 +93,7 @@ class gene(object):
         self.location_end = int(location_parse.group(2))
         self.location_direction = location_parse.group(3)
 
-def output_groups_try(mongo_db_name):
+def output_fasta(mongo_db_name):
     client = pymongo.MongoClient()
     db = client[mongo_db_name]
 
@@ -101,41 +101,70 @@ def output_groups_try(mongo_db_name):
 
     for species in all_species:
         current_species_collection = db[species]
-        groups_list =[]
-        for record in current_species_collection.find():
-            if record['hits']:
-                hits_list = [(record['species'], str(record['_id'])),]
-                for hit in record['hits']:
-                    hits_list.append((hit['hit_species'], hit['hit_id']))
-
-                groups_list.append(hits_list)
-        print groups_list
-        print '\n'
+        with open('hits_fasta/{0}_hits.fna'.format(species), 'w+') as output_handle:
+            for record in current_species_collection.find():
+                if record['hits']:
+                    output_handle.write(
+                        '>{0}|{1}|{2}\n{3}\n'.format(
+                            record['species'],
+                            record['locus_tag'],
+                            str(record['_id']),
+                            record['dna_seq'],
+                            )
+                        )
 
 def output_groups(mongo_db_name):
     client = pymongo.MongoClient()
     db = client[mongo_db_name]
 
     all_species = db.collection_names(False)
+    
     all_hits_lists = []
-
     for species in all_species:
         current_species_collection = db[species]
         all_hits_lists.append(output_islands(db, species))
 
+    merged_hits = []
     for species_queries in all_hits_lists:
         for query_set in species_queries:
             new_set = set()
-            print 'old query set: ', query_set
             for query in query_set:
                 query_hits = get_mongo_record(db, query)['hits']
                 for hit in query_hits:
                     new_set.update([(hit['hit_species'], hit['hit_id'])])
             query_set.update(new_set)
-            print 'updated set: ', query_set
+            merged_hits.append(list(query_set))
+    
+    groups = map(list, collapse_lists(merged_hits))
 
-
-
+    group_no = 0
+    with open('kvasir/groups5000.tsv', 'w+') as output_handle:
+        output_handle.write(
+            '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
+            'groups',
+            'species',
+            'locus_tag',
+            'contig',
+            'location',
+            'annotation',
+            'dna_seq'
+            )
+        )
+        for group in groups:
+            group_no += 1
+            for entry in group:
+                db_handle = get_mongo_record(db, entry)
+                output_handle.write(
+                    'Group {0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
+                    str(group_no).zfill(2),
+                    db_handle['species'],
+                    db_handle['locus_tag'],
+                    db_handle['contig'],
+                    db_handle['location'],
+                    db_handle['annotation'],
+                    db_handle['dna_seq']
+                    )
+                )
 
 def get_mongo_record(db, id_tuple):
     '''id_tuple should be (species, _id), where _id is the string 
@@ -166,8 +195,9 @@ def get_tag_int(locus_tag):
     return int(locus_tag[-5:])
 
 # For testing
-print output_groups('full_pipe_test')
+#a_list = [(u'Brachybacterium', u'5581afe447c19f4d0b15fc5a'), (u'Corynebacterium', '5581afe947c19f4d0b161aad'), (u'Brachybacterium', u'5581afe447c19f4d0b15fc59'), (u'Brevibacterium', u'5581afe647c19f4d0b160862'), (u'Brevibacterium', u'5581afe647c19f4d0b160864'), (u'Corynebacterium', '5581afe947c19f4d0b161ab1'), (u'Brachybacterium', u'5581afe447c19f4d0b15fc5b'), (u'Brevibacterium', u'5581afe647c19f4d0b160861'), (u'Corynebacterium', '5581afe947c19f4d0b161aae'), (u'Brevibacterium', u'5581afe647c19f4d0b160863'), (u'Corynebacterium', '5581afe947c19f4d0b161ab0'), (u'Corynebacterium', '5581afe947c19f4d0b161aaf')]
+#print output_groups('full_pipe_test')
 
-#if __name__ == '__main__':
-#    import sys
-#    output_groups(sys.argv[1])
+if __name__ == '__main__':
+    import sys
+    output_fasta(sys.argv[1])
