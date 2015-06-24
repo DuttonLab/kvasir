@@ -202,7 +202,7 @@ def output_compare_matrix(mongo_db_name):
     all_species = db.collection_names(False)
     
 def pair_compare(first_species, second_species, db):
-
+    
 
 
 # For testing
