@@ -9,6 +9,7 @@ from itertools import groupby
 from operator import itemgetter
 from bson.objectid import ObjectId
 import re
+import pandas as pd
 
 def output_tsv(mongo_db_name):
     client = pymongo.MongoClient()
@@ -194,10 +195,19 @@ def collapse_lists(list_of_lists):
 def get_tag_int(locus_tag):
     return int(locus_tag[-5:])
 
-# For testing
-#a_list = [(u'Brachybacterium', u'5581afe447c19f4d0b15fc5a'), (u'Corynebacterium', '5581afe947c19f4d0b161aad'), (u'Brachybacterium', u'5581afe447c19f4d0b15fc59'), (u'Brevibacterium', u'5581afe647c19f4d0b160862'), (u'Brevibacterium', u'5581afe647c19f4d0b160864'), (u'Corynebacterium', '5581afe947c19f4d0b161ab1'), (u'Brachybacterium', u'5581afe447c19f4d0b15fc5b'), (u'Brevibacterium', u'5581afe647c19f4d0b160861'), (u'Corynebacterium', '5581afe947c19f4d0b161aae'), (u'Brevibacterium', u'5581afe647c19f4d0b160863'), (u'Corynebacterium', '5581afe947c19f4d0b161ab0'), (u'Corynebacterium', '5581afe947c19f4d0b161aaf')]
-#print output_groups('full_pipe_test')
+def output_compare_matrix(mongo_db_name):
+    client = pymongo.MongoClient()
+    db = client[mongo_db_name]
 
-if __name__ == '__main__':
-    import sys
-    output_fasta(sys.argv[1])
+    all_species = db.collection_names(False)
+    
+def pair_compare(first_species, second_species, db):
+
+
+
+# For testing
+output_compare_matrix('full_pipe_test')
+
+#if __name__ == '__main__':
+#    import sys
+#    output_fasta(sys.argv[1])
