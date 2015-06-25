@@ -6,6 +6,7 @@
 import pymongo
 import os
 from itertools import groupby
+from itertools import combinations
 from operator import itemgetter
 from bson.objectid import ObjectId
 import re
@@ -75,7 +76,7 @@ def output_islands(db, species):
                 pass
             elif entry_1.contig != entry_2.contig:
                 pass
-            elif abs(entry_1.location_start - entry_2.location_end) <= 5000:
+            elif abs(entry_1.location.start - entry_2.location.end) <= 5000:
                 entry_recorded = 1
                 islands.append([entry_1.identifier, entry_2.identifier])
         if entry_recorded == -1:
@@ -87,12 +88,17 @@ class gene(object):
     def __init__(self, identifier, contig, location):
         self.identifier = identifier
         self.contig = contig
+        self.location = gene_location(location)
+
+class gene_location(object):
+    def __init__(self, location):
         self.location = location
-        
+
         location_parse = re.search(r'\[(\d+)\:(\d+)\](\S+)', location)                
-        self.location_start = int(location_parse.group(1))
-        self.location_end = int(location_parse.group(2))
-        self.location_direction = location_parse.group(3)
+        self.start = int(location_parse.group(1))
+        self.end = int(location_parse.group(2))
+        self.direction = location_parse.group(3)
+        
 
 def output_fasta(mongo_db_name):
     client = pymongo.MongoClient()
@@ -200,14 +206,39 @@ def output_compare_matrix(mongo_db_name):
     db = client[mongo_db_name]
 
     all_species = db.collection_names(False)
+    with open('kvasir/compare_matrix.tsv', 'w+') as output_handle:
+        output_handle.write('Species 1\tSpecies 2\tshared CDS\tshared nt\n')
+        for species_pair in combinations(all_species, 2):
+            comparison = pair_compare(species_pair[0], species_pair[1], db)
+            output_handle.write(
+                '{0}\t{1}\t{2}\t{3}\n'.format(
+                    species_pair[0],
+                    species_pair[1],
+                    comparison[0],
+                    comparison[1],
+                    )
+                )
     
 def pair_compare(first_species, second_species, db):
-    
+    first_species_collection = db[first_species]
+    shared_CDS = 0
+    shared_nt = 0
+    shared_group = 0
+
+    for first_species_record in first_species_collection.find():
+        if first_species_record['hits']:
+            for hit in first_species_record['hits']:
+                if hit['hit_species'] == second_species:
+                    shared_CDS += 1
+                    second_species_record = get_mongo_record(db, (hit['hit_species'], hit['hit_id']))
+                    hit_loc = gene_location(second_species_record['location'])
+                    shared_nt += (hit_loc.end - hit_loc.start)
+    return (shared_CDS, shared_nt)
 
 
 # For testing
-output_compare_matrix('full_pipe_test')
+#output_compare_matrix('full_pipe_test')
 
-#if __name__ == '__main__':
-#    import sys
-#    output_fasta(sys.argv[1])
+if __name__ == '__main__':
+    import sys
+    output_compare_matrix(sys.argv[1])
