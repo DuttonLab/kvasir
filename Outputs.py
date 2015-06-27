@@ -120,7 +120,7 @@ def output_fasta(mongo_db_name):
                             )
                         )
 
-def output_groups(mongo_db_name):
+def output_groups(mongo_db_name, output_file='kvasir/groups5000.tsv'):
     client = pymongo.MongoClient()
     db = client[mongo_db_name]
 
@@ -145,7 +145,8 @@ def output_groups(mongo_db_name):
     groups = map(list, collapse_lists(merged_hits))
 
     group_no = 0
-    with open('kvasir/groups5000.tsv', 'w+') as output_handle:
+    with open(output_file, 'w+') as output_handle:
+        print output_handle
         output_handle.write(
             '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
             'groups',
@@ -162,7 +163,7 @@ def output_groups(mongo_db_name):
             for entry in group:
                 db_handle = get_mongo_record(db, entry)
                 output_handle.write(
-                    'Group {0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
+                    '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
                     str(group_no).zfill(2),
                     db_handle['species'],
                     db_handle['locus_tag'],
@@ -172,6 +173,8 @@ def output_groups(mongo_db_name):
                     db_handle['dna_seq']
                     )
                 )
+    return pair_group_compare(all_species, output_file)
+
 
 def get_mongo_record(db, id_tuple):
     '''id_tuple should be (species, _id), where _id is the string 
@@ -235,10 +238,28 @@ def pair_compare(first_species, second_species, db):
                     shared_nt += (hit_loc.end - hit_loc.start)
     return (shared_CDS, shared_nt)
 
+def pair_group_compare(list_of_species, group_output_file):
+    species_combos = list(combinations(list_of_species, 2))
+    pair_counts = {n:0 for n in species_combos}
+
+    df = pd.read_csv(group_output_file, sep='\t')
+    df2 = df.loc[:,['groups','species']]
+
+    for group in df2.groupby('groups'):
+        group_species = list(group[1]['species'])
+        for combo in species_combos:
+            if combo[0] in group_species:
+                if combo[1] in group_species:
+                    pair_counts[combo] += 1
+    for key in pair_counts:
+        print pair_counts[key]
+
+        #for combo in species_combos:
+        #    print combo
+            
 
 # For testing
-#output_compare_matrix('full_pipe_test')
-
-if __name__ == '__main__':
-    import sys
-    output_compare_matrix(sys.argv[1])
+output_groups('full_pipe_test', '/Users/KBLaptop/googleDrive/work/duttonLab/working_database/kvasir/groups5000.tsv')
+#if __name__ == '__main__':
+#    import sys
+#    pair_group_compare(sys.argv[1])
