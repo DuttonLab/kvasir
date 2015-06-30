@@ -30,9 +30,7 @@ class mongo_iter(object):
         super(mongodb_iter, self).__init__()
         self.mongodb_name = mongodb_name
 
-        client = pymongo.MongoClient()
-        db = client[mongo_db_name]
-        all_species = db.collection_names(False)
+        all_species = get get_collections(mongodb_name)
         index = -1
 
     def __iter__(self):
@@ -44,6 +42,13 @@ class mongo_iter(object):
         else:
             index += 1
             return (db[all_species[index]], all_species[index])
+
+def get_collections(mongodb_name):
+    client = pymongo.MongoClient()
+    db = client[mongo_db_name]
+    return db.collection_names(False)
+
+def get_collection(mongodb_name, species)
 
             
         

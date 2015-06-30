@@ -5,12 +5,11 @@
 
 import pymongo
 import os
-from itertools import groupby, combinations
-from operator import itemgetter
-from bson.objectid import ObjectId
 import re
+from itertools import groupby, combinations
+from bson.objectid import ObjectId
 import pandas as pd
-from KvDataStructures as kv
+import KvDataStructures as kv
 
 def output_tsv(mongo_db_name):
     for current_species_collection, species in kv.mongo_iter(mongo_db_name):
@@ -48,44 +47,9 @@ def output_tsv(mongo_db_name):
                             hit_db_record['location'],
                             )
                         )
-                            
-def output_islands(db, species):
-    current_species_collection = db[species]
-    islands = []
-    species_hits = []
-    
-    for record in current_species_collection.find():
-        if record['hits']:
-            species_hits.append(
-                gene(
-                (record['species'], str(record['_id'])),
-                record['contig'],
-                record['location']
-                )
-            )
-    for entry_1 in species_hits:
-        entry_recorded = -1
-        for entry_2 in species_hits:
-            if entry_1 == entry_2:
-                pass
-            elif entry_1.contig != entry_2.contig:
-                pass
-            elif abs(entry_1.location.start - entry_2.location.end) <= 5000:
-                entry_recorded = 1
-                islands.append([entry_1.identifier, entry_2.identifier])
-        if entry_recorded == -1:
-            islands.append([entry_1.identifier])
-
-    return collapse_lists(islands)
 
 def output_fasta(mongo_db_name):
-    client = pymongo.MongoClient()
-    db = client[mongo_db_name]
-
-    all_species = db.collection_names(False)
-
-    for species in all_species:
-        current_species_collection = db[species]
+    for current_species_collection, species in kv.mongo_iter(mongo_db_name):
         with open('hits_fasta/{0}_hits.fna'.format(species), 'w+') as output_handle:
             for record in current_species_collection.find():
                 if record['hits']:
@@ -99,28 +63,20 @@ def output_fasta(mongo_db_name):
                         )
 
 def output_groups(mongo_db_name, output_file='kvasir/groups5000.tsv'):
-    client = pymongo.MongoClient()
-    db = client[mongo_db_name]
+    hits_list = []
+    for current_species_collection, species in kv.mongo_iter(mongo_db_name):
+        current_species_islands = get_islands(current_species_collection)
 
-    all_species = db.collection_names(False)
-    
-    all_hits_lists = []
-    for species in all_species:
-        current_species_collection = db[species]
-        all_hits_lists.append(output_islands(db, species))
-
-    merged_hits = []
-    for species_queries in all_hits_lists:
-        for query_set in species_queries:
+        for island in current_species_islands:
             new_set = set()
-            for query in query_set:
-                query_hits = get_mongo_record(db, query)['hits']
-                for hit in query_hits:
+            for gene_id in island:
+                gene_hits = get_mongo_record(current_species_collection, gene_id)['hits']
+                for hit in gene_hits:
                     new_set.update([(hit['hit_species'], hit['hit_id'])])
-            query_set.update(new_set)
-            merged_hits.append(list(query_set))
+            current_id.update(new_set)
+            hits_list.append(list(current_id))
     
-    groups = map(list, collapse_lists(merged_hits))
+    groups = map(list, collapse_lists(hits_list))
 
     group_no = 0
     with open(output_file, 'w+') as output_handle:
@@ -139,7 +95,7 @@ def output_groups(mongo_db_name, output_file='kvasir/groups5000.tsv'):
         for group in groups:
             group_no += 1
             for entry in group:
-                db_handle = get_mongo_record(db, entry)
+                db_handle = get_mongo_record(, entry)
                 output_handle.write(
                     '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
                     str(group_no).zfill(2),
@@ -152,35 +108,6 @@ def output_groups(mongo_db_name, output_file='kvasir/groups5000.tsv'):
                     )
                 )
     return pair_group_compare(all_species, output_file)
-
-
-def get_mongo_record(db, id_tuple):
-    '''id_tuple should be (species, _id), where _id is the string 
-        representation of an ObjectId''' 
-    species, mongo_id = id_tuple
-    current_species_collection = db[species]
-    return current_species_collection.find_one({'_id':ObjectId(mongo_id)})
-
-def collapse_lists(list_of_lists):
-    # example input: [[1,2,3],[3,4],[5,6,7],[1,8,9,10],[11],[11,12],[13],[5,12]]
-    result = []
-    for d in list_of_lists:
-        d = set(d)
-
-        matched = [d]
-        unmatched = []
-        # first divide into matching and non-matching groups
-        for g in result:
-            if d & g:
-                matched.append(g)
-            else:
-                unmatched.append(g)
-        # then merge matching groups
-        result = unmatched + [set().union(*matched)]
-    return result
-
-def get_tag_int(locus_tag):
-    return int(locus_tag[-5:])
 
 def output_compare_matrix(mongo_db_name):
     client = pymongo.MongoClient()
@@ -234,7 +161,60 @@ def pair_group_compare(list_of_species, group_output_file):
 
         #for combo in species_combos:
         #    print combo
-            
+
+"""Getters"""
+def get_islands(species_collection):
+    islands = []
+    species_hits = []
+    
+    for record in species_collection.find():
+        if record['hits']:
+            species_hits.append(
+                kv.gene(
+                (record['species'], str(record['_id'])),
+                record['contig'],
+                record['location']
+                )
+            )
+    for entry_1 in species_hits:
+        entry_recorded = -1
+        for entry_2 in species_hits:
+            if entry_1 == entry_2:
+                pass
+            elif entry_1.contig != entry_2.contig:
+                pass
+            elif abs(entry_1.location.start - entry_2.location.end) <= 5000:
+                entry_recorded = 1
+                islands.append([entry_1.identifier, entry_2.identifier])
+        if entry_recorded == -1:
+            islands.append([entry_1.identifier])
+
+    return collapse_lists(islands)
+
+def get_mongo_record(species_collection, mongo_id): # Check others' use
+    return species_collection.find_one({'_id':ObjectId(mongo_id)})
+
+"""Basic Use Functions"""
+def collapse_lists(list_of_lists):
+    # example input: [[1,2,3],[3,4],[5,6,7],[1,8,9,10],[11],[11,12],[13],[5,12]]
+    result = []
+    for d in list_of_lists:
+        d = set(d)
+
+        matched = [d]
+        unmatched = []
+        # first divide into matching and non-matching groups
+        for g in result:
+            if d & g:
+                matched.append(g)
+            else:
+                unmatched.append(g)
+        # then merge matching groups
+        result = unmatched + [set().union(*matched)]
+    return result
+
+def get_tag_int(locus_tag):
+    return int(locus_tag[-5:])
 
 # For testing
 output_groups('full_pipe_test', '/Users/KBLaptop/googleDrive/work/duttonLab/working_database/kvasir/groups5000.tsv')
