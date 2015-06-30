@@ -1,24 +1,19 @@
-
+#!/usr/bin/env python
 # by Kevin Bonham, PhD (2015)
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
 # CC-BY
 
 import pymongo
 import os
-from itertools import groupby
-from itertools import combinations
+from itertools import groupby, combinations
 from operator import itemgetter
 from bson.objectid import ObjectId
 import re
 import pandas as pd
+from KvDataStructures as kv
 
 def output_tsv(mongo_db_name):
-    client = pymongo.MongoClient()
-    db = client[mongo_db_name]
-
-    all_species = db.collection_names(False)
-
-    for species in all_species:
+    for current_species_collection, species in kv.mongo_iter(mongo_db_name):
         with open('kvasir/{0}_hits.tsv'.format(species), 'w+') as output_handle:
             output_handle.write('{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\n'.format(
                 'parent_locus',
@@ -35,7 +30,6 @@ def output_tsv(mongo_db_name):
                 )
             )
 
-            current_species_collection = db[species]
             for record in current_species_collection.find():
                 if record['hits']:
                     for hit in record['hits']:
@@ -83,22 +77,6 @@ def output_islands(db, species):
             islands.append([entry_1.identifier])
 
     return collapse_lists(islands)
-
-class gene(object):
-    def __init__(self, identifier, contig, location):
-        self.identifier = identifier
-        self.contig = contig
-        self.location = gene_location(location)
-
-class gene_location(object):
-    def __init__(self, location):
-        self.location = location
-
-        location_parse = re.search(r'\[(\d+)\:(\d+)\](\S+)', location)                
-        self.start = int(location_parse.group(1))
-        self.end = int(location_parse.group(2))
-        self.direction = location_parse.group(3)
-        
 
 def output_fasta(mongo_db_name):
     client = pymongo.MongoClient()
@@ -251,8 +229,8 @@ def pair_group_compare(list_of_species, group_output_file):
             if combo[0] in group_species:
                 if combo[1] in group_species:
                     pair_counts[combo] += 1
-    for key in pair_counts:
-        print pair_counts[key]
+
+    return pair_counts
 
         #for combo in species_combos:
         #    print combo

@@ -80,8 +80,11 @@ def collapse_lists(list_of_lists):
     return result
 
 def random_code():
-    x, y = (1,2)
-    print x
+    l = [(1,2), (3,4), (5,6)]
+    for x, y in l:
+        print x
+
+random_code()
 
 
 
