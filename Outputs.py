@@ -12,7 +12,8 @@ import pandas as pd
 import KvDataStructures as kv
 
 def output_tsv(mongo_db_name):
-    for current_species_collection, species in kv.mongo_iter(mongo_db_name):
+    for current_species_collection in kv.mongo_iter(mongo_db_name):
+        species = current_species_collection.name
         with open('kvasir/{0}_hits.tsv'.format(species), 'w+') as output_handle:
             output_handle.write('{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\n'.format(
                 'parent_locus',
@@ -49,7 +50,8 @@ def output_tsv(mongo_db_name):
                         )
 
 def output_fasta(mongo_db_name):
-    for current_species_collection, species in kv.mongo_iter(mongo_db_name):
+    for current_species_collection in kv.mongo_iter(mongo_db_name):
+        species = current_species_collection.name
         with open('hits_fasta/{0}_hits.fna'.format(species), 'w+') as output_handle:
             for record in current_species_collection.find():
                 if record['hits']:
@@ -64,7 +66,7 @@ def output_fasta(mongo_db_name):
 
 def output_groups(mongo_db_name, output_file='kvasir/groups5000.tsv'):
     hits_list = []
-    for current_species_collection, species in kv.mongo_iter(mongo_db_name):
+    for current_species_collection in kv.mongo_iter(mongo_db_name):
         current_species_islands = get_islands(current_species_collection)
 
         for island in current_species_islands:
@@ -95,7 +97,7 @@ def output_groups(mongo_db_name, output_file='kvasir/groups5000.tsv'):
         for group in groups:
             group_no += 1
             for entry in group:
-                db_handle = get_mongo_record(, entry)
+                db_handle = get_mongo_record(, entry) # Needs fixing!
                 output_handle.write(
                     '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
                     str(group_no).zfill(2),
@@ -110,8 +112,7 @@ def output_groups(mongo_db_name, output_file='kvasir/groups5000.tsv'):
     return pair_group_compare(all_species, output_file)
 
 def output_compare_matrix(mongo_db_name):
-    client = pymongo.MongoClient()
-    db = client[mongo_db_name]
+    
 
     all_species = db.collection_names(False)
     with open('kvasir/compare_matrix.tsv', 'w+') as output_handle:
@@ -128,6 +129,7 @@ def output_compare_matrix(mongo_db_name):
                 )
     
 def pair_compare(first_species, second_species, db):
+    
     first_species_collection = db[first_species]
     shared_CDS = 0
     shared_nt = 0
@@ -138,29 +140,10 @@ def pair_compare(first_species, second_species, db):
             for hit in first_species_record['hits']:
                 if hit['hit_species'] == second_species:
                     shared_CDS += 1
-                    second_species_record = get_mongo_record(db, (hit['hit_species'], hit['hit_id']))
+                    second_species_record = mongo_record(db, (hit['hit_species'], hit['hit_id']))
                     hit_loc = gene_location(second_species_record['location'])
                     shared_nt += (hit_loc.end - hit_loc.start)
     return (shared_CDS, shared_nt)
-
-def pair_group_compare(list_of_species, group_output_file):
-    species_combos = list(combinations(list_of_species, 2))
-    pair_counts = {n:0 for n in species_combos}
-
-    df = pd.read_csv(group_output_file, sep='\t')
-    df2 = df.loc[:,['groups','species']]
-
-    for group in df2.groupby('groups'):
-        group_species = list(group[1]['species'])
-        for combo in species_combos:
-            if combo[0] in group_species:
-                if combo[1] in group_species:
-                    pair_counts[combo] += 1
-
-    return pair_counts
-
-        #for combo in species_combos:
-        #    print combo
 
 """Getters"""
 def get_islands(species_collection):

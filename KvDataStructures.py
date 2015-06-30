@@ -25,30 +25,36 @@ class gene_location(object):
 
 class mongo_iter(object):
     """Iterator that steps through species in mongoDB. Call with:
-    `for current_species collection, species in mongo_iter(mongodb_name):`"""
-    def __init__(self, mongodb_name):
-        super(mongodb_iter, self).__init__()
-        self.mongodb_name = mongodb_name
-
-        all_species = get get_collections(mongodb_name)
-        index = -1
+    `for current_species collection, species in mongo_iter(mongo_db_name):`"""
+    def __init__(self, db):
+        self.db = db
+        self.index = -1
+        self.collections = get_collections(db)
 
     def __iter__(self):
         return self
 
     def next(self):
-        if index >= len(all_species):
+        if self.index == len(self.collections) - 1:
             raise StopIteration
         else:
-            index += 1
-            return (db[all_species[index]], all_species[index])
-
-def get_collections(mongodb_name):
+            self.index += 1
+            return get_species_collection(self.db, self.collections[self.index])
+                
+            
+def get_collections(mongo_db_name):
     client = pymongo.MongoClient()
     db = client[mongo_db_name]
     return db.collection_names(False)
 
-def get_collection(mongodb_name, species)
+def get_species_collection(mongo_db_name, species):
+    client = pymongo.MongoClient()
+    db = client[mongo_db_name]
+    return db[species]
+
+for item in enumerate(mongo_iter('full_pipe_test')):
+    print item[1].name
+
 
             
         
