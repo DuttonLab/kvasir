@@ -5,16 +5,14 @@
 
 import pymongo
 import os
-import re
 from itertools import groupby, combinations
-from bson.objectid import ObjectId
 import pandas as pd
 import KvDataStructures as kv
 
 def output_tsv(mongo_db_name):
     for current_species_collection in kv.mongo_iter(mongo_db_name):
         species = current_species_collection.name
-        with open('kvasir/{0}_hits.tsv'.format(species), 'w+') as output_handle:
+        with open('kvasir/{0}_hits.tsv'.format(species),'w+') as output_handle:
             output_handle.write('{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\n'.format(
                 'parent_locus',
                 'parent_annotation',
@@ -64,23 +62,36 @@ def output_fasta(mongo_db_name):
                             )
                         )
 
-def output_groups(mongo_db_name, output_file='kvasir/groups5000.tsv'):
-    hits_list = []
-    for current_species_collection in kv.mongo_iter(mongo_db_name):
+def get_groups():
+    groups_list = []
+    for current_species_collection in kv.mongo_iter():
+        # Generate list of islands, formated as list of lists of gene ids. Each inner list represents one island eg: 
+        # [[gene1, gene2, gene3],[gene4, gene5],[gene6, gene7]]
         current_species_islands = get_islands(current_species_collection)
 
+        # each sublist represents one island...
         for island in current_species_islands:
-            new_set = set()
+            hit_set = set() # container for hits 
             for gene_id in island:
-                gene_hits = get_mongo_record(current_species_collection, gene_id)['hits']
+                gene_hits = kv.get_mongo_record(current_species_collection, gene_id[1])['hits']
+                
+                # Pulls each hit and builds id tuple, then appends it to group_set
                 for hit in gene_hits:
-                    new_set.update([(hit['hit_species'], hit['hit_id'])])
-            current_id.update(new_set)
-            hits_list.append(list(current_id))
-    
-    groups = map(list, collapse_lists(hits_list))
+                    hit_species_collection = kv.get_species_collection(hit['hit_species'])
+                    hit_db_record = kv.get_mongo_record(hit_species_collection, hit['hit_id'])
+                    hit_set.add(
+                        tuple((hit_db_record['species'], str(hit_db_record['_id'])))
+                        )
+            # add id tuples for hits to island list...
+            island.update(hit_set)
+            # And add new island (with multiple species) to groups_list
+            groups_list.append(list(island))
 
-    group_no = 0
+    # Since each species' islands are built independently, there's a lot of redundancy
+    # So... Collapse lists that contain shared elements and deduplicate
+    return map(list, collapse_lists(groups_list))
+
+def output_groups(groups_list, output_file='tmp/groups_test.tsv'):
     with open(output_file, 'w+') as output_handle:
         print output_handle
         output_handle.write(
@@ -94,10 +105,14 @@ def output_groups(mongo_db_name, output_file='kvasir/groups5000.tsv'):
             'dna_seq'
             )
         )
-        for group in groups:
+        
+        group_no= 0
+        for group in groups_list:
             group_no += 1
+            # Entry is `(species, id)`
             for entry in group:
-                db_handle = get_mongo_record(, entry) # Needs fixing!
+                species_collection = kv.get_species_collection(entry[0])
+                db_handle = kv.get_mongo_record(species_collection, entry[1])
                 output_handle.write(
                     '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
                     str(group_no).zfill(2),
@@ -109,12 +124,9 @@ def output_groups(mongo_db_name, output_file='kvasir/groups5000.tsv'):
                     db_handle['dna_seq']
                     )
                 )
-    return pair_group_compare(all_species, output_file)
 
-def output_compare_matrix(mongo_db_name):
+def output_compare_matrix(mongo_db_name): #needs fixing
     
-
-    all_species = db.collection_names(False)
     with open('kvasir/compare_matrix.tsv', 'w+') as output_handle:
         output_handle.write('Species 1\tSpecies 2\tshared CDS\tshared nt\n')
         for species_pair in combinations(all_species, 2):
@@ -128,9 +140,8 @@ def output_compare_matrix(mongo_db_name):
                     )
                 )
     
-def pair_compare(first_species, second_species, db):
-    
-    first_species_collection = db[first_species]
+def pair_compare(groups_list):
+        
     shared_CDS = 0
     shared_nt = 0
     shared_group = 0
@@ -145,18 +156,17 @@ def pair_compare(first_species, second_species, db):
                     shared_nt += (hit_loc.end - hit_loc.start)
     return (shared_CDS, shared_nt)
 
-"""Getters"""
+
 def get_islands(species_collection):
     islands = []
     species_hits = []
     
+    # Add mongo_record for each hit in any gene
     for record in species_collection.find():
         if record['hits']:
             species_hits.append(
-                kv.gene(
-                (record['species'], str(record['_id'])),
-                record['contig'],
-                record['location']
+                kv.get_mongo_record(
+                    kv.get_species_collection(record['species']), str(record['_id'])
                 )
             )
     for entry_1 in species_hits:
@@ -164,31 +174,36 @@ def get_islands(species_collection):
         for entry_2 in species_hits:
             if entry_1 == entry_2:
                 pass
-            elif entry_1.contig != entry_2.contig:
+            elif entry_1['contig'] != entry_2['contig']:
                 pass
-            elif abs(entry_1.location.start - entry_2.location.end) <= 5000:
-                entry_recorded = 1
-                islands.append([entry_1.identifier, entry_2.identifier])
+            else:
+                location_1 = kv.gene_location(entry_1['location'])
+                location_2 = kv.gene_location(entry_2['location'])
+                if abs(location_1.start - location_2.end) <= 5000:
+                    entry_recorded = 1
+                    islands.append([
+                        (entry_1['species'], str(entry_1['_id'])),
+                        (entry_2['species'], str(entry_2['_id']))
+                    ])
         if entry_recorded == -1:
-            islands.append([entry_1.identifier])
+            islands.append([(entry_1['species'], str(entry_1['_id']))])
 
     return collapse_lists(islands)
-
-def get_mongo_record(species_collection, mongo_id): # Check others' use
-    return species_collection.find_one({'_id':ObjectId(mongo_id)})
 
 """Basic Use Functions"""
 def collapse_lists(list_of_lists):
     # example input: [[1,2,3],[3,4],[5,6,7],[1,8,9,10],[11],[11,12],[13],[5,12]]
+    # example output: [[1,2,3,4,8,9,10],[5,6,7,11,12],[13]]
+    # from stackoverflow user YXD: http://stackoverflow.com/questions/30917226/collapse-list-of-lists-to-eliminate-redundancy
     result = []
-    for d in list_of_lists:
-        d = set(d)
+    for l in list_of_lists:
+        s = set(l)
 
-        matched = [d]
+        matched = [s]
         unmatched = []
         # first divide into matching and non-matching groups
         for g in result:
-            if d & g:
+            if s & g:
                 matched.append(g)
             else:
                 unmatched.append(g)
@@ -200,7 +215,10 @@ def get_tag_int(locus_tag):
     return int(locus_tag[-5:])
 
 # For testing
-output_groups('full_pipe_test', '/Users/KBLaptop/googleDrive/work/duttonLab/working_database/kvasir/groups5000.tsv')
+kv.mongo_init('full_pipe_test')
+output_groups(get_groups())
+
+
 #if __name__ == '__main__':
 #    import sys
 #    pair_group_compare(sys.argv[1])

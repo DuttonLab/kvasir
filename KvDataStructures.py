@@ -6,12 +6,8 @@
 '''Class objects for use in other scripts, and functions for extracting information from MongoDB'''
 
 import pymongo
-
-class gene(object):
-    def __init__(self, identifier, contig, location):
-        self.identifier = identifier
-        self.contig = contig
-        self.location = gene_location(location)
+from bson.objectid import ObjectId
+import re
 
 class gene_location(object):
     '''Takes BioPython location object eg. `[1030:1460](-)` and extracts integer values'''
@@ -25,11 +21,10 @@ class gene_location(object):
 
 class mongo_iter(object):
     """Iterator that steps through species in mongoDB. Call with:
-    `for current_species collection, species in mongo_iter(mongo_db_name):`"""
-    def __init__(self, db):
-        self.db = db
+    `for current_species_collection in mongo_iter(mongo_db_name):`"""
+    def __init__(self):
         self.index = -1
-        self.collections = get_collections(db)
+        self.collections = get_collections()
 
     def __iter__(self):
         return self
@@ -39,22 +34,22 @@ class mongo_iter(object):
             raise StopIteration
         else:
             self.index += 1
-            return get_species_collection(self.db, self.collections[self.index])
+            return get_species_collection(self.collections[self.index])
                 
-            
-def get_collections(mongo_db_name):
-    client = pymongo.MongoClient()
+client = pymongo.MongoClient()
+db = None
+
+def mongo_init(mongo_db_name):
+    global db
     db = client[mongo_db_name]
+
+def get_collections():
     return db.collection_names(False)
 
-def get_species_collection(mongo_db_name, species):
-    client = pymongo.MongoClient()
-    db = client[mongo_db_name]
+def get_species_collection(species):
     return db[species]
 
-for item in enumerate(mongo_iter('full_pipe_test')):
-    print item[1].name
-
-
-            
+def get_mongo_record(species_collection, mongo_id):
+    return species_collection.find_one({'_id':ObjectId(mongo_id)})
+     
         
