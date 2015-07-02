@@ -125,34 +125,44 @@ def output_groups(groups_list, output_file='tmp/groups_test.tsv'):
                     )
                 )
 
-def output_compare_matrix(mongo_db_name): #needs fixing
+def output_compare_matrix(groups_list): #needs fixing
     
-    with open('kvasir/compare_matrix.tsv', 'w+') as output_handle:
-        output_handle.write('Species 1\tSpecies 2\tshared CDS\tshared nt\n')
-        for species_pair in combinations(all_species, 2):
-            comparison = pair_compare(species_pair[0], species_pair[1], db)
+    with open('tmp/compare_matrix.tsv', 'w+') as output_handle:
+        output_handle.write('Species 1\tSpecies 2\tshared CDS\tshared nt\tshared groups\n')
+        for species_pair in combinations(kv.get_collections(), 2):
+            comparison = pair_compare(species_pair[0], species_pair[1])
+            
+            shared_groups = 0
+            for group in groups_list:
+                if any(species_pair[0] in x for x in group):
+                    if any(species_pair[1] in y for y in group):
+                        shared_groups += 1
+
+
             output_handle.write(
-                '{0}\t{1}\t{2}\t{3}\n'.format(
+                '{0}\t{1}\t{2}\t{3}\t{4}\n'.format(
                     species_pair[0],
                     species_pair[1],
                     comparison[0],
                     comparison[1],
+                    shared_groups
                     )
                 )
     
-def pair_compare(groups_list):
-        
+def pair_compare(species_1, species_2):    
     shared_CDS = 0
     shared_nt = 0
-    shared_group = 0
 
-    for first_species_record in first_species_collection.find():
-        if first_species_record['hits']:
-            for hit in first_species_record['hits']:
-                if hit['hit_species'] == second_species:
+    for species_1_record in kv.get_species_collection(species_1).find():
+        if species_1_record['hits']:
+            for hit in species_1_record['hits']:
+                if hit['hit_species'] == species_2:
                     shared_CDS += 1
-                    second_species_record = mongo_record(db, (hit['hit_species'], hit['hit_id']))
-                    hit_loc = gene_location(second_species_record['location'])
+                    species_2_record = kv.get_mongo_record(
+                        kv.get_species_collection(hit['hit_species']),
+                        hit['hit_id']
+                    )
+                    hit_loc = kv.gene_location(species_2_record['location'])
                     shared_nt += (hit_loc.end - hit_loc.start)
     return (shared_CDS, shared_nt)
 
@@ -216,7 +226,8 @@ def get_tag_int(locus_tag):
 
 # For testing
 kv.mongo_init('full_pipe_test')
-output_groups(get_groups())
+output_compare_matrix(get_groups())
+
 
 
 #if __name__ == '__main__':
