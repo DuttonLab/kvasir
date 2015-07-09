@@ -3,12 +3,11 @@
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
 # CC-BY
 
+import os, re
 from Bio import SeqIO
 from Bio.Seq import Seq
-import os
 
 def add_locus_tag(some_genbank):
-    import re
     with open(some_genbank, 'r') as open_file:
         
         lt_counter = 0
@@ -27,9 +26,9 @@ def add_locus_tag(some_genbank):
                         'No locus_tag found for CDS, adding {0}'.format(feature.qualifiers['locus_tag'])
             new_genome.append(record)
 
-        with open(os.path.abspath('kvasir/{0}_validated.gbk'.format(some_genbank[:-4])), 'w+') as output_handle:
+        with open(os.path.abspath('kvasir/{0}_validated.gbk'.format(some_genbank[:-3])), 'w+') as output_handle:
             SeqIO.write(new_genome, output_handle, 'gb')
-            return os.path.abspath('kvasir/{0}_validated.gbk'.format(some_genbank[:-4]))
+            return os.path.abspath('kvasir/{0}_validated.gbk'.format(some_genbank[:-3]))
 
 def check_dupe_locus_tags(some_genbank):
     with open(some_genbank, 'r') as open_file:
@@ -40,7 +39,6 @@ def check_dupe_locus_tags(some_genbank):
 
         duplicate_flag = -1
         lt_counter = 0
-
 
         for record in genome:
             for feature in record.features:

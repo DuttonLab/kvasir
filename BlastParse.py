@@ -3,23 +3,14 @@
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
 # CC-BY
 
-def parse_blast_result(some_blast_result, mongo_db_name):
-    from Bio.Blast import NCBIXML
-    import re
-    from pymongo import MongoClient
+import re
+from Bio.Blast import NCBIXML
+import KvDataStructures as kv
 
-    client = MongoClient()
-
-    species_db = client['mongo_db_name']
-
-    hits_db = client['hits_test']
-    hits_collection = hits_db['arthro_hits']
-
-    with open('./tmp/arthro_all.xml', 'r') as result_handle:
+def parse_blast_result(some_blast_result):
+    with open(some_blast_result, 'r') as result_handle:
         blast_records = NCBIXML.parse(result_handle)
         
-        #grep = re.compile(r'gnl\|all_genomes\|(\w+IMG|\w+Fixed2?)_(\w+)')
-
         for blast_record in blast_records:
             if len(blast_record.alignments) > 1:
                 query_match = grep.match(str(blast_record.query))

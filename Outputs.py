@@ -9,8 +9,8 @@ from itertools import groupby, combinations
 import pandas as pd
 import KvDataStructures as kv
 
-def output_tsv(mongo_db_name):
-    for current_species_collection in kv.mongo_iter(mongo_db_name):
+def output_tsv():
+    for current_species_collection in kv.mongo_iter():
         species = current_species_collection.name
         with open('kvasir/{0}_hits.tsv'.format(species),'w+') as output_handle:
             output_handle.write('{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\n'.format(
@@ -47,8 +47,8 @@ def output_tsv(mongo_db_name):
                             )
                         )
 
-def output_fasta(mongo_db_name):
-    for current_species_collection in kv.mongo_iter(mongo_db_name):
+def output_all_fasta():
+    for current_species_collection in kv.mongo_iter():
         species = current_species_collection.name
         with open('hits_fasta/{0}_hits.fna'.format(species), 'w+') as output_handle:
             for record in current_species_collection.find():
@@ -61,6 +61,15 @@ def output_fasta(mongo_db_name):
                             record['dna_seq'],
                             )
                         )
+def output_one_fasta(mongo_record, out_file='output.fna'):
+    with open(out_file, 'w+') as output_handle:
+        output_handle.write(
+            '>{0}|{1}\n{2}\n'.format(
+                mongo_record['species'],
+                str(mongo_record['_id']),
+                mongo_record['dna_seq'],
+                )
+            )
 
 def get_groups():
     groups_list = []
@@ -77,7 +86,7 @@ def get_groups():
                 
                 # Pulls each hit and builds id tuple, then appends it to group_set
                 for hit in gene_hits:
-                    hit_species_collection = kv.get_species_collection(hit['hit_species'])
+                    hit_species_collection = kv.get_collection(hit['hit_species'])
                     hit_db_record = kv.get_mongo_record(hit_species_collection, hit['hit_id'])
                     hit_set.add(
                         tuple((hit_db_record['species'], str(hit_db_record['_id'])))
@@ -111,7 +120,7 @@ def output_groups(groups_list, output_file='tmp/groups_test.tsv'):
             group_no += 1
             # Entry is `(species, id)`
             for entry in group:
-                species_collection = kv.get_species_collection(entry[0])
+                species_collection = kv.get_collection(entry[0])
                 db_handle = kv.get_mongo_record(species_collection, entry[1])
                 output_handle.write(
                     '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
@@ -153,19 +162,18 @@ def pair_compare(species_1, species_2):
     shared_CDS = 0
     shared_nt = 0
 
-    for species_1_record in kv.get_species_collection(species_1).find():
+    for species_1_record in kv.get_collection(species_1).find():
         if species_1_record['hits']:
             for hit in species_1_record['hits']:
                 if hit['hit_species'] == species_2:
                     shared_CDS += 1
                     species_2_record = kv.get_mongo_record(
-                        kv.get_species_collection(hit['hit_species']),
+                        kv.get_collection(hit['hit_species']),
                         hit['hit_id']
                     )
                     hit_loc = kv.gene_location(species_2_record['location'])
                     shared_nt += (hit_loc.end - hit_loc.start)
     return (shared_CDS, shared_nt)
-
 
 def get_islands(species_collection):
     islands = []
@@ -176,7 +184,7 @@ def get_islands(species_collection):
         if record['hits']:
             species_hits.append(
                 kv.get_mongo_record(
-                    kv.get_species_collection(record['species']), str(record['_id'])
+                    kv.get_collection(record['species']), str(record['_id'])
                 )
             )
     for entry_1 in species_hits:
@@ -225,8 +233,8 @@ def get_tag_int(locus_tag):
     return int(locus_tag[-5:])
 
 # For testing
-kv.mongo_init('full_pipe_test')
-output_compare_matrix(get_groups())
+#kv.mongo_init('full_pipe_test')
+#output_compare_matrix(get_groups())
 
 
 

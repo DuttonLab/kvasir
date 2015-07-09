@@ -7,24 +7,18 @@
 Must have Mongod running, in terminal: `mongod --dbpath path/to/db`
 '''
 
-def blast(mongo_db_name, blast_database):
-    from pymongo import MongoClient
-    from subprocess import Popen
-    from Bio.Blast import NCBIXML
-    from Bio.Blast.Applications import NcbiblastnCommandline
-    from bson.objectid import ObjectId
-    import os
-    import re
+import os, re
+from subprocess import Popen
+from Bio.Blast import NCBIXML
+from Bio.Blast.Applications import NcbiblastnCommandline
+from bson.objectid import ObjectId
+import KvDataStructures as kv
 
-    client = MongoClient()
-    db = client[mongo_db_name]
 
-    all_species = db.collection_names(False)
-
-    for species in all_species:
-        print 'Blasting {0}'.format(species)
-        current_species_collection = db[species]
-        query_fasta = 'kvasir/{0}.fna'.format(species)
+def blast():
+    for current_species_collection in kv.mongo_iter():
+        print 'Blasting {0}'.format(current_species_collection.name)
+        query_fasta = 'kvasir/{0}.fna'.format(current_species_collection.name)
 
         with open(query_fasta, 'w+') as query_handle:
             for query in current_species_collection.find():
@@ -37,7 +31,7 @@ def blast(mongo_db_name, blast_database):
 
         blast_handle = NcbiblastnCommandline(
             query=query_fasta,
-            db='kvasir/{0}'.format(mongo_db_name),
+            db='kvasir/{0}'.format(kv.db.name),
             perc_identity=99,
             outfmt=5,
             out="kvasir/blast_out_tmp.xml",
@@ -53,7 +47,7 @@ def blast(mongo_db_name, blast_database):
                 query_species = query_parse.group(1)
                 query_id = query_parse.group(2)
 
-                db_query = current_species_collection.find_one({'_id':ObjectId(query_id)})
+                db_query = kv.get_mongo_record(current_species_collection, query_id)
                 hits_list = []
 
                 for alignment in blast_record.alignments:
@@ -72,24 +66,10 @@ def blast(mongo_db_name, blast_database):
                 
                 print 'Updataing mongoDB with hits'
                 current_species_collection.update_one(
-                    {'_id':ObjectId(query_id)},
+                    {'_id':ObjectId(query_id), 'species':query_species},
                     {'$set':{'hits':hits_list}},
                     upsert=True
-                    )
-
-                            #print 'Query: {0}_{1}\nHit:{2}_{3}'.format(
-                            #                                        db_query['species'],
-                            #                                        db_query['locus_tag'],
-                            #                                        hit_species, 
-                            #                                        hit_tag
-                            #                                        )
-                            #for hsp in alignment.hsps:
-                            #    pass
-                                #print hsp.query
-                                #print 'e value: ' + str(hsp.expect)
-                                #print(hsp.query[0:75] + '...')
-                                #print(hsp.match[0:75] + '...')
-                                #print(hsp.sbjct[0:75] + '...')  
+                    ) 
 
             os.remove(query_fasta)
             os.remove('kvasir/blast_out_tmp.xml')

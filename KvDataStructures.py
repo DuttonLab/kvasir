@@ -24,7 +24,7 @@ class mongo_iter(object):
     `for current_species_collection in mongo_iter(mongo_db_name):`"""
     def __init__(self):
         self.index = -1
-        self.collections = get_collections()
+        self.collections = get_species_collections()
 
     def __iter__(self):
         return self
@@ -46,10 +46,13 @@ def mongo_init(mongo_db_name):
 def get_collections():
     return db.collection_names(False)
 
-def get_species_collection(species):
-    return db[species]
+def get_collection(collection):
+    return db[collection]
+
+def get_species_collections():
+    collections = db.collection_names(False)
+    collections.remove('16S')
+    return collections
 
 def get_mongo_record(species_collection, mongo_id):
     return species_collection.find_one({'_id':ObjectId(mongo_id)})
-     
-        

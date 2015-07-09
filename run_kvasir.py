@@ -5,16 +5,14 @@
 
 '''Must have Mongod running, in terminal: `mongod --dbpath path/to/db`'''
 
-import DataImport
-import FixGbk
-import MakeBlastDB
-import KvasirBlast
 import os
 import sys
+import DataImport, FixGbk, MakeBlastDB, KvasirBlast
+import KvDataStructures as kv
 
 print 'Here we go!'
 gbk_folder = sys.argv[1]
-mongo_db_name = sys.argv[2]
+kv.mongo_init(sys.argv[2])
 
 new_folder = '{0}/kvasir/'.format(os.path.abspath(gbk_folder))
 if not os.path.isdir(new_folder):
@@ -28,7 +26,7 @@ for the_file in os.listdir(gbk_folder):
         validated_file = FixGbk.add_locus_tag(path_to_file)
 
         print 'Importing {0}'.format(the_file)
-        DataImport.import_file(validated_file, mongo_db_name)
+        DataImport.import_file(validated_file)
 
-MakeBlastDB.make_blast_db(mongo_db_name)
-KvasirBlast.blast(mongo_db_name, mongo_db_name)
+MakeBlastDB.make_blast_db()
+# KvasirBlast.blast()
