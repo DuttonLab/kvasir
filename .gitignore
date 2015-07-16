@@ -4,6 +4,3 @@
 *.sublime-workspace
 *.pyc
 scratch_code.py
-
-/data/input/*
-/data/output/*
