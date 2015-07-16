@@ -1,14 +1,9 @@
 .DS_store
 
-mongo_diagnostics.py
-*.fasta
-*.faa
-*.nhr
-*.nin
-*.nsq
-*.xml
 *.sublime-project
 *.sublime-workspace
 *.pyc
+scratch_code.py
 
-/tmp/
+/data/input/*
+/data/output/*
