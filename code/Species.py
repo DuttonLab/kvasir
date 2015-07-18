@@ -59,13 +59,12 @@ def species_compare_16S():
         pairs[key] = list(pairs[key])                        
     ssu.insert_one({'same_genera':pairs})
 
-
 def parse_seqid(seqid):
     return (tuple(seqid.split('|')))
 
 if __name__ == '__main__':
     import sys
     kv.mongo_init(sys.argv[1])
-    species_compare_16S()
+    species_compare_ftsz()
 
 

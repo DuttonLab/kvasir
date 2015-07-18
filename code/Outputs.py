@@ -100,7 +100,7 @@ def get_groups():
     # So... Collapse lists that contain shared elements and deduplicate
     return map(list, collapse_lists(groups_list))
 
-def output_groups(groups_list, output_file='tmp/groups_test.tsv'):
+def output_groups(groups_list, output_file='output/groups.tsv'):
     with open(output_file, 'w+') as output_handle:
         print output_handle
         output_handle.write(
@@ -124,7 +124,7 @@ def output_groups(groups_list, output_file='tmp/groups_test.tsv'):
                 db_handle = kv.get_mongo_record(species_collection, entry[1])
                 output_handle.write(
                     '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
-                    str(group_no).zfill(2),
+                    str(group_no).zfill(3),
                     db_handle['species'],
                     db_handle['locus_tag'],
                     db_handle['contig'],
@@ -136,9 +136,9 @@ def output_groups(groups_list, output_file='tmp/groups_test.tsv'):
 
 def output_compare_matrix(groups_list): #needs fixing
     
-    with open('tmp/compare_matrix.tsv', 'w+') as output_handle:
+    with open('output/compare_matrix.tsv', 'w+') as output_handle:
         output_handle.write('Species 1\tSpecies 2\tshared CDS\tshared nt\tshared groups\n')
-        for species_pair in combinations(kv.get_collections(), 2):
+        for species_pair in combinations(kv.get_species_collections(), 2):
             comparison = pair_compare(species_pair[0], species_pair[1])
             
             shared_groups = 0
@@ -233,11 +233,12 @@ def get_tag_int(locus_tag):
     return int(locus_tag[-5:])
 
 # For testing
-#kv.mongo_init('full_pipe_test')
+#kv.mongo_init('scratch_20150717')
 #output_compare_matrix(get_groups())
 
 
 
-#if __name__ == '__main__':
-#    import sys
-#    pair_group_compare(sys.argv[1])
+if __name__ == '__main__':
+    import sys
+    kv.mongo_init(sys.argv[1])
+    print get_groups()

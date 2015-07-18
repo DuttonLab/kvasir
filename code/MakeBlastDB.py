@@ -16,7 +16,7 @@ def make_blast_db(seq_type='nucl'):
     # Reads database and makes list of all collections (representing species)
     # Handle for temporary .fasta file that will contain all CDS for all species
     database_name = kv.db.name
-    output_fasta = 'kvasir/{0}.fasta'.format(database_name)
+    output_fasta = 'output/{0}.fasta'.format(database_name)
 
     # For each collection (species) in the database, reads each gene record and
     # appends the gene and its aa sequence in FASTA format. The .fasta file will 
@@ -47,7 +47,7 @@ def make_blast_db(seq_type='nucl'):
             ['makeblastdb',
             '-in', output_fasta,
             '-dbtype', seq_type,
-            '-out', 'kvasir/{0}'.format(database_name),
+            '-out', 'output/{0}'.format(database_name),
             '-title', database_name,
             ]
         ).wait() # waits for this operation to terminate before moving on

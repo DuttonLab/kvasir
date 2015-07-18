@@ -34,7 +34,7 @@ class mongo_iter(object):
             raise StopIteration
         else:
             self.index += 1
-            return get_species_collection(self.collections[self.index])
+            return get_collection(self.collections[self.index])
                 
 client = pymongo.MongoClient()
 db = None
@@ -49,10 +49,40 @@ def get_collections():
 def get_collection(collection):
     return db[collection]
 
+def remove_collection(collection):
+    print 'merp'
+    print get_collections()
+    db.drop_collection(collection)
+
 def get_species_collections():
     collections = db.collection_names(False)
-    collections.remove('16S')
+    if '16S' in collections:
+        collections.remove('16S')
+    if 'hits' in collections:
+        collections.remove('hits')
+    if 'FtsZ' in collections:
+        collections.remove('FtsZ')
     return collections
 
 def get_mongo_record(species_collection, mongo_id):
     return species_collection.find_one({'_id':ObjectId(mongo_id)})
+
+def get_genus(species_name):
+    return re.search(r'^(\w+)', species_name).group(1)
+
+def view_record():
+    collection = db['hits']
+    print collection
+    counter = 1
+    for record in collection.find():
+        print record
+        counter += 1
+        if counter > 3:
+            break
+
+#testing
+mongo_init('scratch_20150717')
+view_record()
+#remove_collection('hits')
+
+

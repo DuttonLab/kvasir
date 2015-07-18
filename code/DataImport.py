@@ -20,28 +20,29 @@ def import_file(some_genbank):
     with open(some_genbank, 'r') as open_file:
         current_species = get_species_name(some_genbank)
         species_collection = kv.get_collection(current_species)
+        ftsz_collection = kv.get_collection('FtsZ')
 
         print 'Working on importing {0}'.format(current_species)
 
         # Each "record" in genbank file is read, corresponds to individual contigs
         for record in SeqIO.parse(open_file, 'gb'):
-            current_contig = get_contig(record.description)
-            ssu_gene = get_16S(record)
-            if ssu_gene:
-                gene_record = {
-                    'species':current_species,
-                    'contig':current_contig,
-                    'location':str(ssu_gene[0].location),
-                    'annotation':ssu_gene[0].qualifiers['product'][0],
-                    'dna_seq':ssu_gene[1],
-                    'type':'16S'
-                    }
-                print "adding 16S gene!"
-                species_collection.insert_one(gene_record)
-                kv.get_collection('16S').insert_one(gene_record)
+            current_contig = get_contig(record.name)
+            print "Importing {}".format(current_contig)
+            #ssu_gene = get_16S(record)
+            #if ssu_gene:
+            #    gene_record = {
+            #        'species':current_species,
+            #        'contig':current_contig,
+            #        'location':str(ssu_gene[0].location),
+            #        'annotation':ssu_gene[0].qualifiers['product'][0],
+            #        'dna_seq':ssu_gene[1],
+            #        'type':'16S'
+            #        }
+            #    print "adding 16S gene!"
+            #    species_collection.insert_one(gene_record)
+            #    kv.get_collection('16S').insert_one(gene_record)
 
             for feature in record.features:
-                print record
                 if feature.type == 'CDS':
                     gene_record = {
                         'species':current_species, 
@@ -53,8 +54,18 @@ def import_file(some_genbank):
                         'aa_seq':feature.qualifiers['translation'][0],
                         'type':'gene'
                         }
-                    print "adding {0}".format(gene_record['locus_tag'])
-                    species_collection.insert_one(gene_record)
+                    gene_id = species_collection.insert_one(gene_record).inserted_id
+                    
+                    #if is_ftsz(feature.qualifiers['product'][0]):
+                    #    print "Hey look! I found FtsZ!"
+                    #    ftsz_collection.insert_one(
+                    #        {
+                    #        '_id':gene_id,
+                    #        'species':current_species,
+                    #        'annotation':feature.qualifiers['product'][0],
+                    #        'dna_seq':get_dna_seq(feature, record),
+                    #        }
+                    #    )
 
 def get_dna_seq(feature, record):
     if feature.location.strand == 1:
@@ -76,16 +87,22 @@ def get_16S(gbk_record):
                 else:
                     return None
 
+def is_ftsz(CDS_annotation):
+    parsed_description = re.search(r"[fF][tT][sS][zZ]", CDS_annotation)
+    if parsed_description:
+        return True
+    else:
+        return False
+
 def get_species_name(path_to_genbank):
     import re
-    name = re.search(r"(\w+)_validated\.gb", path_to_genbank)
+    name = re.search(r"([\w\s]+)_validated\.gb", path_to_genbank)
     return name.group(1)
 
 # Need to fix search! Only returns "contig"...
-def get_contig(record_description):
+def get_contig(record_name):
     import re
-    print record_description
-    parse_contig = re.search(r'contig_\d+|NODE_\d+|Contig gi\|\d+', record_description)
+    parse_contig = re.search(r'(kvc_\d\d\d)', record_name)
     return parse_contig.group(0)
 
 def import_folder(genbank_folder):
