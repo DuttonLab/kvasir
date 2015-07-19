@@ -14,7 +14,7 @@ class gene_location(object):
     def __init__(self, location):
         self.location = location
 
-        location_parse = re.search(r'\[(\d+)\:(\d+)\](\S+)', location)                
+        location_parse = re.search(r'\[(\d+)\:>?(\d+)\](\S+)', location)                
         self.start = int(location_parse.group(1))
         self.end = int(location_parse.group(2))
         self.direction = location_parse.group(3)
@@ -42,6 +42,7 @@ db = None
 def mongo_init(mongo_db_name):
     global db
     db = client[mongo_db_name]
+    return db.name
 
 def get_collections():
     return db.collection_names(False)
@@ -64,7 +65,8 @@ def get_species_collections():
         collections.remove('FtsZ')
     return collections
 
-def get_mongo_record(species_collection, mongo_id):
+def get_mongo_record(species, mongo_id):
+    species_collection = get_collection(species)
     return species_collection.find_one({'_id':ObjectId(mongo_id)})
 
 def get_genus(species_name):
@@ -81,8 +83,8 @@ def view_record():
             break
 
 #testing
-mongo_init('scratch_20150717')
-view_record()
+#mongo_init('scratch_20150717')
+#view_record()
 #remove_collection('hits')
 
 

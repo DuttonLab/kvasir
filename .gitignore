@@ -1,5 +1,5 @@
 .DS_store
-
+*ipynb*
 *.sublime-project
 *.sublime-workspace
 *.pyc

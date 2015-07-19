@@ -37,6 +37,6 @@ for the_file in os.listdir(gbk_folder):
     else:
         print '{0} is not a valid genbank file, skipping'.format(the_file)
 
-os.chdir('../')
-MakeBlastDB.make_blast_db()
+KvasirBlast.make_blast_db()
 KvasirBlast.blast()
+KvasirBlast.blast_to_db()
