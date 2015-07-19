@@ -12,7 +12,7 @@
 
 import os
 import sys
-import DataImport, FixGbk, MakeBlastDB, KvasirBlast
+import DataImport, FixGbk, MakeBlastDB, KvasirBlast, get_outputs
 from KvDataStructures import mongo_init
 
 print 'Here we go!'
@@ -20,7 +20,7 @@ gbk_folder = os.path.abspath('input/')
 exp_name = sys.argv[1]
 mongo_init(exp_name)
 
-new_folder = 'output/{0}'.format(exp_name)
+new_folder = 'output/{0}/'.format(exp_name)
 if not os.path.isdir(new_folder):
    os.makedirs(new_folder)
 os.chdir(new_folder)
@@ -40,3 +40,5 @@ for the_file in os.listdir(gbk_folder):
 KvasirBlast.make_blast_db()
 KvasirBlast.blast()
 KvasirBlast.blast_to_db()
+get_outputs()
+

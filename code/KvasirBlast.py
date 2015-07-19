@@ -17,7 +17,9 @@ import KvDataStructures as kv
 def make_blast_db(seq_type='nucl'):
     # Reads database and makes list of all collections (representing species)
     # Handle for temporary .fasta file that will contain all CDS for all species
-    output_fasta = 'output/{0}/{0}.fasta'.format(kv.db.name)
+    if not os.path.isdir('blast_results/'):
+            os.makedirs('blast_results/')    
+    output_fasta = '{0}_all.fasta'.format(kv.db.name)
 
     # For each collection (species) in the database, reads each gene record and
     # appends the gene and its aa sequence in FASTA format. The .fasta file will 
@@ -48,8 +50,8 @@ def make_blast_db(seq_type='nucl'):
             ['makeblastdb',
             '-in', output_fasta,
             '-dbtype', seq_type,
-            '-out', 'output/{0}/{0}_blastdb'.format(database_name),
-            '-title', database_name,
+            '-out', 'blast_results/{0}_blastdb'.format(kv.db.name),
+            '-title', kv.db.name,
             ]
         ).wait() # waits for this operation to terminate before moving on
 
@@ -58,7 +60,7 @@ def make_blast_db(seq_type='nucl'):
 
 def blast():
     for current_species_collection in kv.mongo_iter():
-        query_fasta = 'output/{}/blast_results/{}_tmp.fna'.format(kv.db.name, current_species_collection.name)
+        query_fasta = 'blast_results/{}_tmp.fna'.format(kv.db.name, current_species_collection.name)
 
         with open(query_fasta, 'w+') as query_handle:
             for query in current_species_collection.find():
@@ -73,9 +75,9 @@ def blast():
         out = Popen(
             ['blastn',
             '-query', query_fasta,
-            '-db', 'output/{0}'.format(kv.db.name),
+            '-db', 'blast_results/{0}_blastdb'.format(kv.db.name),
             '-outfmt', '5',
-            '-out', 'output/{}/blast_results/{}_blast.xml'.format(kv.db.name, current_species_collection.name),
+            '-out', 'blast_results/{}_blast.xml'.format(current_species_collection.name),
             '-perc_identity', '99'
             ],
             stdout=PIPE
@@ -85,43 +87,44 @@ def blast():
         # os.remove('output/blast_out_tmp.xml')
 
 def blast_to_db():
-    blast_dir = 'output/{}/blast_results/'.format(kv.db.name)
+    blast_dir = 'blast_results/'.format(kv.db.name)
     for f in os.listdir(blast_dir):
-        file_handle = os.path.join(blast_dir, f)
-        with open(file_handle, 'r') as result_handle:
-            blast_records = NCBIXML.parse(result_handle)
-            hits_dict = {}
-            for blast_record in blast_records:
-                query_parse = re.search(r'(\w+)([\w\s]+)\|(\w+)', blast_record.query)
-                query_genus = query_parse.group(1)
-                query_name = '{}{}'.format(query_parse.group(1), query_parse.group(2))
-                query_id = query_parse.group(3)
+        if f.endswith('.xml'):
+            file_handle = os.path.join(blast_dir, f)
+            with open(file_handle, 'r') as result_handle:
+                blast_records = NCBIXML.parse(result_handle)
+                hits_dict = {}
+                for blast_record in blast_records:
+                    query_parse = re.search(r'(\w+)([\w\s]+)\|(\w+)', blast_record.query)
+                    query_genus = query_parse.group(1)
+                    query_name = '{}{}'.format(query_parse.group(1), query_parse.group(2))
+                    query_id = query_parse.group(3)
 
-                hits_dict[query_id] = []
-                
-                for alignment in blast_record.alignments:
-                    hit_parse = re.search(r'(\w+)([\w\s]+)\|(\w+)', alignment.hit_def)
-                    hit_genus = hit_parse.group(1)
-                    hit_name = '{}{}'.format(hit_parse.group(1), hit_parse.group(2))
-                    hit_id = hit_parse.group(3)
+                    hits_dict[query_id] = []
                     
-                    if query_name == hit_name:
-                        pass
-                    elif query_genus == hit_genus:
-                        print "Oops! {} and {} are the same genus, skipping...".format(query_name, hit_name)
-                        pass
-                    else:
-                        print '=======\nhit for {0} detected:\nspecies: {1}\n======='.format(query_name, hit_name)
-                        hits_dict[query_id].append((hit_name, hit_id))
-                
-            print 'Updataing mongoDB with hits'
-            hits_collection = kv.get_collection('hits')
-            hits_collection.insert_one(
-                {
-                'species':query_name,
-                'hits':hits_dict
-                }
-            ) 
+                    for alignment in blast_record.alignments:
+                        hit_parse = re.search(r'(\w+)([\w\s]+)\|(\w+)', alignment.hit_def)
+                        hit_genus = hit_parse.group(1)
+                        hit_name = '{}{}'.format(hit_parse.group(1), hit_parse.group(2))
+                        hit_id = hit_parse.group(3)
+                        
+                        if query_name == hit_name:
+                            pass
+                        elif query_genus == hit_genus:
+                            print "Oops! {} and {} are the same genus, skipping...".format(query_name, hit_name)
+                            pass
+                        else:
+                            print '=======\nhit for {0} detected:\nspecies: {1}\n======='.format(query_name, hit_name)
+                            hits_dict[query_id].append((hit_name, hit_id))
+                    
+                print 'Updataing mongoDB with hits'
+                hits_collection = kv.get_collection('hits')
+                hits_collection.insert_one(
+                    {
+                    'species':query_name,
+                    'hits':hits_dict
+                    }
+                ) 
 
 def hits_reset():
     kv.remove_collection('hits')
@@ -133,7 +136,7 @@ if __name__ == '__main__':
         if sys.argv[2] == 'reset':
             hits_reset()
     else:
-        
+        make_blast_db()
         blast()
         blast_to_db()
 

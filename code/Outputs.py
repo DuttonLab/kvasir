@@ -10,12 +10,15 @@ from bson.objectid import ObjectId
 import pandas as pd
 import KvDataStructures as kv
 
-def output_tsv():
+def output_hits_csv():
     hits = kv.get_collection('hits')
+    if not os.path.isdir('hits/'):
+       os.makedirs('hits/')
+
     for record in hits.find():
         query_species = record['species']
-        with open('output/{0}/{1}_hits.tsv'.format(kv.db.name, query_species),'w+') as output_handle:
-            output_handle.write('{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\n'.format(
+        with open('hits/{1}_hits.tsv'.format(kv.db.name, query_species),'w+') as output_handle:
+            output_handle.write('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}\n'.format(
                 'parent_locus',
                 'parent_annotation',
                 'parent_seq',
@@ -46,7 +49,7 @@ def output_tsv():
                         print hit_species_collection
                         hit_record = hit_species_collection.find_one({'_id':ObjectId(hit_id)})
                         print hit_record
-                        output_handle.write('{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\n'.format(
+                        output_handle.write('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}\n'.format(
                             query_record['locus_tag'],
                             query_record['annotation'],
                             query_record['dna_seq'],
@@ -113,11 +116,11 @@ def get_groups():
 
 def output_groups(output_file='default', min_group_size=2):
     if output_file == 'default':
-        output_file = 'output/{}/groups.tsv'.format(kv.db.name)
+        output_file = 'groups.csv'.format(kv.db.name)
     with open(output_file, 'w+') as output_handle:
         print output_handle
         output_handle.write(
-            '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
+            '{0},{1},{2},{3},{4},{5},{6}\n'.format(
             'groups',
             'species',
             'locus_tag',
@@ -138,7 +141,7 @@ def output_groups(output_file='default', min_group_size=2):
                 for entry in group:
                     db_handle = kv.get_mongo_record(*entry)
                     output_handle.write(
-                        '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n'.format(
+                        '{0},{1},{2},{3},{4},{5},{6}\n'.format(
                         str(group_no).zfill(3),
                         db_handle['species'],
                         db_handle['locus_tag'],
@@ -176,9 +179,9 @@ def output_compare_matrix():
             groups_df[pair[0]][pair[1]] = groups_df[pair[1]][pair[0]] = shared_groups
             print "shared cds: {}\nshared nt: {}\nshared groups: {}\n====".format(shared_cds, shared_nt, shared_groups)
 
-    cds_df.to_csv('output/{}/cds_matrix.csv'.format(kv.db.name))
-    nt_df.to_csv('output/{}/nt_matrix.csv'.format(kv.db.name))
-    groups_df.to_csv('output/{}/groups_matrix.csv' .format(kv.db.name))
+    cds_df.to_csv('cds_matrix.csv'.format(kv.db.name))
+    nt_df.to_csv('nt_matrix.csv'.format(kv.db.name))
+    groups_df.to_csv('groups_matrix.csv' .format(kv.db.name))
 
 def pair_compare(species_1, species_2):    
     shared_CDS = 0

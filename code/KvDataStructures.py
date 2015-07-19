@@ -51,9 +51,17 @@ def get_collection(collection):
     return db[collection]
 
 def remove_collection(collection):
-    print 'merp'
     print get_collections()
     db.drop_collection(collection)
+
+def reset_database(database):
+    mongo_init(database)
+    print "Now you see it:"
+    print db.collection_names(False)
+    for collection in db.collection_names(False):
+        db.drop_collection(collection)
+    print "Now you don't!"
+    print db.collection_names(False)
 
 def get_species_collections():
     collections = db.collection_names(False)
@@ -83,7 +91,7 @@ def view_record():
             break
 
 #testing
-#mongo_init('scratch_20150717')
+#mongo_init('dutton_cheese')
 #view_record()
 #remove_collection('hits')
 
