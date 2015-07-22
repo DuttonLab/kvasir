@@ -94,28 +94,29 @@ def output_one_fasta(mongo_record, out_file='output.fna'):
             )
 
 def get_groups():
-    dutton_list = ['JB182', 'JB7', 'JB5', 'JB4', 'JB37', 'JB110', 'JB170', 'JB193', 'JB196', 'JB197', 'Brevibacterium undefined']
+    # dutton_list = ['JB182', 'JB7', 'JB5', 'JB4', 'JB37', 'JB110', 'JB170', 'JB193', 'JB196', 'JB197', 'Brevibacterium undefined']
+    # wolfe_list = ["962_8", "738_8", "862_7", "947_11", "862_8", "341_9", "738_10",]
     all_hits = kv.get_collection('hits')
     groups_list = []
     for h in all_hits.find():
         current_species = h['species']
 
-        if any([x in current_species for x in dutton_list]):
-            current_species_islands = get_islands(h['species'])
-            
-            # each sublist represents one island...
-            for island in current_species_islands:
-                hit_set = set() # container for hits 
-                for gene_id in island:
-                    gene_hits = h['hits'][gene_id[1]]
-                    
-                    # Pulls each hit id tuple, then appends it to group_set
-                    for hit in gene_hits:
-                        hit_set.add((hit[0], hit[1]))
-                # add id tuples for hits to island list...
-                island.update(hit_set)
-                # And add new island (with multiple species) to groups_list
-                groups_list.append(list(island))
+        # if any([x in current_species for x in dutton_list] or [y in current_species for y in wolfe_list]):
+        current_species_islands = get_islands(h['species'])
+        
+        # each sublist represents one island...
+        for island in current_species_islands:
+            hit_set = set() # container for hits 
+            for gene_id in island:
+                gene_hits = h['hits'][gene_id[1]]
+                
+                # Pulls each hit id tuple, then appends it to group_set
+                for hit in gene_hits:
+                    hit_set.add((hit[0], hit[1]))
+            # add id tuples for hits to island list...
+            island.update(hit_set)
+            # And add new island (with multiple species) to groups_list
+            groups_list.append(list(island))
 
     # Since each species' islands are built independently, there's a lot of redundancy
     # So... Collapse lists that contain shared elements and deduplicate
@@ -278,6 +279,7 @@ def get_species_distance(species_1, species_2):
     s2_ssu = str(kv.db['16S'].find_one({'species':species_2})['dna_seq'])
     return get_gene_distance(s1_ssu, s2_ssu)
 
+
 def output_all_16S():
     if not '16S' in kv.get_collections():
         import_16S()
@@ -301,7 +303,7 @@ def output_distance_matrix():
         print distance
         distance_matrix[pair[0]][pair[1]] = distance
 
-    distance_matrix.to_csv('distance_matrix.csv')
+    distance_matrix.to_csv('distance_matrix_with_ben.csv')
 
 """Basic Use Functions"""
 def collapse_lists(list_of_lists):
@@ -336,4 +338,5 @@ def get_tag_int(locus_tag):
 if __name__ == '__main__':
     import sys
     kv.mongo_init(sys.argv[1])
+    # output_groups('groups_with_ben.csv')
     output_groups_by_species()
