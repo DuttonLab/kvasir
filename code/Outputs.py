@@ -5,10 +5,13 @@
 
 import pymongo
 import os
-from itertools import groupby, combinations
+from itertools import groupby, combinations, combinations_with_replacement
 from bson.objectid import ObjectId
 import pandas as pd
 import KvDataStructures as kv
+from DataImport import import_16S
+from skbio import DNA
+from skbio.alignment import StripedSmithWaterman
 
 def output_hits_csv():
     hits = kv.get_collection('hits')
@@ -17,7 +20,7 @@ def output_hits_csv():
 
     for record in hits.find():
         query_species = record['species']
-        with open('hits/{1}_hits.tsv'.format(kv.db.name, query_species),'w+') as output_handle:
+        with open('hits/{1}_hits.csv'.format(kv.db.name, query_species),'w+') as output_handle:
             output_handle.write('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}\n'.format(
                 'parent_locus',
                 'parent_annotation',
@@ -36,33 +39,34 @@ def output_hits_csv():
             for query_id in record['hits']:
                 list_of_hits = record['hits'][query_id]
                 if list_of_hits:
-                    print query_id
                     query_species_collection = kv.get_collection(query_species)
                     query_record = query_species_collection.find_one({'_id':ObjectId(query_id)})
                     
                     for hit in list_of_hits:
-                        print hit
                         hit_species = hit[0]
                         hit_id = hit[1]
-                        print hit_species
                         hit_species_collection = kv.get_collection(hit_species)
-                        print hit_species_collection
                         hit_record = hit_species_collection.find_one({'_id':ObjectId(hit_id)})
-                        print hit_record
-                        output_handle.write('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}\n'.format(
-                            query_record['locus_tag'],
-                            query_record['annotation'],
-                            query_record['dna_seq'],
-                            query_record['contig'],
-                            query_record['location'],
-                            hit_record['species'],
-                            hit_record['locus_tag'],
-                            hit_record['annotation'],
-                            hit_record['dna_seq'],
-                            hit_record['contig'],
-                            hit_record['location'],
+                        try:
+                            hit_record['locus_tag']
+                            query_annotation = query_record['annotation'].replace(',','')
+                            hit_annotation = hit_record['annotation'].replace(',','')
+                            output_handle.write('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}\n'.format(
+                                query_record['locus_tag'],
+                                query_annotation,
+                                query_record['dna_seq'],
+                                query_record['contig'],
+                                query_record['location'],
+                                hit_record['species'],
+                                hit_record['locus_tag'],
+                                hit_annotation,
+                                hit_record['dna_seq'],
+                                hit_record['contig'],
+                                hit_record['location'],
+                                )
                             )
-                        )
+                        except KeyError as e:
+                            print 'skipping'
 
 def output_all_fasta():
     for current_species_collection in kv.mongo_iter():
@@ -78,6 +82,7 @@ def output_all_fasta():
                             record['dna_seq'],
                             )
                         )
+
 def output_one_fasta(mongo_record, out_file='output.fna'):
     with open(out_file, 'w+') as output_handle:
         output_handle.write(
@@ -89,30 +94,32 @@ def output_one_fasta(mongo_record, out_file='output.fna'):
             )
 
 def get_groups():
+    dutton_list = ['JB182', 'JB7', 'JB5', 'JB4', 'JB37', 'JB110', 'JB170', 'JB193', 'JB196', 'JB197', 'Brevibacterium undefined']
     all_hits = kv.get_collection('hits')
     groups_list = []
     for h in all_hits.find():
         current_species = h['species']
-        current_species_islands = get_islands(h['species'])
-        
-        # each sublist represents one island...
-        for island in current_species_islands:
-            hit_set = set() # container for hits 
-            for gene_id in island:
-                gene_hits = h['hits'][gene_id[1]]
-                
-                # Pulls each hit id tuple, then appends it to group_set
-                for hit in gene_hits:
-                    hit_set.add((hit[0], hit[1]))
-            # add id tuples for hits to island list...
-            island.update(hit_set)
-            # And add new island (with multiple species) to groups_list
-            groups_list.append(list(island))
+
+        if any([x in current_species for x in dutton_list]):
+            current_species_islands = get_islands(h['species'])
+            
+            # each sublist represents one island...
+            for island in current_species_islands:
+                hit_set = set() # container for hits 
+                for gene_id in island:
+                    gene_hits = h['hits'][gene_id[1]]
+                    
+                    # Pulls each hit id tuple, then appends it to group_set
+                    for hit in gene_hits:
+                        hit_set.add((hit[0], hit[1]))
+                # add id tuples for hits to island list...
+                island.update(hit_set)
+                # And add new island (with multiple species) to groups_list
+                groups_list.append(list(island))
 
     # Since each species' islands are built independently, there's a lot of redundancy
     # So... Collapse lists that contain shared elements and deduplicate
     return map(list, collapse_lists(groups_list))
-
 
 def output_groups(output_file='default', min_group_size=2):
     if output_file == 'default':
@@ -140,17 +147,39 @@ def output_groups(output_file='default', min_group_size=2):
                 # Entry is `(species, id)`
                 for entry in group:
                     db_handle = kv.get_mongo_record(*entry)
-                    output_handle.write(
-                        '{0},{1},{2},{3},{4},{5},{6}\n'.format(
-                        str(group_no).zfill(3),
-                        db_handle['species'],
-                        db_handle['locus_tag'],
-                        db_handle['contig'],
-                        db_handle['location'],
-                        db_handle['annotation'],
-                        db_handle['dna_seq']
+                    
+                    annotation = db_handle['annotation'].replace(',','')
+                    try:
+                        output_handle.write(
+                            '{0},{1},{2},{3},{4},{5},{6}\n'.format(
+                            str(group_no).zfill(3),
+                            db_handle['species'],
+                            db_handle['locus_tag'],
+                            db_handle['contig'],
+                            db_handle['location'],
+                            annotation,
+                            db_handle['dna_seq']
+                            )
                         )
-                    )
+                    except KeyError as e:
+                        print e
+                        print db_handle
+
+def output_groups_by_species(min_group_size=2):
+    all_species = kv.get_species_collections()
+    groups_list = get_groups()
+    groups_list.sort(key=len, reverse=True)
+
+    groups_df = pd.DataFrame(data={n:0 for n in all_species}, index=[str(x+1) for x in range(0, len(groups_list))])
+
+    group_no = 0
+    for group in groups_list:
+        if len(group) >= min_group_size:
+            group_no += 1
+            species_in_group = [x[0] for x in group]
+            for species in species_in_group:
+                groups_df[species][group_no-1] = 1
+    groups_df.to_csv('groups_by_species.csv')
 
 def output_compare_matrix():
     groups = get_groups()
@@ -174,9 +203,9 @@ def output_compare_matrix():
                 if [x for x in group if x[0] == pair[0] and any(y[0] == pair[1] for y in group)]:
                     shared_groups +=1
 
-            cds_df[pair[0]][pair[1]] = cds_df[pair[1]][pair[0]] = shared_cds
-            nt_df[pair[0]][pair[1]] = nt_df[pair[1]][pair[0]] = shared_nt
-            groups_df[pair[0]][pair[1]] = groups_df[pair[1]][pair[0]] = shared_groups
+            cds_df[pair[0]][pair[1]] = shared_cds
+            nt_df[pair[0]][pair[1]] = shared_nt
+            groups_df[pair[0]][pair[1]] = shared_groups
             print "shared cds: {}\nshared nt: {}\nshared groups: {}\n====".format(shared_cds, shared_nt, shared_groups)
 
     cds_df.to_csv('cds_matrix.csv'.format(kv.db.name))
@@ -198,7 +227,6 @@ def pair_compare(species_1, species_2):
                     hit_loc = kv.gene_location(species_2_record['location'])
                     shared_nt += (hit_loc.end - hit_loc.start)
     return shared_CDS, shared_nt
-
 
 def get_islands(species_name):
     islands = []
@@ -236,6 +264,45 @@ def get_islands(species_name):
 
     return collapse_lists(islands)
 
+def get_gene_distance(seq_1, seq_2):
+    query = StripedSmithWaterman(seq_1)
+    alignment = query(seq_2)
+    return (2.0 - float(alignment.optimal_alignment_score) / float(len(alignment.query_sequence)))
+
+def get_species_distance(species_1, species_2):
+    if not '16S' in kv.get_collections():
+        import_16S()
+    
+    print 'Aligning:', species_1, species_2
+    s1_ssu = str(kv.db['16S'].find_one({'species':species_1})['dna_seq'])
+    s2_ssu = str(kv.db['16S'].find_one({'species':species_2})['dna_seq'])
+    return get_gene_distance(s1_ssu, s2_ssu)
+
+def output_all_16S():
+    if not '16S' in kv.get_collections():
+        import_16S()
+
+    print "Making fasta of all 16S in database {}".format(kv.db.name)
+    with open('{}_16S.fna'.format(kv.db.name), 'w+') as output_handle:
+        for record in kv.get_collection('16S').find():
+            output_handle.write(
+                '>{0}\n{1}\n'.format(
+                    record['species'],
+                    record['dna_seq'],
+                    )
+                )
+
+def output_distance_matrix():
+    all_species = kv.get_species_collections() 
+    distance_matrix = pd.DataFrame(data={n:0.0 for n in all_species}, index=all_species)
+    
+    for pair in combinations_with_replacement(all_species, 2):
+        distance = get_species_distance(pair[0], pair[1])
+        print distance
+        distance_matrix[pair[0]][pair[1]] = distance
+
+    distance_matrix.to_csv('distance_matrix.csv')
+
 """Basic Use Functions"""
 def collapse_lists(list_of_lists):
     # example input: [[1,2,3],[3,4],[5,6,7],[1,8,9,10],[11],[11,12],[13],[5,12]]
@@ -260,11 +327,13 @@ def collapse_lists(list_of_lists):
 def get_tag_int(locus_tag):
     return int(locus_tag[-5:])
 
+
+
 # For testing
-#kv.mongo_init('scratch_20150717')
-#output_compare_matrix(get_groups())
+# kv.mongo_init('big_test')
+# output_all_16S()
 
 if __name__ == '__main__':
     import sys
     kv.mongo_init(sys.argv[1])
-    output_groups(min_group_size=4)
+    output_groups_by_species()

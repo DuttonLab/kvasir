@@ -14,7 +14,7 @@ class gene_location(object):
     def __init__(self, location):
         self.location = location
 
-        location_parse = re.search(r'\[(\d+)\:>?(\d+)\](\S+)', location)                
+        location_parse = re.search(r'\[<?(\d+)\:>?(\d+)\](\S+)', location)
         self.start = int(location_parse.group(1))
         self.end = int(location_parse.group(2))
         self.direction = location_parse.group(3)
@@ -81,18 +81,19 @@ def get_genus(species_name):
     return re.search(r'^(\w+)', species_name).group(1)
 
 def view_record():
-    collection = db['hits']
-    print collection
-    counter = 1
-    for record in collection.find():
-        print record
-        counter += 1
-        if counter > 3:
-            break
+    for item in get_species_collections():
+        print item
+        counter = 1
+        for collection in get_collection(item).find():
+            counter += 1
+            if counter > 3:
+                break
+
+
 
 #testing
-#mongo_init('dutton_cheese')
-#view_record()
+# mongo_init('big_test')
+# view_record()
 #remove_collection('hits')
 
 

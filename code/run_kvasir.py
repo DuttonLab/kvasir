@@ -12,10 +12,12 @@
 
 import os
 import sys
-import DataImport, FixGbk, MakeBlastDB, KvasirBlast, get_outputs
+import DataImport, FixGbk, MakeBlastDB, KvasirBlast
+from get_outputs import get_outputs
 from KvDataStructures import mongo_init
 
 print 'Here we go!'
+
 gbk_folder = os.path.abspath('input/')
 exp_name = sys.argv[1]
 mongo_init(exp_name)
@@ -31,9 +33,11 @@ for the_file in os.listdir(gbk_folder):
     if the_file.endswith('.gb'):
         print 'Checking {0}'.format(the_file)
         validated_file = FixGbk.validate_gbk(path_to_file)
-
-        print 'Importing {0}'.format(the_file)
-        DataImport.import_file(validated_file)
+        if validated_file:
+            print 'Importing {0}'.format(the_file)
+            DataImport.import_file(validated_file)
+        else:
+            print 'moving on...'
     else:
         print '{0} is not a valid genbank file, skipping'.format(the_file)
 
