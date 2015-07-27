@@ -35,6 +35,7 @@ def import_file(some_genbank):
                     'location':str(ssu_gene[0].location),
                     'annotation':ssu_gene[0].qualifiers['product'][0],
                     'dna_seq':ssu_gene[1],
+                    'kvtag':ssu_gene[0].qualifiers['kvtag'][0],
                     'type':'16S'
                     }
                 print "adding 16S gene!"
@@ -47,24 +48,13 @@ def import_file(some_genbank):
                         'species':current_species, 
                         'contig':current_contig,
                         'location':str(feature.location),
-                        'locus_tag':feature.qualifiers['locus_tag'][0],
+                        'kvtag':feature.qualifiers['kvtag'][0],
                         'annotation':feature.qualifiers['product'][0],
                         'dna_seq':get_dna_seq(feature, record),
                         'aa_seq':feature.qualifiers['translation'][0],
                         'type':'gene'
                         }
-                    gene_id = species_collection.insert_one(gene_record).inserted_id
-                
-                    #if is_ftsz(feature.qualifiers['product'][0]):
-                    #    print "Hey look! I found FtsZ!"
-                    #    ftsz_collection.insert_one(
-                    #        {
-                    #        '_id':gene_id,
-                    #        'species':current_species,
-                    #        'annotation':feature.qualifiers['product'][0],
-                    #        'dna_seq':get_dna_seq(feature, record),
-                    #        }
-                    #    )
+                    species_collection.insert_one(gene_record)
 
 def get_dna_seq(feature, record):
     if feature.location.strand == 1:

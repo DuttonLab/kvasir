@@ -98,20 +98,21 @@ def blast_to_db():
                 blast_records = NCBIXML.parse(result_handle)
                 hits_dict = {}
                 for blast_record in blast_records:
-                    query_parse = re.search(r'(\w+)([^|]+)*\|(\w+)', blast_record.query)
-                    query_genus = query_parse.group(1)
-                    query_name = '{}{}'.format(query_parse.group(1), query_parse.group(2))
-                    query_id = query_parse.group(3)
+                    query_parse = re.search(r'(\w+)\|(\w+)', blast_record.query)
+                    query_genus_parse = re.match(r'([A-Za-z]+)_', blast_record.query)
+                    query_genus = query_genus_parse.group(1)
+                    query_name = query_parse.group(1)
+                    query_id = query_parse.group(2)
 
                     hits_dict[query_id] = []
-                    
 
                     for alignment in blast_record.alignments:
-                        hit_parse = re.search(r'(\w+)([^|]+)*\|(\w+)', alignment.hit_def)
-                        hit_genus = hit_parse.group(1)
-                        hit_name = '{}{}'.format(hit_parse.group(1), hit_parse.group(2))
-                        hit_id = hit_parse.group(3)
-                        
+                        hit_parse = re.search(r'(\w+)\|(\w+)', alignment.hit_def)
+                        hit_genus_parse = re.match(r'([A-Za-z]+)_', alignment.hit_def)
+                        hit_genus = hit_genus_parse.group(1)
+
+                        hit_name = hit_parse.group(1)
+                        hit_id = hit_parse.group(2)
                         if query_name == hit_name:
                             pass
                         elif query_genus == hit_genus:
@@ -212,7 +213,7 @@ if __name__ == '__main__':
     import sys
     kv.mongo_init(sys.argv[1])
     # make_blast_db()
-    # hits_reset()
+    hits_reset()
     # blast()
-    # blast_to_db()
+    blast_to_db()
 

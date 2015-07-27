@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python 2.7
 # by Kevin Bonham, PhD (2015)
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
 # CC-BY
@@ -48,17 +48,17 @@ def output_hits_csv():
                         hit_species_collection = kv.get_collection(hit_species)
                         hit_record = hit_species_collection.find_one({'_id':ObjectId(hit_id)})
                         try:
-                            hit_record['locus_tag']
+                            hit_record['kvtag']
                             query_annotation = query_record['annotation'].replace(',','')
                             hit_annotation = hit_record['annotation'].replace(',','')
                             output_handle.write('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}\n'.format(
-                                query_record['locus_tag'],
+                                query_record['kvtag'],
                                 query_annotation,
                                 query_record['dna_seq'],
                                 query_record['contig'],
                                 query_record['location'],
                                 hit_record['species'],
-                                hit_record['locus_tag'],
+                                hit_record['kvtag'],
                                 hit_annotation,
                                 hit_record['dna_seq'],
                                 hit_record['contig'],
@@ -67,21 +67,6 @@ def output_hits_csv():
                             )
                         except KeyError as e:
                             print 'skipping'
-
-def output_all_fasta():
-    for current_species_collection in kv.mongo_iter():
-        species = current_species_collection.name
-        with open('hits_fasta/{0}_hits.fna'.format(species), 'w+') as output_handle:
-            for record in current_species_collection.find():
-                if record['hits']:
-                    output_handle.write(
-                        '>{0}|{1}|{2}\n{3}\n'.format(
-                            record['species'],
-                            record['locus_tag'],
-                            str(record['_id']),
-                            record['dna_seq'],
-                            )
-                        )
 
 def output_one_fasta(mongo_record, out_file='output.fna'):
     with open(out_file, 'w+') as output_handle:
@@ -131,7 +116,7 @@ def output_groups(output_file='default', min_group_size=2):
             '{0},{1},{2},{3},{4},{5},{6}\n'.format(
             'groups',
             'species',
-            'locus_tag',
+            'kvtag',
             'contig',
             'location',
             'annotation',
@@ -155,7 +140,7 @@ def output_groups(output_file='default', min_group_size=2):
                             '{0},{1},{2},{3},{4},{5},{6}\n'.format(
                             str(group_no).zfill(3),
                             db_handle['species'],
-                            db_handle['locus_tag'],
+                            db_handle['kvtag'],
                             db_handle['contig'],
                             db_handle['location'],
                             annotation,
@@ -270,7 +255,7 @@ def get_gene_distance(seq_1, seq_2):
     alignment = query(seq_2)
     return (2.0 - float(alignment.optimal_alignment_score) / float(len(alignment.query_sequence)))
 
-def get_species_distance(species_1, species_2):
+def get_16S_distance(species_1, species_2):
     if not '16S' in kv.get_collections():
         import_16S()
     
@@ -278,7 +263,6 @@ def get_species_distance(species_1, species_2):
     s1_ssu = str(kv.db['16S'].find_one({'species':species_1})['dna_seq'])
     s2_ssu = str(kv.db['16S'].find_one({'species':species_2})['dna_seq'])
     return get_gene_distance(s1_ssu, s2_ssu)
-
 
 def output_all_16S():
     if not '16S' in kv.get_collections():
@@ -299,11 +283,11 @@ def output_distance_matrix():
     distance_matrix = pd.DataFrame(data={n:0.0 for n in all_species}, index=all_species)
     
     for pair in combinations_with_replacement(all_species, 2):
-        distance = get_species_distance(pair[0], pair[1])
+        distance = get_16S_distance(pair[0], pair[1])
         print distance
         distance_matrix[pair[0]][pair[1]] = distance
 
-    distance_matrix.to_csv('distance_matrix_with_ben.csv')
+    distance_matrix.to_csv('distance_matrix.csv')
 
 """Basic Use Functions"""
 def collapse_lists(list_of_lists):
@@ -326,8 +310,8 @@ def collapse_lists(list_of_lists):
         result = unmatched + [set().union(*matched)]
     return result
 
-def get_tag_int(locus_tag):
-    return int(locus_tag[-5:])
+def get_tag_int(kvtag):
+    return int(kvtag[-5:])
 
 
 
@@ -338,5 +322,6 @@ def get_tag_int(locus_tag):
 if __name__ == '__main__':
     import sys
     kv.mongo_init(sys.argv[1])
-    # output_groups('groups_with_ben.csv')
-    output_groups_by_species()
+    print 'yessssss!'
+    # output_groups('groups.csv')
+    # output_groups_by_species()
