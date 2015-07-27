@@ -7,6 +7,11 @@ import re
 import os
 import KvDataStructures as kv
 import Outputs as o
+from matplotlib import pyplot as plt
+from itertools import combinations
+from numpy import std
+from Bio import SeqIO
+from Bio.Blast import NCBIXML
 from bson.objectid import ObjectId
 from subprocess import Popen, PIPE
 
@@ -22,21 +27,20 @@ def fasta_blast(species_1, species_2):
     s1 = make_species_fasta(species_1)
     s2 = make_species_fasta(species_2)
     
-    Popen(
-        ['makeblastdb',
-            '-in', s2,
-            '-dbtype', 'nucl',
-            '-out', '{}_blastdb'.format(species_2.replace(' ', '_')),
-            '-title', species_2,
-        ]
-    ).wait()
+    # Popen(
+    #     ['makeblastdb',
+    #         '-in', s2,
+    #         '-dbtype', 'nucl',
+    #         '-out', '{}_blastdb'.format(species_2.replace(' ', '_')),
+    #         '-title', species_2,
+    #     ]
+    # ).wait()
     out = Popen(
         ['blastn',
         '-query', s1,
         '-db', '{}_blastdb'.format(species_2.replace(' ', '_')),
         '-outfmt', '5',
         '-out', 'blast_results.xml',
-        '-num_alignments', '1',
         ],
     ).communicate()[0]
 
@@ -48,12 +52,48 @@ def get_clocks(species):
         if any(gene.lower() in record['annotation'].lower() for gene in clock_genes):
             print record['annotation']
 
-def all_by_all_distance():
-    for current_species_collection in kv.mongo_iter():
-        pass
+def all_by_all_distance(species_1, species_2):
+    global fig_counter
+    fig_counter += 1
+    with open('blast_results.xml', 'r') as result_handle:
+        blast_records = NCBIXML.parse(result_handle)
+        distance_list = []
+        for blast_record in blast_records:
+            s1_ssu = None
+            s2_ssu = None
+            for alignment in blast_record.alignments:
+                for hsp in alignment.hsps:
+                    if hsp.align_length > 100:
+                        pident = float(hsp.positives)/float(hsp.align_length)
+                        length = hsp.align_length
+                        distance_list.append((length, pident))
+                    break
+                break
+
+        x, y = zip(*distance_list)
+        average = sum(y) / float(len(y))
+        dev = std(y)
+        plt.figure(fig_counter)
+        plt.scatter(x,y)
+        plt.ylabel('percent identity')
+        plt.xlabel('length')
+        plt.xlim(xmin=0)
+        plt.axhline(y=average, color='r')
+        plt.axhline(y=(average+dev), color='r', linestyle=':')
+        plt.axhline(y=(average-dev), color='r', linestyle=':')
+        plt.title("{} and {}".format(species_1, species_2))
+        plt.savefig('Figure_{}.pdf'.format(fig_counter))
+        plt.close()
+
 
 if __name__ == '__main__':
-    kv.mongo_init('dutton_cheese')
-    print kv.get_species_collections()
-    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/{}/'.format(kv.db.name))
-    fasta_blast('Arthrobacter sp JB182', 'Brevibacterium sp JB5')
+    import sys
+    kv.mongo_init('once_again')
+    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/once_again/')
+    ls = kv.get_species_collections()
+    ls.remove('Arthrobacter_arilaitensis_Re117')
+    pairs = combinations(ls, 2)
+    fig_counter = 0
+    for pair in pairs:
+        fasta_blast(pair[0],pair[1])
+        all_by_all_distance(pair[0],pair[1])

@@ -253,7 +253,7 @@ def get_islands(species_name):
 def get_gene_distance(seq_1, seq_2):
     query = StripedSmithWaterman(seq_1)
     alignment = query(seq_2)
-    return (2.0 - float(alignment.optimal_alignment_score) / float(len(alignment.query_sequence)))
+    return (2.0 - float(alignment.optimal_alignment_score) / float(len(alignment.query_sequence)))    
 
 def get_16S_distance(species_1, species_2):
     if not '16S' in kv.get_collections():

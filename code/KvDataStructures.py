@@ -69,8 +69,6 @@ def get_species_collections():
         collections.remove('16S')
     if 'hits' in collections:
         collections.remove('hits')
-    if 'FtsZ' in collections:
-        collections.remove('FtsZ')
     return collections
 
 def get_mongo_record(species, mongo_id):
@@ -88,6 +86,11 @@ def view_record():
             counter += 1
             if counter > 3:
                 break
+
+def fasta_id_parse(fasta_id):
+    """"species_name|_id" -> (species_name, _id)"""
+    parsed = re.search(r'(\w+)\|(\w+)', fasta_id)
+    return (parsed.group(1), parsed.group(2))
 
 
 
