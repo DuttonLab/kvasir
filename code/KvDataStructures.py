@@ -9,16 +9,6 @@ import pymongo
 from bson.objectid import ObjectId
 import re
 
-class gene_location(object):
-    '''Takes BioPython location object eg. `[1030:1460](-)` and extracts integer values'''
-    def __init__(self, location):
-        self.location = location
-
-        location_parse = re.search(r'\[<?(\d+)\:>?(\d+)\](\S+)', location)
-        self.start = int(location_parse.group(1))
-        self.end = int(location_parse.group(2))
-        self.direction = location_parse.group(3)
-
 class mongo_iter(object):
     """Iterator that steps through species in mongoDB. Call with:
     `for current_species_collection in mongo_iter(mongo_db_name):`"""
@@ -38,6 +28,18 @@ class mongo_iter(object):
                 
 client = pymongo.MongoClient()
 db = None
+
+def get_gene_location(location):
+    '''
+    Takes BioPython location object eg. `[1030:1460](-)` and extracts integer values.
+    Returns (start, stop, direction)
+    '''
+    location_parse = re.search(r'\[<?(\d+)\:>?(\d+)\]\((\+|-)\)', location)
+    if location_parse.group(3) == '+':
+        direction = 1
+    elif location_parse.group(3) == '-':
+        direction = -1
+    return (int(location_parse.group(1)), int(location_parse.group(2)), direction)
 
 def mongo_init(mongo_db_name):
     global db

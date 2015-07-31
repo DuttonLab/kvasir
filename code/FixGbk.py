@@ -9,7 +9,7 @@ from Bio import SeqIO
 def confirm_species_name(file_name):
     user_validate = str(raw_input("Is {} the correct species name? [y/n]".format(file_name[:-3])))
     if user_validate == 'y':
-        return file_name[:-3].replace(' ', '_')
+        return file_name[:-3].replace(' ', '_').replace('.', '')
     elif user_validate == 'n':
         print "Please use only letters for the following"
         genus = raw_input("Please enter organism genus: ")

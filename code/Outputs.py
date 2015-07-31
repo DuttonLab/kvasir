@@ -12,6 +12,8 @@ import KvDataStructures as kv
 from DataImport import import_16S
 from skbio import DNA
 from skbio.alignment import StripedSmithWaterman
+from matplotlib import pyplot as plt
+import numpy as np
 
 def output_hits_csv():
     hits = kv.get_collection('hits')
@@ -210,8 +212,8 @@ def pair_compare(species_1, species_2):
                 if hit[0] == species_2:
                     shared_CDS += 1
                     species_2_record = kv.get_mongo_record(hit[0],hit[1])
-                    hit_loc = kv.gene_location(species_2_record['location'])
-                    shared_nt += (hit_loc.end - hit_loc.start)
+                    hit_loc = species_2_record['location']
+                    shared_nt += hit_loc['stop'] - hit_loc['start']
     return shared_CDS, shared_nt
 
 def get_islands(species_name):
@@ -237,9 +239,9 @@ def get_islands(species_name):
             elif entry_1['contig'] != entry_2['contig']:
                 pass
             else:
-                location_1 = kv.gene_location(entry_1['location'])
-                location_2 = kv.gene_location(entry_2['location'])
-                if abs(location_1.start - location_2.end) <= 5000:
+                location_1 = entry_1['location']
+                location_2 = entry_2['location']
+                if abs(location_1['stop'] - location_2['start']) <= 5000:
                     entry_recorded = True
                     islands.append([
                         (entry_1['species'], str(entry_1['_id'])),
@@ -259,7 +261,7 @@ def get_16S_distance(species_1, species_2):
     if not '16S' in kv.get_collections():
         import_16S()
     
-    print 'Aligning:', species_1, species_2
+    # print 'Aligning:', species_1, species_2
     s1_ssu = str(kv.db['16S'].find_one({'species':species_1})['dna_seq'])
     s2_ssu = str(kv.db['16S'].find_one({'species':species_2})['dna_seq'])
     return get_gene_distance(s1_ssu, s2_ssu)
@@ -289,6 +291,10 @@ def output_distance_matrix():
 
     distance_matrix.to_csv('distance_matrix.csv')
 
+def index_position(species_collection):
+    contigs = species_collection.distinct('contig')
+    print contigs
+
 """Basic Use Functions"""
 def collapse_lists(list_of_lists):
     # example input: [[1,2,3],[3,4],[5,6,7],[1,8,9,10],[11],[11,12],[13],[5,12]]
@@ -314,14 +320,9 @@ def get_tag_int(kvtag):
     return int(kvtag[-5:])
 
 
-
-# For testing
-# kv.mongo_init('big_test')
-# output_all_16S()
-
 if __name__ == '__main__':
     import sys
-    kv.mongo_init(sys.argv[1])
-    print 'yessssss!'
-    # output_groups('groups.csv')
-    # output_groups_by_species()
+    kv.mongo_init('once_again')
+    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/once_again/')
+    for current_species_collection in kv.mongo_iter():
+        index_position(current_species_collection)

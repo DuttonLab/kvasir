@@ -29,10 +29,17 @@ def import_file(some_genbank):
             print "Importing {}".format(current_contig)
             ssu_gene = get_16S(record)
             if ssu_gene:
+                parsed_location = kv.get_gene_location(ssu_gene[0].location)
                 gene_record = {
                     'species':current_species,
-                    'contig':current_contig,
-                    'location':str(ssu_gene[0].location),
+                    'location':{
+                        'contig':current_contig,
+                        'location':ssu_gene[0].location,
+                        'start':parsed_location[0],
+                        'end':parsed_location[1],
+                        'strand':parsed_location[2],
+                        'index':None
+                    },
                     'annotation':ssu_gene[0].qualifiers['product'][0],
                     'dna_seq':ssu_gene[1],
                     'kvtag':ssu_gene[0].qualifiers['kvtag'][0],
@@ -44,10 +51,17 @@ def import_file(some_genbank):
 
             for feature in record.features:
                 if feature.type == 'CDS':
+                    parsed_location = kv.get_gene_location(feature.location)
                     gene_record = {
-                        'species':current_species, 
-                        'contig':current_contig,
-                        'location':str(feature.location),
+                        'species':current_species,
+                        'location':{
+                            'contig':current_contig,
+                            'location':feature.location,
+                            'start':parsed_location[0],
+                            'end':parsed_location[1],
+                            'strand':parsed_location[2],
+                            'index':None
+                        },
                         'kvtag':feature.qualifiers['kvtag'][0],
                         'annotation':feature.qualifiers['product'][0],
                         'dna_seq':get_dna_seq(feature, record),
@@ -84,8 +98,8 @@ def get_species_name(path_to_genbank):
 # Need to fix search! Only returns "contig"...
 def get_contig(record_name):
     import re
-    parse_contig = re.search(r'(kvc_\d\d\d)', record_name)
-    return parse_contig.group(0)
+    parse_contig = re.search(r'kvc_(\d\d\d)', record_name)
+    return parse_contig.group(1)
 
 def import_folder(genbank_folder):
     import os
