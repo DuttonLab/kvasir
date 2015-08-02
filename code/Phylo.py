@@ -28,6 +28,30 @@ def make_species_fasta(species):
                 )
     return fasta
 
+def make_gene_fasta(gene_record):
+    if not os.path.isdir('fastas/genes'):
+        os.makedirs('fastas/genes')    
+    fasta = 'fastas/genes/{}_{}.fna'.format(gene_record['species'], gene_record['kvtag'])
+    if not os.path.isfile(fasta):
+        with open(fasta, 'w+') as output_handle:
+            output_handle.write(
+                ">{}|{}\n{}\n".format(gene_record['species'].replace(' ', '_'), gene_record['_id'], gene_record['dna_seq'])
+            )
+    return fasta
+
+def make_indexed_fasta(indexed_species):
+    if not os.path.isdir('fastas/'):
+        os.makedirs('fastas/')    
+    fasta = 'fastas/{}_indexed.fna'.format(gene_record['species'])
+    if not os.path.isfile(fasta):
+        with open(fasta, 'w+') as output_handle:
+            for record in indexed_species:
+                output_handle.write(
+                    ">{}|{}\n{}\n".format(record['species'].replace(' ', '_'), record['_id'], record['dna_seq'])
+                )
+
+    return fasta
+
 def fasta_blast(species_1, species_2, word_size=28):
     if not os.path.isdir('pairwise_blast'):
         os.makedirs('pairwise_blast')
@@ -78,12 +102,80 @@ def fasta_blast(species_1, species_2, word_size=28):
         os.remove(results)
         return False
 
-def output_loc_hist():
-    for current_species_collection in kv.mongo_iter():
-        # current_species_collection.create_index([('contig', pymongo.ASCENDING), ('location', pymongo.ASCENDING)], name='position')
-        for index in current_species_collection.list_indexes():
-            print index
-            break
+def output_loc_hist(species_1, species_2):
+    s1_collection = kv.get_collection(species_1)
+    s2 = kv.index_contigs(s1_collection)
+    s2 = make_species_fasta(species_2)
+    if not os.path.isfile('pairwise_blast/{}_blastdb.nhr'.format(species_2)):
+        Popen(
+            ['makeblastdb',
+                '-in', s2,
+                '-dbtype', 'nucl',
+                '-out', 'pairwise_blast/{}_blastdb'.format(species_2),
+                '-title', os.path.basename(species_2),
+            ]
+        ).wait()
+
+    to_graph = []
+
+    
+    current_contig = None
+    
+    for gene in kv.index_contigs(s1_collection):
+        print '----'
+        print 'contig: {}'.format(gene['location']['contig'])
+        print 'gene: {}'.format(gene['kvtag'])
+        print '----'
+        fasta = make_gene_fasta(gene)
+        result = blast_one(fasta, 'pairwise_blast/{}_blastdb'.format(species_2))
+        if result:
+            pident = float(result[2])
+        else:
+            pident = 0.0
+
+        # if gene['location']['contig'] == current_contig:
+        #     to_graph.extend([
+        #         (gene['location']['start'], pident),
+        #         (gene['location']['end'], pident),
+        #         ])
+        # else:
+        #     if current_contig:
+        #         x, y = zip(*to_graph)
+        #         plt.close()
+        #         plt.title("{}:{} {}".format(species_1, species_2, current_contig))
+        #         plt.plot(x, y, marker=None, color='#B0384D', linestyle='-')
+        #         plt.fill_between(x, 0, y, color='#B0384D', alpha=0.5)
+
+        #         plt.xlabel("Position")
+        #         plt.ylabel("percent identity")
+        #         plt.xlim(xmin=0)
+        #         plt.ylim(ymin=0)
+
+        #         plt.savefig('{}_{}_{}.pdf'.format(species_1, species_2, current_contig))
+        #     current_contig = gene['location']['contig']
+        #     to_graph = []
+        #     to_graph.extend([
+        #         (gene['location']['start'], pident),
+        #         (gene['location']['end'], pident),
+        #         ])
+
+
+def blast_one(query, database, word_size=28):
+    out, err = Popen(
+            ['blastn',
+            '-query', query,
+            '-db', database,
+            '-num_alignments', '1',
+            '-outfmt', '10 qseqid sseqid pident length',
+            '-word_size', str(word_size),
+            ], stdout=PIPE
+        ).communicate()
+    if out:
+        result = re.split(r'[,\n]', out.rstrip())
+        return result
+    else:
+        return None
+
 
 def get_clocks(species):
     clock_genes = ["dnaG", "frr", "infC", "nusA", "pgk", "pyrG", "rplA", "rplB", "rplC", "rplD", "rplE", "rplF", "rplK", "rplL", "rplM", "rplN", "rplP", "rplS", "rplT", "rpmA", "rpoB", "rpsB", "rpsC", "rpsE", "rpsI", "rpsJ", "rpsK", "rpsM", "rpsS", "smpB", "tsf"]
@@ -253,9 +345,12 @@ def count_records(blast_xml):
 
 
 if __name__ == '__main__':
-    kv.mongo_init('once_again')
-    # os.chdir('/Users/KBLaptop/computation/kvasir/data/output/once_again/phylo_data/')
-    # ls = kv.get_species_collections()
-    # ls.remove('Arthrobacter_arilaitensis_Re117')
-    output_loc_hist()
+    kv.mongo_init('more_genomes')
+    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/more_genomes/')
+    ls = kv.get_species_collections()
+    print ls
+    # for pair in combinations(ls, 2):
+    #     output_loc_hist(pair[0], pair[1])
+    output_loc_hist('Arthrobacter_sp_JB182', 'Brevibacterium_sp_JB5')
+
     # test()

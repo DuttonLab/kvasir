@@ -7,7 +7,9 @@
 
 import pymongo
 from bson.objectid import ObjectId
+from operator import itemgetter
 import re
+
 
 class mongo_iter(object):
     """Iterator that steps through species in mongoDB. Call with:
@@ -34,7 +36,7 @@ def get_gene_location(location):
     Takes BioPython location object eg. `[1030:1460](-)` and extracts integer values.
     Returns (start, stop, direction)
     '''
-    location_parse = re.search(r'\[<?(\d+)\:>?(\d+)\]\((\+|-)\)', location)
+    location_parse = re.search(r'\[<?(\d+)\:>?(\d+)\]\((\+|-)\)', str(location))
     if location_parse.group(3) == '+':
         direction = 1
     elif location_parse.group(3) == '-':
@@ -94,11 +96,13 @@ def fasta_id_parse(fasta_id):
     parsed = re.search(r'(\w+)\|(\w+)', fasta_id)
     return (parsed.group(1), parsed.group(2))
 
+def index_contigs(species_collection):
+    return species_collection.find().sort([("location.contig", pymongo.ASCENDING), ("location.start", pymongo.ASCENDING)])
 
 
-#testing
-# mongo_init('big_test')
-# view_record()
-#remove_collection('hits')
-
-
+if __name__ == '__main__':
+    mongo_init('more_genomes')
+    for gene in index_contigs():
+        print gene['kvtag']
+        print gene['location']['contig']
+        print gene['location']['start']

@@ -34,11 +34,9 @@ def import_file(some_genbank):
                     'species':current_species,
                     'location':{
                         'contig':current_contig,
-                        'location':ssu_gene[0].location,
                         'start':parsed_location[0],
                         'end':parsed_location[1],
                         'strand':parsed_location[2],
-                        'index':None
                     },
                     'annotation':ssu_gene[0].qualifiers['product'][0],
                     'dna_seq':ssu_gene[1],
@@ -56,7 +54,6 @@ def import_file(some_genbank):
                         'species':current_species,
                         'location':{
                             'contig':current_contig,
-                            'location':feature.location,
                             'start':parsed_location[0],
                             'end':parsed_location[1],
                             'strand':parsed_location[2],

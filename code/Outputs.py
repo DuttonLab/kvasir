@@ -20,55 +20,68 @@ def output_hits_csv():
     if not os.path.isdir('hits/'):
        os.makedirs('hits/')
 
+    df_index = [
+        'parent_locus',
+        'parent_annotation',
+        'parent_seq',
+        'parent_contig',
+        'parent_start',
+        'parent_end',
+        'parent_strand',
+        'hit_species',
+        'hit_tag',
+        'hit_annotation',
+        'hit_seq',
+        'hit_contig',
+        'hit_start',
+        'hit_end',
+        'hit_strand',
+    ]
+    
     for record in hits.find():
         query_species = record['species']
-        with open('hits/{1}_hits.csv'.format(kv.db.name, query_species),'w+') as output_handle:
-            output_handle.write('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}\n'.format(
-                'parent_locus',
-                'parent_annotation',
-                'parent_seq',
-                'parent_contig',
-                'parent_loc',
-                'hit_species',
-                'hit_tag',
-                'hit_annotation',
-                'hit_seq',
-                'hit_contig',
-                'hit_loc',
-                )
-            )
+        df = pd.DataFrame()
 
-            for query_id in record['hits']:
-                list_of_hits = record['hits'][query_id]
-                if list_of_hits:
-                    query_species_collection = kv.get_collection(query_species)
-                    query_record = query_species_collection.find_one({'_id':ObjectId(query_id)})
+        for query_id in record['hits']:
+            list_of_hits = record['hits'][query_id]
+            if list_of_hits:
+                query_species_collection = kv.get_collection(query_species)
+                query_record = query_species_collection.find_one({'_id':ObjectId(query_id)})
+                
+                for hit in list_of_hits:
+
+                    hit_species = hit[0]
+                    hit_id = hit[1]
+                    hit_species_collection = kv.get_collection(hit_species)
+                    hit_record = hit_species_collection.find_one({'_id':ObjectId(hit_id)})
+                    hit_record['kvtag']
+                    query_annotation = query_record['annotation'].replace(',','')
+                    hit_annotation = hit_record['annotation'].replace(',','')
                     
-                    for hit in list_of_hits:
-                        hit_species = hit[0]
-                        hit_id = hit[1]
-                        hit_species_collection = kv.get_collection(hit_species)
-                        hit_record = hit_species_collection.find_one({'_id':ObjectId(hit_id)})
-                        try:
-                            hit_record['kvtag']
-                            query_annotation = query_record['annotation'].replace(',','')
-                            hit_annotation = hit_record['annotation'].replace(',','')
-                            output_handle.write('{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}\n'.format(
-                                query_record['kvtag'],
-                                query_annotation,
-                                query_record['dna_seq'],
-                                query_record['contig'],
-                                query_record['location'],
-                                hit_record['species'],
-                                hit_record['kvtag'],
-                                hit_annotation,
-                                hit_record['dna_seq'],
-                                hit_record['contig'],
-                                hit_record['location'],
-                                )
-                            )
-                        except KeyError as e:
-                            print 'skipping'
+                    series = pd.Series(
+                        [query_record['kvtag'],
+                        query_annotation,
+                        query_record['dna_seq'],
+                        query_record['location']['contig'],
+                        query_record['location']['start'],
+                        query_record['location']['end'],
+                        query_record['location']['strand'],
+                        hit_record['species'],
+                        hit_record['kvtag'],
+                        hit_annotation,
+                        hit_record['dna_seq'],
+                        hit_record['location']['contig'],
+                        hit_record['location']['start'],
+                        hit_record['location']['end'],
+                        hit_record['location']['strand'],
+                        ],
+                        index=df_index,
+                        name=hit_record['species']
+                    )
+
+                    df=df.append(series)
+        df.to_csv('hits/{}_hits.csv'.format(query_species), cols=df_index)
+            
 
 def output_one_fasta(mongo_record, out_file='output.fna'):
     with open(out_file, 'w+') as output_handle:
@@ -112,23 +125,22 @@ def get_groups():
 def output_groups(output_file='default', min_group_size=2):
     if output_file == 'default':
         output_file = 'groups.csv'.format(kv.db.name)
-    with open(output_file, 'w+') as output_handle:
-        print output_handle
-        output_handle.write(
-            '{0},{1},{2},{3},{4},{5},{6}\n'.format(
+        df_index = [
             'groups',
             'species',
             'kvtag',
             'contig',
-            'location',
+            'start',
+            'end',
+            'strand',
             'annotation',
-            'dna_seq'
-            )
-        )
-        
+            'dna_seq',
+        ]
+        df = pd.DataFrame()
         group_no= 0
         groups_list = get_groups()
         groups_list.sort(key=len, reverse=True)
+
         for group in groups_list:
             if len(group) >= min_group_size:
                 group_no += 1
@@ -137,21 +149,22 @@ def output_groups(output_file='default', min_group_size=2):
                     db_handle = kv.get_mongo_record(*entry)
                     
                     annotation = db_handle['annotation'].replace(',','')
-                    try:
-                        output_handle.write(
-                            '{0},{1},{2},{3},{4},{5},{6}\n'.format(
-                            str(group_no).zfill(3),
-                            db_handle['species'],
-                            db_handle['kvtag'],
-                            db_handle['contig'],
-                            db_handle['location'],
-                            annotation,
-                            db_handle['dna_seq']
-                            )
-                        )
-                    except KeyError as e:
-                        print e
-                        print db_handle
+                    series = pd.Series(
+                        [str(group_no).zfill(3),
+                        db_handle['species'],
+                        db_handle['kvtag'],
+                        db_handle['location']['contig'],
+                        db_handle['location']['start'],
+                        db_handle['location']['end'],
+                        db_handle['location']['strand'],
+                        annotation,
+                        db_handle['dna_seq']
+                        ],
+                        index=df_index,
+                        name=db_handle['kvtag']
+                    )
+                    df=df.append(series)
+        df.to_csv(output_file, cols=df_index)
 
 def output_groups_by_species(min_group_size=2):
     all_species = kv.get_species_collections()
@@ -213,7 +226,7 @@ def pair_compare(species_1, species_2):
                     shared_CDS += 1
                     species_2_record = kv.get_mongo_record(hit[0],hit[1])
                     hit_loc = species_2_record['location']
-                    shared_nt += hit_loc['stop'] - hit_loc['start']
+                    shared_nt += hit_loc['end'] - hit_loc['start']
     return shared_CDS, shared_nt
 
 def get_islands(species_name):
@@ -236,12 +249,12 @@ def get_islands(species_name):
         for entry_2 in species_hits_list:
             if entry_1 == entry_2:
                 pass
-            elif entry_1['contig'] != entry_2['contig']:
+            elif entry_1['location']['contig'] != entry_2['location']['contig']:
                 pass
             else:
                 location_1 = entry_1['location']
                 location_2 = entry_2['location']
-                if abs(location_1['stop'] - location_2['start']) <= 5000:
+                if abs(location_1['end'] - location_2['start']) <= 5000:
                     entry_recorded = True
                     islands.append([
                         (entry_1['species'], str(entry_1['_id'])),
@@ -291,10 +304,6 @@ def output_distance_matrix():
 
     distance_matrix.to_csv('distance_matrix.csv')
 
-def index_position(species_collection):
-    contigs = species_collection.distinct('contig')
-    print contigs
-
 """Basic Use Functions"""
 def collapse_lists(list_of_lists):
     # example input: [[1,2,3],[3,4],[5,6,7],[1,8,9,10],[11],[11,12],[13],[5,12]]
@@ -322,7 +331,6 @@ def get_tag_int(kvtag):
 
 if __name__ == '__main__':
     import sys
-    kv.mongo_init('once_again')
-    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/once_again/')
-    for current_species_collection in kv.mongo_iter():
-        index_position(current_species_collection)
+    kv.mongo_init('more_genomes')
+    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/more_genomes/')
+    output_groups_by_species(4)
