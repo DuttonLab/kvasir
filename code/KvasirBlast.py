@@ -14,7 +14,7 @@ from Bio.Blast.Applications import NcbiblastnCommandline
 from bson.objectid import ObjectId
 import KvDataStructures as kv
 
-def make_blast_db(seq_type='nucl'):
+def make_blast_db():
     # Reads database and makes list of all collections (representing species)
     # Handle for temporary .fasta file that will contain all CDS for all species
     if not os.path.isdir('blast_results/'):
@@ -28,22 +28,11 @@ def make_blast_db(seq_type='nucl'):
     with open(output_fasta, 'w+') as output_handle:
 
         for current_species_collection in kv.mongo_iter():
-            print current_species_collection.name
             for gene in current_species_collection.find():
-                if gene['type'] == '16S':
-                    pass 
-                elif seq_type == 'nucl':
-                    seq = gene['dna_seq']
-                elif seq_type == 'prot':
-                    seq = gene['aa_seq']
-                else:
-                    print 'That\'s not a valid sequence type, use "nucl" or "prot"'
-                    break
-
                 output_handle.write('>{0}|{1}\n{2}\n'.format(
                     gene['species'],
                     gene['_id'],
-                    seq,
+                    gene['dna_seq'],
                     )
                 )
     
@@ -52,7 +41,7 @@ def make_blast_db(seq_type='nucl'):
         Popen(
             ['makeblastdb',
             '-in', output_fasta,
-            '-dbtype', seq_type,
+            '-dbtype', 'nucl',
             '-out', 'blast_results/{0}_blastdb'.format(kv.db.name),
             '-title', kv.db.name,
             ]
@@ -212,8 +201,8 @@ def hits_reset_one():
 if __name__ == '__main__':
     import sys
     kv.mongo_init(sys.argv[1])
-    # make_blast_db()
+    make_blast_db()
     hits_reset()
-    # blast()
+    blast()
     blast_to_db()
 

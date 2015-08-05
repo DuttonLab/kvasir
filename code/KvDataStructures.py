@@ -99,10 +99,32 @@ def fasta_id_parse(fasta_id):
 def index_contigs(species_collection):
     return species_collection.find().sort([("location.contig", pymongo.ASCENDING), ("location.start", pymongo.ASCENDING)])
 
+def concat_contigs(species_collection):
+    current_contig = 0
+    last_contig_end = 0
+    last_gene_end = 0
+    concatenated = {}
+    for gene in index_contigs(species_collection):
+        if gene['location']['contig'] == current_contig:
+            gene['location']['start'] += last_contig_end
+            gene['location']['end'] += last_contig_end
+            last_gene_end = gene['location']['end']
+            
+            concatenated[gene['_id']] = gene
+        else:
+            current_contig = gene['location']['contig']
+            last_contig_end = last_gene_end
+
+            gene['location']['start'] += last_contig_end
+            gene['location']['end'] += last_contig_end
+            last_gene_end = gene['location']['end']
+        
+            concatenated[gene['_id']] = gene
+
+    return concatenated
+
 
 if __name__ == '__main__':
     mongo_init('more_genomes')
-    for gene in index_contigs():
-        print gene['kvtag']
-        print gene['location']['contig']
-        print gene['location']['start']
+    
+    

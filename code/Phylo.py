@@ -15,6 +15,25 @@ from bson.objectid import ObjectId
 from subprocess import Popen, PIPE
 import numpy as np
 import pymongo
+import plotly.plotly as py
+
+def ssu_perc_id(species_1, species_2):
+    s1_ssu = kv.db['16S'].find_one({'species':species_1})
+    s2_ssu = kv.db['16S'].find_one({'species':species_2})
+
+    s1_fasta = make_gene_fasta(s1_ssu)
+    s2_fasta = make_gene_fasta(s2_ssu)
+
+    out = Popen(
+        ['blastn',
+        '-query', s1_fasta,
+        '-subject', s2_fasta,
+        '-outfmt', '10 pident',
+        ], stdout=PIPE
+    ).communicate()[0]
+    if out:
+        result = re.split(r'[,\n]', out.rstrip())[0]
+        return result
 
 def make_species_fasta(species):
     if not os.path.isdir('fastas'):
@@ -39,18 +58,23 @@ def make_gene_fasta(gene_record):
             )
     return fasta
 
-def make_indexed_fasta(indexed_species):
+def make_indexed_fasta(species):
     if not os.path.isdir('fastas/'):
-        os.makedirs('fastas/')    
-    fasta = 'fastas/{}_indexed.fna'.format(gene_record['species'])
+        os.makedirs('fastas/')
+    id_list =[]
+    indexed_species = kv.index_contigs(kv.get_collection(species))
+    indexed_species2 = kv.index_contigs(kv.get_collection(species))
+    fasta = 'fastas/{}_indexed.fna'.format(species)
+    for record in indexed_species:
+        id_list.append(record['_id'])
     if not os.path.isfile(fasta):
         with open(fasta, 'w+') as output_handle:
-            for record in indexed_species:
+            for record in indexed_species2:
                 output_handle.write(
                     ">{}|{}\n{}\n".format(record['species'].replace(' ', '_'), record['_id'], record['dna_seq'])
                 )
-
-    return fasta
+                
+    return (fasta, id_list)
 
 def fasta_blast(species_1, species_2, word_size=28):
     if not os.path.isdir('pairwise_blast'):
@@ -102,9 +126,8 @@ def fasta_blast(species_1, species_2, word_size=28):
         os.remove(results)
         return False
 
-def output_loc_hist(species_1, species_2):
-    s1_collection = kv.get_collection(species_1)
-    s2 = kv.index_contigs(s1_collection)
+def output_loc_hist(species_1, species_2, ax):
+    s1, id_list = make_indexed_fasta(species_1)
     s2 = make_species_fasta(species_2)
     if not os.path.isfile('pairwise_blast/{}_blastdb.nhr'.format(species_2)):
         Popen(
@@ -116,49 +139,47 @@ def output_loc_hist(species_1, species_2):
             ]
         ).wait()
 
-    to_graph = []
-
+    indexed_blast = blast_one(s1, 'pairwise_blast/{}_blastdb'.format(species_2))
+    concatenated_subject = kv.concat_contigs(kv.get_collection(species_1))
     
-    current_contig = None
+    xys = []
+    last_end = 0
     
-    for gene in kv.index_contigs(s1_collection):
-        print '----'
-        print 'contig: {}'.format(gene['location']['contig'])
-        print 'gene: {}'.format(gene['kvtag'])
-        print '----'
-        fasta = make_gene_fasta(gene)
-        result = blast_one(fasta, 'pairwise_blast/{}_blastdb'.format(species_2))
-        if result:
-            pident = float(result[2])
-        else:
-            pident = 0.0
+    for i in range(len(indexed_blast))[0::4]:
+        # print indexed_blast[i:i+4]
 
-        # if gene['location']['contig'] == current_contig:
-        #     to_graph.extend([
-        #         (gene['location']['start'], pident),
-        #         (gene['location']['end'], pident),
-        #         ])
-        # else:
-        #     if current_contig:
-        #         x, y = zip(*to_graph)
-        #         plt.close()
-        #         plt.title("{}:{} {}".format(species_1, species_2, current_contig))
-        #         plt.plot(x, y, marker=None, color='#B0384D', linestyle='-')
-        #         plt.fill_between(x, 0, y, color='#B0384D', alpha=0.5)
+        subject = concatenated_subject[ObjectId(kv.fasta_id_parse(indexed_blast[i])[1])]
+        query = kv.get_mongo_record(*kv.fasta_id_parse(indexed_blast[i+1]))
+        
+        x1 = subject['location']['start']
+        if x1 <= last_end:
+            x1 = last_end + 1
 
-        #         plt.xlabel("Position")
-        #         plt.ylabel("percent identity")
-        #         plt.xlim(xmin=0)
-        #         plt.ylim(ymin=0)
+        x2 = subject['location']['end']
+        last_end = x2
 
-        #         plt.savefig('{}_{}_{}.pdf'.format(species_1, species_2, current_contig))
-        #     current_contig = gene['location']['contig']
-        #     to_graph = []
-        #     to_graph.extend([
-        #         (gene['location']['start'], pident),
-        #         (gene['location']['end'], pident),
-        #         ])
+        y = float(indexed_blast[i+2])
+        print [(x1-0.1, 0), (x1, y), (x2, y), (x2+0.1, 0)]
+        xys.extend([(x1-0.1, 0), (x1, y), (x2, y), (x2+0.1, 0)])
 
+    xys.sort(key=lambda xy:xy[0])
+    x, y = zip(*xys)
+
+    if len(x) > 200:
+        cmap = plt.get_cmap('jet')
+        color = cmap(np.random.rand())
+
+        ax.plot(x, y, marker=None, color=color, linestyle='-', label='{}'.format(species_2))
+        print "Plotting {} vs {}!".format(species_1, species_2)
+        
+        ssu_id = ssu_perc_id(species_1, species_2)
+        xmin, xmax = plt.xlim()
+        ax.plot([xmin, xmax], [ssu_id, ssu_id], color=color, label='{} 16S'.format(species_2))
+       
+    else:
+        print "Not that many hits between {} and {}, skipping!".format(species_1, species_2)
+
+    # plt.fill_between(x, 0, y, color='#B0384D', alpha=0.5)
 
 def blast_one(query, database, word_size=28):
     out, err = Popen(
@@ -175,7 +196,6 @@ def blast_one(query, database, word_size=28):
         return result
     else:
         return None
-
 
 def get_clocks(species):
     clock_genes = ["dnaG", "frr", "infC", "nusA", "pgk", "pyrG", "rplA", "rplB", "rplC", "rplD", "rplE", "rplF", "rplK", "rplL", "rplM", "rplN", "rplP", "rplS", "rplT", "rpmA", "rpoB", "rpsB", "rpsC", "rpsE", "rpsI", "rpsJ", "rpsK", "rpsM", "rpsS", "smpB", "tsf"]
@@ -343,14 +363,38 @@ def count_records(blast_xml):
                 pass
         return counter
 
+def plot_many(list_of_species_pairs):
+    fig = plt.figure()
+    ypos = 1
+    for pair in list_of_species_pairs:    
+        if pair[0] == pairs[0][0]:
+            ax = fig.add_axes([1,ypos,1,1])
+            output_loc_hist(pair[0], pair[1], ax)
+
+    plot_url = py.plot_mpl(fig)
+    print plot_url
+
+    # plt.xlabel("Position")
+    # plt.ylabel("percent identity")
+    # plt.savefig('/Users/KBLaptop/Desktop/try.pdf')
 
 if __name__ == '__main__':
     kv.mongo_init('more_genomes')
     os.chdir('/Users/KBLaptop/computation/kvasir/data/output/more_genomes/')
     ls = kv.get_species_collections()
     print ls
-    # for pair in combinations(ls, 2):
-    #     output_loc_hist(pair[0], pair[1])
-    output_loc_hist('Arthrobacter_sp_JB182', 'Brevibacterium_sp_JB5')
+    ls.remove('Arthrobacter_arilaitensis_Re117')
+    pairs = []
+    for pair in combinations(ls, 2):
+        pairs.append((pair[0], pair[1]))
+    plot_many(pairs)
+
+
+    #     if os.path.isfile('{}_{}.pdf'.format(pair[0], pair[1])):
+    #         continue
+    #     try:
+    #         output_loc_hist(pair[0], pair[1])
+    #     except RuntimeError:
+    #         print "Couldn't compare {} and {}".format(pair[0], pair[1])
 
     # test()

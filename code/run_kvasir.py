@@ -14,13 +14,14 @@ import os
 import sys
 import DataImport, FixGbk, MakeBlastDB, KvasirBlast
 from get_outputs import get_outputs
-from KvDataStructures import mongo_init
+from KvDataStructures import mongo_init, reset_database
 
 print 'Here we go!'
 
 gbk_folder = os.path.abspath('input/')
 exp_name = sys.argv[1]
 mongo_init(exp_name)
+reset_database(exp_name)
 
 new_folder = 'output/{0}/'.format(exp_name)
 if not os.path.isdir(new_folder):

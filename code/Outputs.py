@@ -82,7 +82,6 @@ def output_hits_csv():
                     df=df.append(series)
         df.to_csv('hits/{}_hits.csv'.format(query_species), cols=df_index)
             
-
 def output_one_fasta(mongo_record, out_file='output.fna'):
     with open(out_file, 'w+') as output_handle:
         output_handle.write(
@@ -184,7 +183,8 @@ def output_groups_by_species(min_group_size=2):
 
 def output_compare_matrix():
     groups = get_groups()
-    all_species = kv.get_species_collections() 
+    all_species = kv.get_species_collections()
+    
     cds_df = pd.DataFrame(data={n:0 for n in all_species}, index=all_species)
     nt_df = pd.DataFrame(data={n:0 for n in all_species}, index=all_species)
     groups_df = pd.DataFrame(data={n:0 for n in all_species}, index=all_species)
@@ -268,9 +268,12 @@ def get_islands(species_name):
 def get_gene_distance(seq_1, seq_2):
     query = StripedSmithWaterman(seq_1)
     alignment = query(seq_2)
-    return (2.0 - float(alignment.optimal_alignment_score) / float(len(alignment.query_sequence)))    
+    score = float(alignment.optimal_alignment_score)
+    length = float(len(alignment.query_sequence))
 
-def get_16S_distance(species_1, species_2):
+    return (2.0 - score / length)  
+
+def get_16S_distance(species_1, species_2, pident=False):
     if not '16S' in kv.get_collections():
         import_16S()
     
