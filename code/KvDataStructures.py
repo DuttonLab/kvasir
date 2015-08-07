@@ -125,6 +125,7 @@ def concat_contigs(species_collection):
 
 
 if __name__ == '__main__':
-    mongo_init('more_genomes')
-    
+    db = str(raw_input("Please enter database name: "))
+    mongo_init(db)
+    print get_species_collections()    
     

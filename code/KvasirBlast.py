@@ -125,7 +125,7 @@ def blast_to_db():
 def hits_reset():
     kv.remove_collection('hits')
 
-def blast_one(species):
+def blast_one(species, perc_identity='99'):
     current_species_collection = kv.get_collection(species)
     query_fasta = 'blast_results/{}_tmp.fna'.format(kv.db.name)
     with open(query_fasta, 'w+') as query_handle:

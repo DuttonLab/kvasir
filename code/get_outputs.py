@@ -15,10 +15,11 @@ def get_outputs():
 
     o.output_hits_csv()
     o.output_groups(min_group_size=4)
-    # o.output_compare_matrix()
-    # o.output_distance_matrix()
+    o.output_compare_matrix()
+    o.output_distance_matrix()
 
 if __name__ == '__main__':
     import sys
-    mongo_init(sys.argv[1])
+    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/dutton_genomes2/')
+    mongo_init('dutton_genomes2')
     get_outputs()

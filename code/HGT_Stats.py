@@ -11,9 +11,12 @@ import pandas as pd
 import KvDataStructures as kv
 from DataImport import import_16S
 from skbio import DNA
+from skbio import DistanceMatrix
+from skbio import tree
 from skbio.alignment import StripedSmithWaterman
 from matplotlib import pyplot as plt
 import numpy as np
+
 
 def output_hits_csv():
     hits = kv.get_collection('hits')
@@ -28,7 +31,6 @@ def output_hits_csv():
         'parent_start',
         'parent_end',
         'parent_strand',
-        'hit_species',
         'hit_tag',
         'hit_annotation',
         'hit_seq',
@@ -66,7 +68,6 @@ def output_hits_csv():
                         query_record['location']['start'],
                         query_record['location']['end'],
                         query_record['location']['strand'],
-                        hit_record['species'],
                         hit_record['kvtag'],
                         hit_annotation,
                         hit_record['dna_seq'],
@@ -80,7 +81,7 @@ def output_hits_csv():
                     )
 
                     df=df.append(series)
-        df.to_csv('hits/{}_hits.csv'.format(query_species), cols=df_index)
+        df.to_csv('hits/{}_hits.csv'.format(query_species), columns=df_index)
             
 def output_one_fasta(mongo_record, out_file='output.fna'):
     with open(out_file, 'w+') as output_handle:
@@ -93,8 +94,6 @@ def output_one_fasta(mongo_record, out_file='output.fna'):
             )
 
 def get_groups():
-    # dutton_list = ['JB182', 'JB7', 'JB5', 'JB4', 'JB37', 'JB110', 'JB170', 'JB193', 'JB196', 'JB197', 'Brevibacterium undefined']
-    # wolfe_list = ["962_8", "738_8", "862_7", "947_11", "862_8", "341_9", "738_10",]
     all_hits = kv.get_collection('hits')
     groups_list = []
     for h in all_hits.find():
@@ -163,7 +162,7 @@ def output_groups(output_file='default', min_group_size=2):
                         name=db_handle['kvtag']
                     )
                     df=df.append(series)
-        df.to_csv(output_file, cols=df_index)
+        df.to_csv(output_file, columns=df_index)
 
 def output_groups_by_species(min_group_size=2):
     all_species = kv.get_species_collections()
@@ -183,11 +182,12 @@ def output_groups_by_species(min_group_size=2):
 
 def output_compare_matrix():
     groups = get_groups()
-    all_species = kv.get_species_collections()
+    all_species = get_tree()[1]
+    print all_species
     
-    cds_df = pd.DataFrame(data={n:0 for n in all_species}, index=all_species)
-    nt_df = pd.DataFrame(data={n:0 for n in all_species}, index=all_species)
-    groups_df = pd.DataFrame(data={n:0 for n in all_species}, index=all_species)
+    cds_df = pd.DataFrame(data={n:0 for n in all_species}, index=all_species, columns=all_species)
+    nt_df = pd.DataFrame(data={n:0 for n in all_species}, index=all_species, columns=all_species)
+    groups_df = pd.DataFrame(data={n:0 for n in all_species}, index=all_species, columns=all_species)
 
     for pair in combinations(all_species, 2):
         print "====\nComparing {} and {}".format(pair[0], pair[1])
@@ -204,10 +204,12 @@ def output_compare_matrix():
                 if [x for x in group if x[0] == pair[0] and any(y[0] == pair[1] for y in group)]:
                     shared_groups +=1
 
-            cds_df[pair[0]][pair[1]] = shared_cds
-            nt_df[pair[0]][pair[1]] = shared_nt
-            groups_df[pair[0]][pair[1]] = shared_groups
+            cds_df[pair[0]][pair[1]] = cds_df[pair[1]][pair[0]] = shared_cds
+            nt_df[pair[0]][pair[1]] = nt_df[pair[1]][pair[0]] = shared_nt
+            groups_df[pair[0]][pair[1]] = groups_df[pair[1]][pair[0]] = shared_groups
             print "shared cds: {}\nshared nt: {}\nshared groups: {}\n====".format(shared_cds, shared_nt, shared_groups)
+
+    print nt_df
 
     cds_df.to_csv('cds_matrix.csv'.format(kv.db.name))
     nt_df.to_csv('nt_matrix.csv'.format(kv.db.name))
@@ -268,10 +270,10 @@ def get_islands(species_name):
 def get_gene_distance(seq_1, seq_2):
     query = StripedSmithWaterman(seq_1)
     alignment = query(seq_2)
-    score = float(alignment.optimal_alignment_score)
-    length = float(len(alignment.query_sequence))
-
-    return (2.0 - score / length)  
+    q = DNA(alignment.aligned_query_sequence)
+    t = DNA(alignment.aligned_target_sequence)
+    distance = q.distance(t)
+    return distance
 
 def get_16S_distance(species_1, species_2, pident=False):
     if not '16S' in kv.get_collections():
@@ -296,16 +298,33 @@ def output_all_16S():
                     )
                 )
 
-def output_distance_matrix():
+def output_distance_matrix(to_file=True):
     all_species = kv.get_species_collections() 
     distance_matrix = pd.DataFrame(data={n:0.0 for n in all_species}, index=all_species)
     
     for pair in combinations_with_replacement(all_species, 2):
         distance = get_16S_distance(pair[0], pair[1])
-        print distance
         distance_matrix[pair[0]][pair[1]] = distance
+        distance_matrix[pair[1]][pair[0]] = distance
 
-    distance_matrix.to_csv('distance_matrix.csv')
+    if to_file:
+        distance_matrix.to_csv('distance_matrix.csv')
+    else:
+        return distance_matrix
+
+def get_tree(newick=False):
+    dm = DistanceMatrix(output_distance_matrix(False), kv.get_species_collections())
+    t = tree.nj(dm)
+    print t.ascii_art()
+    tips = []
+    for node in t.tips():
+        print node.name, node.length
+        tips.append(node.name.replace(' ', '_'))
+    if newick:
+        n = tree.nj(dm, result_constructor=str)
+        print n
+    else:
+        return (t, tips)
 
 """Basic Use Functions"""
 def collapse_lists(list_of_lists):
@@ -333,7 +352,6 @@ def get_tag_int(kvtag):
 
 
 if __name__ == '__main__':
-    import sys
     kv.mongo_init('more_genomes')
     os.chdir('/Users/KBLaptop/computation/kvasir/data/output/more_genomes/')
-    output_groups_by_species(4)
+    get_tree(True)

@@ -20,8 +20,18 @@ print 'Here we go!'
 
 gbk_folder = os.path.abspath('input/')
 exp_name = sys.argv[1]
+
 mongo_init(exp_name)
 reset_database(exp_name)
+
+check_file_names = str(raw_input("Manually enter species names? [y/n]"))
+if check_file_names == 'y':
+    check_file_names = True
+elif check_file_names == 'n':
+    check_file_names = False
+else:
+    "Must enter 'y' or 'n', start over"
+    break
 
 new_folder = 'output/{0}/'.format(exp_name)
 if not os.path.isdir(new_folder):
@@ -33,7 +43,9 @@ for the_file in os.listdir(gbk_folder):
     path_to_file = '{0}/{1}'.format(gbk_folder, the_file)
     if the_file.endswith('.gb'):
         print 'Checking {0}'.format(the_file)
-        validated_file = FixGbk.validate_gbk(path_to_file)
+
+        validated_file = FixGbk.validate_gbk(path_to_file, check_file_names)       
+
         if validated_file:
             print 'Importing {0}'.format(the_file)
             DataImport.import_file(validated_file)
