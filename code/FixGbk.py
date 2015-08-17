@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # by Kevin Bonham, PhD (2015)
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
-# CC-BY
+# Unless otherwise indicated, licensed under GNU Public License (GPLv3)
 
 import os, re
 from Bio import SeqIO
@@ -45,6 +45,10 @@ def validate_gbk(some_genbank, user_validate=True):
                 new_genome = []
 
                 for record in genome:
+                    new_genome.append(record)
+                new_genome.sort(key=len, reverse=True)
+                
+                for record in new_genome:
                     contig_counter += 1
                     try:
                         source = record.annotations['source']
@@ -59,7 +63,7 @@ def validate_gbk(some_genbank, user_validate=True):
                     for feature in record.features:
                         lt_counter += 1
                         feature.qualifiers['kvtag'] = str(lt_counter).zfill(5)
-                    new_genome.append(record)
+                
                 if not os.path.isdir('validated_gbk/'):
                     os.makedirs('validated_gbk/')
                 with open(new_file_name, 'w+') as output_handle:
@@ -69,3 +73,6 @@ def validate_gbk(some_genbank, user_validate=True):
             print 'already fixed, skipping validation!'
             return False
 
+if __name__ == '__main__':
+    os.chdir('/Users/KBLaptop/computation/tmp')
+    validate_gbk('/Users/KBLaptop/computation/genomes/arthro_IMG.gb', False)

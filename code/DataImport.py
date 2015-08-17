@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # by Kevin Bonham, PhD (2015)
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
-# CC-BY
+# Unless otherwise indicated, licensed under GNU Public License (GPLv3)
 
 '''
 This script is designed to import data from a genbank file and
@@ -16,16 +16,21 @@ from Bio.Alphabet import IUPAC
 import KvDataStructures as kv
 
 
-def import_file(some_genbank):
+def import_file(some_genbank, collection):
     with open(some_genbank, 'r') as open_file:
         current_species = get_species_name(some_genbank)
-        species_collection = kv.get_collection(current_species)
+        collection = kv.get_collection(collection)
 
         print 'Working on importing {0}'.format(current_species)
 
         # Each "record" in genbank file is read, corresponds to individual contigs
         for record in SeqIO.parse(open_file, 'gb'):
             current_contig = get_contig(record.name)
+            # kv.get_collection('contigs').insert_one({
+            #                             'species':current_species,
+            #                             'contig':current_contig,
+            #                             'length':len(record)
+            #                             })
             print "Importing {}".format(current_contig)
             ssu_gene = get_16S(record)
             if ssu_gene:
@@ -44,7 +49,7 @@ def import_file(some_genbank):
                     'type':'16S'
                     }
                 print "adding 16S gene!"
-                species_collection.insert_one(gene_record)
+                collection.insert_one(gene_record)
                 kv.get_collection('16S').insert_one(gene_record)
 
             for feature in record.features:
@@ -65,7 +70,7 @@ def import_file(some_genbank):
                         'aa_seq':feature.qualifiers['translation'][0],
                         'type':'gene'
                         }
-                    species_collection.insert_one(gene_record)
+                    collection.insert_one(gene_record)
 
 def get_dna_seq(feature, record):
     if feature.location.strand == 1:
@@ -105,56 +110,3 @@ def import_folder(genbank_folder):
         current_file = os.path.join(genbank_folder, a_file)
         print 'importing {0}!'.format(current_file)
         import_file(current_file)
-
-def import_16S(some_genbank, make_fasta=False):
-    with open(some_genbank, 'r') as open_file:
-        current_species = get_species_name(some_genbank)
-        species_collection = kv.get_collection(current_species)
-        all_16S = []
-        print 'Working on importing 16s from {0}'.format(current_species)
-
-        # Each "record" in genbank file is read, corresponds to individual contigs
-        for record in SeqIO.parse(open_file, 'gb'):
-            current_contig = get_contig(record.name)
-            print "Importing {}".format(current_contig)
-            ssu_gene = get_16S(record)
-            if ssu_gene:
-                gene_record = {
-                    'species':current_species,
-                    'contig':current_contig,
-                    'location':str(ssu_gene[0].location),
-                    'annotation':ssu_gene[0].qualifiers['product'][0],
-                    'dna_seq':ssu_gene[1],
-                    'type':'16S'
-                    }
-                print "adding 16S gene!"
-                species_collection.insert_one(gene_record)
-                kv.get_collection('16S').insert_one(gene_record)
-
-                if make_fasta:
-                    all_16S.append(gene_record)
-        if make_fasta:
-            return all_16S
-
-# kv.mongo_init('permissive')
-# input_dir = '/Users/KBLaptop/computation/kvasir/data/output/permissive/validated_gbk'
-    
-# for gb in os.listdir(input_dir):
-#     if gb.endswith('.gb'):
-#         import_16S(os.path.join(input_dir, gb))
-
-#For testing:
-#kv.mongo_init('scratch')
-#import_file('/Users/KBLaptop/googleDrive/work/duttonLab/working_database/Microbacterium_gubbenese_published.gb')
-
-#if __name__ == '__main__':
-#    import sys
-#    import os
-#    kv.mongo_init(sys.argv[2])
-#    if os.path.isdir(sys.argv[1]) is True:
-#        print 'Looks like {0} is a directory!'.format(sys.argv[1])
-#        import_folder(sys.argv[1])
-#    elif os.path.isfile(sys.argv[1]) is True:
-#        import_file(sys.argv[1])
-#    else:
-#        print 'Something\'s really wrong here...'

@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 # by Kevin Bonham, PhD (2015)
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
-# CC-BY
+# Unless otherwise indicated, licensed under GNU Public License (GPLv3)
 
-'''Class objects for use in other scripts, and functions for extracting information from MongoDB'''
+'''Functions for interacting with information from MongoDB'''
 
-import pymongo
+from pymongo import MongoClient, ASCENDING, DESCENDING
 from bson.objectid import ObjectId
-from operator import itemgetter
 import re
 
 
 class mongo_iter(object):
-    """Iterator that steps through species in mongoDB. Call with:
+    """**DEPRECATED** Iterator that steps through species in mongoDB. Call with:
     `for current_species_collection in mongo_iter(mongo_db_name):`"""
     def __init__(self):
         self.index = -1
@@ -28,8 +27,16 @@ class mongo_iter(object):
             self.index += 1
             return get_collection(self.collections[self.index])
                 
-client = pymongo.MongoClient()
+client = MongoClient()
 db = None
+
+def parse_genbank_name(some_genbank):
+    parsed = re.search(r"([A-Za-z]+)_([A-Za-z]+)_([\w-]+)_validated\.gb", some_genbank)
+    return (parsed.group(1), parsed.group(2), parsed.group(3))
+
+def parse_species_name(sp_name):
+    parsed = re.search(r"^([A-Za-z]+)_([A-Za-z]+)_([\w-]+)$", sp_name)
+    return (parsed.group(1), parsed.group(2), parsed.group(3))
 
 def get_gene_location(location):
     '''
@@ -75,9 +82,8 @@ def get_species_collections():
         collections.remove('hits')
     return collections
 
-def get_mongo_record(species, mongo_id):
-    species_collection = get_collection(species)
-    return species_collection.find_one({'_id':ObjectId(mongo_id)})
+def get_mongo_record(species, mongo_id, db='core'):
+    return get_collection(db).find_one({'species':species, '_id':ObjectId(mongo_id)})
 
 def get_genus(species_name):
     return re.search(r'^(\w+)', species_name).group(1)
@@ -96,36 +102,53 @@ def fasta_id_parse(fasta_id):
     parsed = re.search(r'(\w+)\|(\w+)', fasta_id)
     return (parsed.group(1), parsed.group(2))
 
-def index_contigs(species_collection):
-    return species_collection.find().sort([("location.contig", pymongo.ASCENDING), ("location.start", pymongo.ASCENDING)])
+def index_contigs(species, collection='core'):
+    curr_collection = get_collection(collection)
+    return curr_collectioncollection.find({'species':species}).sort([("location.contig", ASCENDING), ("location.start", ASCENDING)])
 
-def concat_contigs(species_collection):
+def concat_contigs(species, collection='core'):
     current_contig = 0
     last_contig_end = 0
     last_gene_end = 0
     concatenated = {}
-    for gene in index_contigs(species_collection):
-        if gene['location']['contig'] == current_contig:
-            gene['location']['start'] += last_contig_end
-            gene['location']['end'] += last_contig_end
-            last_gene_end = gene['location']['end']
-            
-            concatenated[gene['_id']] = gene
-        else:
-            current_contig = gene['location']['contig']
-            last_contig_end = last_gene_end
+    for gene in index_contigs(species, collection):
+        if gene['species'] == species:
+            if gene['location']['contig'] == current_contig:
+                gene['location']['start'] += last_contig_end
+                gene['location']['end'] += last_contig_end
+                last_gene_end = gene['location']['end']
+                
+                concatenated[gene['_id']] = gene
+            else:
+                current_contig = gene['location']['contig']
+                last_contig_end = last_gene_end
 
-            gene['location']['start'] += last_contig_end
-            gene['location']['end'] += last_contig_end
-            last_gene_end = gene['location']['end']
-        
-            concatenated[gene['_id']] = gene
+                gene['location']['start'] += last_contig_end
+                gene['location']['end'] += last_contig_end
+                last_gene_end = gene['location']['end']
+            
+                concatenated[gene['_id']] = gene
 
     return concatenated
 
+def make_gene_fasta(gene_record):
+    fasta = '{}_{}.fna'.format(gene_record['species'], gene_record['kvtag'])
+    
+    if not os.path.isfile(fasta):
+        with open(fasta, 'w+') as output_handle:
+            output_handle.write(
+                ">{}|{}\n{}\n".format(gene_record['species'].replace(' ', '_'), gene_record['_id'], gene_record['dna_seq'])
+            )
+    return fasta
+
+def make_seq_fasta(seq, name='temp'):
+    fasta = '{}.fasta'.format(name)
+    with open(fasta, 'w+') as output_handle:
+        output_handle.write(
+                ">{}\n{}\n".format(name, seq)
+            )
+    return fasta
 
 if __name__ == '__main__':
-    db = str(raw_input("Please enter database name: "))
-    mongo_init(db)
-    print get_species_collections()    
-    
+    test = 'validated_genbank/Arthrobacter_arilaitensis_3M03_validated.gb'
+    print parse_genbank_name(test)

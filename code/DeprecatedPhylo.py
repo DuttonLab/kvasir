@@ -1,12 +1,12 @@
 # !/usr/bin/env python
 # by Kevin Bonham, PhD (2015)
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
-# CC-BY
+# Unless otherwise indicated, licensed under GNU Public License (GPLv3)
 
 import re
 import os
 import KvDataStructures as kv
-import Outputs as o
+import KvasirHGT as kh
 from itertools import combinations, permutations
 from matplotlib import pyplot as plt
 from Bio import SeqIO
@@ -16,6 +16,67 @@ from subprocess import Popen, PIPE
 import numpy as np
 import pymongo
 import plotly.plotly as py
+
+def get_16S_distance(species_1, species_2, pident=False):  
+    # print 'Aligning:', species_1, species_2
+    s1_ssu = str(kv.db['16S'].find_one({'species':species_1})['dna_seq'])
+    s2_ssu = str(kv.db['16S'].find_one({'species':species_2})['dna_seq'])
+    return get_gene_distance(s1_ssu, s2_ssu)
+
+def output_all_16S():
+    print "Making fasta of all 16S in database {}".format(kv.db.name)
+    with open('{}_16S.fna'.format(kv.db.name), 'w+') as output_handle:
+        for record in kv.get_collection('16S').find():
+            output_handle.write(
+                '>{0}\n{1}\n'.format(
+                    record['species'],
+                    record['dna_seq'],
+                    )
+                )
+
+def get_gene_distance(seq_1, seq_2):
+    query = StripedSmithWaterman(seq_1)
+    alignment = query(seq_2)
+    q = DNA(alignment.aligned_query_sequence)
+    t = DNA(alignment.aligned_target_sequence)
+    return q.distance(t)
+
+def output_distance_matrix(core=False, to_file=True):
+    all_species = kv.get_collection('core').distinct('species'))
+    if core:
+        pass
+    else:
+        all_species.extend(kv.get_collection('other').distinct('species'))
+
+    distance_matrix = pd.DataFrame(data={n:0.0 for n in all_species}, index=all_species)
+    
+    for pair in combinations_with_replacement(all_species, 2):
+        distance = get_16S_distance(pair[0], pair[1])
+        distance_matrix[pair[0]][pair[1]] = distance
+        distance_matrix[pair[1]][pair[0]] = distance
+
+    if to_file:
+        distance_matrix.to_csv('distance_matrix.csv')
+    else:
+        return distance_matrix
+
+def get_tree(core=False, newick=False):
+    all_species = kv.get_collection('core').distinct('species')
+    if core:
+        pass
+    else:
+        all_species.extend(kv.get_collection('other').distinct('species'))
+    t = tree.nj(dm)
+    print t.ascii_art()
+    tips = []
+    for node in t.tips():
+        print node.name, node.length
+        tips.append(node.name.replace(' ', '_'))
+    if newick:
+        n = tree.nj(dm, result_constructor=str)
+        print n
+    else:
+        return (t, tips)
 
 def ssu_perc_id(species_1, species_2):
     s1_ssu = kv.db['16S'].find_one({'species':species_1})
@@ -197,14 +258,6 @@ def blast_one(query, database, word_size=28):
     else:
         return None
 
-def get_clocks(species):
-    clock_genes = ["dnaG", "frr", "infC", "nusA", "pgk", "pyrG", "rplA", "rplB", "rplC", "rplD", "rplE", "rplF", "rplK", "rplL", "rplM", "rplN", "rplP", "rplS", "rplT", "rpmA", "rpoB", "rpsB", "rpsC", "rpsE", "rpsI", "rpsJ", "rpsK", "rpsM", "rpsS", "smpB", "tsf"]
-    current_species_collection = kv.get_collection(species)
-    clock_dict = {}
-    for record in current_species_collection.find():
-        if any(gene.lower() in record['annotation'].lower() for gene in clock_genes):
-            print record['annotation']
-
 def all_by_all(species_1, species_2):
     # results = fasta_blast(species_1, species_2)
     results = 'pairwise_blast/{}_{}-blast_results.xml'.format(species_1, species_2)
@@ -234,7 +287,7 @@ def global_distance(species_1, species_2):
     hits_distance = []
     ssu_distance = None
     for hit in hits_list:
-        distance = o.get_gene_distance(str(hit[0]['dna_seq']), str(hit[1]['dna_seq']))
+        distance = kh.get_gene_distance(str(hit[0]['dna_seq']), str(hit[1]['dna_seq']))
         hits_distance.append(distance)
         if hit[0]['type'] == '16S':
             ssu_distance = distance
@@ -282,7 +335,7 @@ def pairwise_distance(species_1, species_2):
     xy_points = []
     for hit in hits:
         x = len(hit[0]['dna_seq'])
-        y = o.get_gene_distance(str(hit[0]['dna_seq']), str(hit[1]['dna_seq']))
+        y = khget_gene_distance(str(hit[0]['dna_seq']), str(hit[1]['dna_seq']))
         xy_points.append((x,y))
     
 
@@ -337,7 +390,7 @@ def pairwise_hist(species_1, species_2):
     hits = all_by_all(species_1, species_2)
     xs = []
     for hit in hits:
-        x = o.get_gene_distance(str(hit[0]['dna_seq']), str(hit[1]['dna_seq']))
+        x = khget_gene_distance(str(hit[0]['dna_seq']), str(hit[1]['dna_seq']))
         xs.append(x)
     
     plt.close()

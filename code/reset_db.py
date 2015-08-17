@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # by Kevin Bonham, PhD (2015)
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
-# CC-BY
+# Unless otherwise indicated, licensed under GNU Public License (GPLv3)
 
 import sys
 import KvDataStructures as kv

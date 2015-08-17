@@ -1,15 +1,13 @@
 #!/usr/bin/env python 2.7
 # by Kevin Bonham, PhD (2015)
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
-# CC-BY
+# Unless otherwise indicated, licensed under GNU Public License (GPLv3)
 
-import pymongo
 import os
-from itertools import groupby, combinations, combinations_with_replacement
+from itertools import combinations, combinations_with_replacement
 from bson.objectid import ObjectId
 import pandas as pd
 import KvDataStructures as kv
-from DataImport import import_16S
 from skbio import DNA
 from skbio import DistanceMatrix
 from skbio import tree
@@ -47,15 +45,13 @@ def output_hits_csv():
         for query_id in record['hits']:
             list_of_hits = record['hits'][query_id]
             if list_of_hits:
-                query_species_collection = kv.get_collection(query_species)
-                query_record = query_species_collection.find_one({'_id':ObjectId(query_id)})
+                query_record = kv.get_collection('core').find_one({'species':query_species, '_id':ObjectId(query_id)})
                 
                 for hit in list_of_hits:
 
                     hit_species = hit[0]
                     hit_id = hit[1]
-                    hit_species_collection = kv.get_collection(hit_species)
-                    hit_record = hit_species_collection.find_one({'_id':ObjectId(hit_id)})
+                    hit_record = kv.get_collection('core').find_one({'species':hit_species, '_id':ObjectId(hit_id)})
                     hit_record['kvtag']
                     query_annotation = query_record['annotation'].replace(',','')
                     hit_annotation = hit_record['annotation'].replace(',','')
@@ -237,7 +233,6 @@ def get_islands(species_name):
     
     # Add mongo_record for each hit in any gene
     all_hits = kv.get_collection('hits')
-    species_hits = all_hits.find_one({'species':species_name})['hits']
 
     
     for query_id in species_hits:
@@ -267,91 +262,7 @@ def get_islands(species_name):
 
     return collapse_lists(islands)
 
-def get_gene_distance(seq_1, seq_2):
-    query = StripedSmithWaterman(seq_1)
-    alignment = query(seq_2)
-    q = DNA(alignment.aligned_query_sequence)
-    t = DNA(alignment.aligned_target_sequence)
-    distance = q.distance(t)
-    return distance
-
-def get_16S_distance(species_1, species_2, pident=False):
-    if not '16S' in kv.get_collections():
-        import_16S()
-    
-    # print 'Aligning:', species_1, species_2
-    s1_ssu = str(kv.db['16S'].find_one({'species':species_1})['dna_seq'])
-    s2_ssu = str(kv.db['16S'].find_one({'species':species_2})['dna_seq'])
-    return get_gene_distance(s1_ssu, s2_ssu)
-
-def output_all_16S():
-    if not '16S' in kv.get_collections():
-        import_16S()
-
-    print "Making fasta of all 16S in database {}".format(kv.db.name)
-    with open('{}_16S.fna'.format(kv.db.name), 'w+') as output_handle:
-        for record in kv.get_collection('16S').find():
-            output_handle.write(
-                '>{0}\n{1}\n'.format(
-                    record['species'],
-                    record['dna_seq'],
-                    )
-                )
-
-def output_distance_matrix(to_file=True):
-    all_species = kv.get_species_collections() 
-    distance_matrix = pd.DataFrame(data={n:0.0 for n in all_species}, index=all_species)
-    
-    for pair in combinations_with_replacement(all_species, 2):
-        distance = get_16S_distance(pair[0], pair[1])
-        distance_matrix[pair[0]][pair[1]] = distance
-        distance_matrix[pair[1]][pair[0]] = distance
-
-    if to_file:
-        distance_matrix.to_csv('distance_matrix.csv')
-    else:
-        return distance_matrix
-
-def get_tree(newick=False):
-    dm = DistanceMatrix(output_distance_matrix(False), kv.get_species_collections())
-    t = tree.nj(dm)
-    print t.ascii_art()
-    tips = []
-    for node in t.tips():
-        print node.name, node.length
-        tips.append(node.name.replace(' ', '_'))
-    if newick:
-        n = tree.nj(dm, result_constructor=str)
-        print n
-    else:
-        return (t, tips)
-
-"""Basic Use Functions"""
-def collapse_lists(list_of_lists):
-    # example input: [[1,2,3],[3,4],[5,6,7],[1,8,9,10],[11],[11,12],[13],[5,12]]
-    # example output: [[1,2,3,4,8,9,10],[5,6,7,11,12],[13]]
-    # from stackoverflow user YXD: http://stackoverflow.com/questions/30917226/collapse-list-of-lists-to-eliminate-redundancy
-    result = []
-    for l in list_of_lists:
-        s = set(l)
-
-        matched = [s]
-        unmatched = []
-        # first divide into matching and non-matching groups
-        for g in result:
-            if s & g:
-                matched.append(g)
-            else:
-                unmatched.append(g)
-        # then merge matching groups
-        result = unmatched + [set().union(*matched)]
-    return result
-
-def get_tag_int(kvtag):
-    return int(kvtag[-5:])
-
-
 if __name__ == '__main__':
-    kv.mongo_init('more_genomes')
-    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/more_genomes/')
+    kv.mongo_init('reorg')
+    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/reorg/')
     get_tree(True)
