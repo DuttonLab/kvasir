@@ -131,15 +131,16 @@ def concat_contigs(species, collection='core'):
 
     return concatenated
 
-def make_gene_fasta(gene_record):
-    fasta = '{}_{}.fna'.format(gene_record['species'], gene_record['kvtag'])
-    
-    if not os.path.isfile(fasta):
+def make_gene_fasta(gene_record, to_file=True):
+    entry = ">{}|{}\n{}\n".format(gene_record['species'].replace(' ', '_'), gene_record['_id'], gene_record['dna_seq'])
+
+    if to_file:
+        fasta = '{}_{}.fna'.format(gene_record['species'], gene_record['kvtag'])
         with open(fasta, 'w+') as output_handle:
-            output_handle.write(
-                ">{}|{}\n{}\n".format(gene_record['species'].replace(' ', '_'), gene_record['_id'], gene_record['dna_seq'])
-            )
-    return fasta
+            output_handle.write(entry)
+        return fasta
+    else:
+        return entry
 
 def make_seq_fasta(seq, name='temp'):
     fasta = '{}.fasta'.format(name)
@@ -148,6 +149,19 @@ def make_seq_fasta(seq, name='temp'):
                 ">{}\n{}\n".format(name, seq)
             )
     return fasta
+
+def make_id_list_fasta(id_list, db):
+    """
+    Make fasta from list of `(species, _id)` tuples
+    """
+    genes = []
+    for gene_id in id_list:
+        genes.append(make_gene_fasta(get_mongo_record(*gene_id, db=db), to_file=False))
+    with open('tmp.fna', 'w+') as output_handle:
+        for gene in genes:
+            output_handle.write(gene)
+
+        
 
 if __name__ == '__main__':
     test = 'validated_genbank/Arthrobacter_arilaitensis_3M03_validated.gb'

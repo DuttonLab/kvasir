@@ -13,6 +13,7 @@ from Bio.Blast import NCBIXML
 from Bio.Blast.Applications import NcbiblastnCommandline
 from bson.objectid import ObjectId
 from pymongo.cursor import Cursor
+from KvasirHGT import core_hgt_groups
 import KvDataStructures as kv
 
 def make_blast_db(source, name=None, remove_source=True):
@@ -81,15 +82,15 @@ def make_blast_db(source, name=None, remove_source=True):
     if remove_source:
         os.remove(output_fasta)
 
-def blast_vs_fasta(subject, query):
+def blast_vs_fasta(query, subject):
     """
-    Blast `subject` against `query`. Both must be paths to fasta file
+    Blast `query` against `subject`. Both must be paths to fasta file
     Returns list of lists, each `[sseqid, qseqid, pident, length]`   
     """
     out = Popen(
         ['blastn',
-        '-query', subject,
-        '-subject', query,
+        '-query', query,
+        '-subject', subject,
         '-outfmt', '10 sseqid qseqid pident length',
         ], stdout=PIPE
     ).communicate()[0]
@@ -97,20 +98,20 @@ def blast_vs_fasta(subject, query):
         result = re.split(r'[,\n]', out.rstrip())[0]
         return [result[i:i+4] for i in range(len(result))[0::4]]
 
-def blast_vs_db(subject, db):
+def blast_vs_db(query, db):
     """
     Blast `subject` (fasta file) against `db` (blast db). 
-    Returns list of lists, each `[sseqid, qseqid, pident, length]`   
+    Returns list of lists, each `[qseqid, sseqid, pident, length]`   
     """
     out = Popen(
         ['blastn',
-        '-query', subject,
+        '-query', query,
         '-db', db,
-        '-outfmt', '10 sseqid qseqid pident length',
+        '-outfmt', '10 qseqid sseqid pident length',
         ], stdout=PIPE
     ).communicate()[0]
     if out:
-        result = re.split(r'[,\n]', out.rstrip())[0]
+        result = re.split(r'[,\n]', out.rstrip())
         return [result[i:i+4] for i in range(len(result))[0::4]]
 
 def core_hgt_blast(perc_identity='99'):
@@ -137,7 +138,7 @@ def core_hgt_blast(perc_identity='99'):
             '-query', query_fasta,
             '-db', 'blast_databases/core',
             '-outfmt', '5',
-            '-out', 'blast_results/core/{}_blast.xml'.format(species),
+            '-out', 'blast_results/core/{}_{}_blast.xml'.format(species, perc_identity),
             '-perc_identity', perc_identity
             ],
             stdout=PIPE
@@ -145,10 +146,10 @@ def core_hgt_blast(perc_identity='99'):
 
         os.remove(query_fasta)
 
-def core_blast_to_db():
+def core_blast_to_db(perc_identity='99'):
     blast_dir = 'blast_results/core/'
     for f in os.listdir(blast_dir):
-        if f.endswith('.xml'):
+        if f.endswith('{}_blast.xml'.format(perc_identity)):
             file_handle = 'blast_results/core/{}'.format(f)
             with open(file_handle, 'r') as result_handle:
                 blast_records = NCBIXML.parse(result_handle)
@@ -182,24 +183,42 @@ def core_blast_to_db():
                     
                 print 'Updataing mongoDB with hits'
                 hits_collection = kv.get_collection('hits')
-                hits_collection.insert_one(
-                    {
-                    'species':query_name,
-                    'core_hits':hits_dict
-                    }
-                ) 
+                hits_collection.update_one(
+                    {'species':query_name},
+                    {'$set':{'core_hits_{}'.format(perc_identity):{x:hits_dict[x] for x in hits_dict if hits_dict[x]}}},
+                    upsert=True
+                    ) 
 
 def hits_reset():
     kv.remove_collection('hits')
 
+def other_blast():
+    groups_list = core_hgt_groups()
+    groups_list.sort(key=len, reverse=True)
+    
+    for i in range(len(groups_list)):
+        group_hits = []
+        kv.make_id_list_fasta(groups_list[i], 'core')
+        results = blast_vs_db('tmp.fna', 'blast_databases/other')
+
+        hits_collection = kv.get_collection('hits')
+        if results:
+            for j in range(len(results)):
+                group_hits.append(results[j])
+        hits_collection.insert_one({'group':(i+1), 'group_hits':group_hits})
+
+
 if __name__ == '__main__':
     import sys
     kv.mongo_init('reorg')
-    kv.mongo_init(sys.argv[1])
-    os.chdir('output/{}/'.format(sys.argv[1]))
-    make_blast_db('core')
-    make_blast_db('other')
+    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/reorg/')
+    # kv.mongo_init(sys.argv[1])
+    # os.chdir('output/{}/'.format(sys.argv[1]))
+    # make_blast_db('core')
+    # make_blast_db('other')
     hits_reset()
-    core_hgt_blast()
-    core_blast_to_db()
-
+    core_blast_to_db(perc_identity='90')
+    core_blast_to_db(perc_identity='95')
+    core_blast_to_db(perc_identity='99')
+    
+    other_blast()

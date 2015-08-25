@@ -6,7 +6,7 @@
 import KvDataStructures as kv
 import pandas as pd
 
-def core_hgt_stats():
+def core_hgt_stats(perc_identity='99'):
     """
     Returns stats of HGT (number of events etc)
     """
@@ -14,7 +14,7 @@ def core_hgt_stats():
     df_index = ['Total_CDS', 'HGT_CDS', 'Islands']
     df = pd.DataFrame()
     for species in collection.distinct('species'):
-        hits = kv.get_collection('hits').find_one({'species':species})['core_hits']
+        hits = kv.get_collection('hits').find_one({'species':species})['core_hits_{}'.format(perc_identity)]
         series = pd.Series([
             sum([1 for x in collection.find({'species':species})]),
             sum([1 for x in hits if hits[x]]),
@@ -48,7 +48,7 @@ def collapse_lists(list_of_lists):
         result = unmatched + [set().union(*matched)]
     return result
 
-def get_islands(species_name):
+def get_islands(species_name, perc_identity='99'):
     """
     For each species, combines HGT hits co-occurring within 5kb of eachother
     Returns list of lists of `(species, _id)` tuples
@@ -59,7 +59,7 @@ def get_islands(species_name):
     
     # Add mongo_record for each hit in any gene
     all_hits = kv.get_collection('hits')
-    species_hits = all_hits.find_one({'species':species_name})['core_hits']
+    species_hits = all_hits.find_one({'species':species_name})['core_hits_{}'.format(perc_identity)]
 
     
     for query_id in species_hits:
@@ -89,7 +89,7 @@ def get_islands(species_name):
 
     return collapse_lists(islands)
 
-def core_hgt_groups():
+def core_hgt_groups(perc_identity='99'):
     """
     Returns mutilspecies groups of genes as list of lists.
     
@@ -99,15 +99,16 @@ def core_hgt_groups():
     """
     all_hits = kv.get_collection('hits')
     groups_list = []
-    for h in all_hits.find():
-        current_species_islands = get_islands(h['species'])
+    for s in all_hits.distinct('species'):
+        s_hits = all_hits.find_one({'species':s})
+        current_species_islands = get_islands(s_hits['species'])
         
         # each sublist represents one island...
         for island in current_species_islands:
             if island: # many lists are empty, skip those
                 hit_set = set() # container for hits 
                 for gene_id in island:
-                    gene_hits = h['core_hits'][gene_id[1]]
+                    gene_hits = s_hits['core_hits_{}'.format(perc_identity)][gene_id[1]]
                     
                     # Pulls each hit id tuple, then appends it to group_set
                     for hit in gene_hits:
@@ -158,8 +159,40 @@ def output_groups(min_group_size=2):
                 df=df.append(series)
     df.to_csv(output_file, columns=df_index)
 
+def group_hits(core=False):
+    all_species = kv.get_collection('core').distinct('species')
+    if not core:
+        all_species.extend(kv.get_collection('other').distinct('species'))
+    
+
+    hits_db = kv.get_collection('hits')
+    species_index = sorted(all_species)
+    print species_index
+    df = pd.DataFrame()
+    core_groups = sorted(core_hgt_groups(), key=len, reverse=True)
+
+
+    for group in sorted(hits_db.distinct('group')):
+        recorded = []
+        s = {sp:0.0 for sp in species_index}
+        for hit in core_groups[group-1]:
+            if not hit in recorded:
+                s[hit[0]] += len(kv.get_mongo_record(*hit)['dna_seq'])
+                recorded.append(hit)
+        
+        for hit in hits_db.find_one({'group':group})['group_hits']:
+            if float(hit[2]) > 90 and float(hit[3]) > 100:
+                if hit[1] not in recorded:
+                    s[kv.fasta_id_parse(hit[1])[0]] += float(hit[2])*float(hit[3])/100
+                    recorded.append(hit[1])
+                
+        s = pd.Series(s, name='group_{}'.format(group))
+        df['group_{}'.format(group)] = s
+
+    # df.to_csv('group_hits_other3.csv')
+
 if __name__ == '__main__':
     import os
     kv.mongo_init('reorg')
     os.chdir('/Users/KBLaptop/computation/kvasir/data/output/reorg/')
-    output_groups()
+    group_hits()
