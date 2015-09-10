@@ -139,8 +139,10 @@ def add_ssu(supp_file):
             kv.get_collection('16S').insert_one(gene_record)
             print kv.get_collection('16S').find_one({'species':ssu_df['strain'][i]})
 
+def get_list_from_tree(newick_file):
+    pass
+
 
 if __name__ == '__main__':
     os.chdir('/Users/KBLaptop/computation/kvasir/data/output/reorg/')
     kv.mongo_init('reorg')
-    ssu_fasta()

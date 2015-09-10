@@ -82,7 +82,7 @@ def get_islands(species_name, perc_identity='99'):
                     entry_recorded = True
                     islands.append([
                         (entry_1['species'], str(entry_1['_id'])),
-                        (entry_2['species'], str(entry_2['_id']))
+                        (entry_2['species'], str(entry_2[ '_id']))
                     ])
         if not entry_recorded:
             islands.append([(entry_1['species'], str(entry_1['_id']))])
@@ -189,10 +189,13 @@ def group_hits(core=False):
         s = pd.Series(s, name='group_{}'.format(group))
         df['group_{}'.format(group)] = s
 
-    # df.to_csv('group_hits_other3.csv')
+    df.to_csv('group_hits_other.csv')
 
-if __name__ == '__main__':
-    import os
-    kv.mongo_init('reorg')
-    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/reorg/')
-    group_hits()
+# if __name__ == '__main__':
+#     import os
+#     kv.mongo_init('pacbio2')
+#     os.chdir('/Users/KBLaptop/computation/kvasir/data/output/pacbio2/')
+#     # group_hits(core=True)
+#     # output_groups()
+#     # core_hgt_stats()
+#     output_hits_csv()

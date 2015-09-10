@@ -26,11 +26,7 @@ def import_file(some_genbank, collection):
         # Each "record" in genbank file is read, corresponds to individual contigs
         for record in SeqIO.parse(open_file, 'gb'):
             current_contig = get_contig(record.name)
-            # kv.get_collection('contigs').insert_one({
-            #                             'species':current_species,
-            #                             'contig':current_contig,
-            #                             'length':len(record)
-            #                             })
+            
             print "Importing {}".format(current_contig)
             ssu_gene = get_16S(record)
             if ssu_gene:

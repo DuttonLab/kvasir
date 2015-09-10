@@ -24,7 +24,10 @@ def get_karyotype(some_gbk):
             sp_name = kv.parse_genbank_name(some_gbk)
             contigs.append((record.name, len(record)))
         sp_strain = sp_name[2]
+        if not os.path.isdir('circos/karyotypes/'):
+            os.makedirs('circos/karyotypes/')
         with open('circos/karyotypes/karyotype_{}.txt'.format(os.path.basename(some_gbk)[:-13]), 'w+') as karyotype:
+            color = [np.random.randint(0,255), np.random.randint(0,255), np.random.randint(0,255)]
             for contig in contigs:
                 if contig[1] > 1000:
                     karyotype.write('chr - {0}{1} {2} {3} {4} {5},{6},{7}\n'.format(
@@ -33,9 +36,7 @@ def get_karyotype(some_gbk):
                         contig[0],
                         '1',
                         contig[1],
-                        np.random.randint(0,255),
-                        np.random.randint(0,255),
-                        np.random.randint(0,255),
+                        *color
                         )
                     )
                 else:
@@ -44,6 +45,8 @@ def get_karyotype(some_gbk):
 def get_links(group=None, perc_identity='99'):
     hits_collection = kv.get_collection('hits')
     group_hits = None
+    if not os.path.isdir('circos/links/'):
+            os.makedirs('circos/links/')
     out_name = 'circos/links/all_links_{}.txt'.format(perc_identity)
     if group:
         groups = core_hgt_groups()
@@ -52,30 +55,34 @@ def get_links(group=None, perc_identity='99'):
     
     with open(out_name, 'w+') as out_handle:
         for species in hits_collection.find():
-            all_hits = species['core_hits_{}'.format(perc_identity)]
-            hits_to_write = None
-            if group:
-                hits_to_write = {gene:all_hits[gene] for gene in all_hits if (species['species'], gene) in group_hits}
-            else:
-                hits_to_write = all_hits
-            for gene in hits_to_write:
-                if hits_to_write[gene]:
-                    s1_record = kv.get_mongo_record(species['species'], gene)
-                    s1_strain = kv.parse_species_name(species['species'])
-                    for hit in hits_to_write[gene]:
-                        s2_record = kv.get_mongo_record(hit[0], hit[1])
-                        s2_strain = kv.parse_species_name(hit[0])
-                        out_handle.write('{0}kvc_{1} {2} {3} {4}kvc_{5} {6} {7}\n'.format(
-                            s1_strain[2],
-                            s1_record['location']['contig'],
-                            s1_record['location']['start'],
-                            s1_record['location']['end'],
-                            s2_strain[2],
-                            s2_record['location']['contig'],
-                            s2_record['location']['start'],
-                            s2_record['location']['end'],
-                            )
-                        )        
+            print species
+            try:
+                all_hits = species['core_hits_{}'.format(perc_identity)]
+                hits_to_write = None
+                if group:
+                    hits_to_write = {gene:all_hits[gene] for gene in all_hits if (species['species'], gene) in group_hits}
+                else:
+                    hits_to_write = all_hits
+                for gene in hits_to_write:
+                    if hits_to_write[gene]:
+                        s1_record = kv.get_mongo_record(species['species'], gene)
+                        s1_strain = kv.parse_species_name(species['species'])
+                        for hit in hits_to_write[gene]:
+                            s2_record = kv.get_mongo_record(hit[0], hit[1])
+                            s2_strain = kv.parse_species_name(hit[0])
+                            out_handle.write('{0}kvc_{1} {2} {3} {4}kvc_{5} {6} {7}\n'.format(
+                                s1_strain[2],
+                                s1_record['location']['contig'],
+                                s1_record['location']['start'],
+                                s1_record['location']['end'],
+                                s2_strain[2],
+                                s2_record['location']['contig'],
+                                s2_record['location']['start'],
+                                s2_record['location']['end'],
+                                )
+                            )        
+            except KeyError:
+                pass
 
 
 def get_gc(some_gbk):
@@ -112,6 +119,8 @@ def get_gc(some_gbk):
             return stats
 
 def gc_circos(gb_folder):
+    if not os.path.isdir('circos/GC/'):
+            os.makedirs('circos/GC/')
     with open('circos/GC/plots.conf', 'w+') as out_handle:
         out_handle.write('<plots>\n')
         for f in os.listdir(gb_folder):
@@ -147,21 +156,22 @@ def gc_circos(gb_folder):
         out_handle.write('</plots>\n')
 
 if __name__ == '__main__':
-    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/reorg/')
-    kv.mongo_init('reorg')
+    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/pacbio2/')
+    kv.mongo_init('pacbio2')
 
-    get_links(group=3, perc_identity='99')
-
-    #gc_circos('validated_gbk/')
-
-    # for entry in kv.get_collection('core').distinct('species'):
-    #     print 'karyotypes/karyotype_{}.txt;'.format(entry)
-    
-    # get_links()
-    
     # if not os.path.isdir('circos'):
     #     os.makedirs('circos')
     # for f in os.listdir('validated_gbk/'):
     #     if f.endswith('.gb'):
     #         print f
     #         get_karyotype('validated_gbk/{}'.format(f))
+
+    get_links(perc_identity='95')
+    get_links(perc_identity='90')
+
+    # gc_circos('validated_gbk/')
+
+    # for entry in kv.get_collection('core').distinct('species'):
+    #     print 'karyotypes/karyotype_{}.txt;'.format(entry)
+        
+    

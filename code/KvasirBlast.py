@@ -119,6 +119,8 @@ def core_hgt_blast(perc_identity='99'):
     Blasts all core genomes against core db
     - Set `perc_identity` if desired (default = 99)
     """
+    if not os.path.isdir('blast_results/core/'):
+        os.makedirs('blast_results/core/')
     for species in kv.get_collection('core').distinct('species'):
         query_fasta = 'blast_results/core/{}_tmp.fna'.format(species)
         
@@ -146,11 +148,11 @@ def core_hgt_blast(perc_identity='99'):
 
         os.remove(query_fasta)
 
-def core_blast_to_db(perc_identity='99'):
-    blast_dir = 'blast_results/core/'
+def blast_to_db(db='core', perc_identity='99'):
+    blast_dir = 'blast_results/{}/'.format(db)
     for f in os.listdir(blast_dir):
         if f.endswith('{}_blast.xml'.format(perc_identity)):
-            file_handle = 'blast_results/core/{}'.format(f)
+            file_handle = 'blast_results/{}/{}'.format(db,f)
             with open(file_handle, 'r') as result_handle:
                 blast_records = NCBIXML.parse(result_handle)
                 hits_dict = {}
@@ -185,7 +187,7 @@ def core_blast_to_db(perc_identity='99'):
                 hits_collection = kv.get_collection('hits')
                 hits_collection.update_one(
                     {'species':query_name},
-                    {'$set':{'core_hits_{}'.format(perc_identity):{x:hits_dict[x] for x in hits_dict if hits_dict[x]}}},
+                    {'$set':{'{}_hits_{}'.format(db, perc_identity):{x:hits_dict[x] for x in hits_dict if hits_dict[x]}}},
                     upsert=True
                     ) 
 
@@ -210,15 +212,18 @@ def other_blast():
 
 if __name__ == '__main__':
     import sys
-    kv.mongo_init('reorg')
-    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/reorg/')
+    kv.mongo_init('pacbio2')
+    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/pacbio2/')
     # kv.mongo_init(sys.argv[1])
     # os.chdir('output/{}/'.format(sys.argv[1]))
-    # make_blast_db('core')
-    # make_blast_db('other')
+    make_blast_db('core')
+    make_blast_db('other')
     hits_reset()
-    core_blast_to_db(perc_identity='90')
-    core_blast_to_db(perc_identity='95')
-    core_blast_to_db(perc_identity='99')
+    hgt_blast(perc_identity='90')
+    hgt_blast(perc_identity='95')
+    hgt_blast(perc_identity='99')
+    blast_to_db(perc_identity='90')
+    blast_to_db(perc_identity='95')
+    blast_to_db(perc_identity='99')
     
     other_blast()

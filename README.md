@@ -5,6 +5,8 @@ Dependencies:
 * MongoDB
   * pymongo
 * BioPython
+* Scikit Bio
+* Pandas
 
 **Identification of horizontal gene transfer between sequenced microbial genomes**
 

@@ -1,19 +1,19 @@
-#!/usr/bin/env 
+#!/usr/bin/env python
 # by Kevin Bonham, PhD (2015)
 # for Dutton Lab, Harvard Center for Systems Biology, Cambridge MA
 # Unless otherwise indicated, licensed under GNU Public License (GPLv3)
 
 '''
 - Create directories `path/input/` and `path/output/`
-- Put genbank files into `path/input/`
+- Put genbank files into `path/input/core` or `path/input/other`
 - Must have Mongod running, in terminal: `mongod --dbpath path/to/db`
 - run `python run_kvasir.py [run_name]` from `path/`
 '''
 
 import os
 import sys
-import DataImport, FixGbk, MakeBlastDB, KvasirBlast
-from get_outputs import get_outputs
+import DataImport, FixGbk, KvasirBlast
+from KvasirHGT import output_groups
 from KvDataStructures import mongo_init, reset_database
 
 print 'Here we go!'
@@ -23,7 +23,7 @@ other_gbk_folder =os.path.abspath('input/other/')
 exp_name = sys.argv[1]
 
 mongo_init(exp_name)
-# reset_database(exp_name)
+reset_database(exp_name)
 
 check_file_names = str(raw_input("Manually enter species names? [y/n]"))
 if check_file_names == 'y':
@@ -43,7 +43,7 @@ print 'Checking and importing core genomes...'
 
 for the_file in os.listdir(core_gbk_folder):
     path_to_file = '{0}/{1}'.format(core_gbk_folder, the_file)
-    if the_file.endswith('.gb'):
+    if the_file.endswith('.gb') or the_file.endswith('.gbk'):
         print 'Checking {0}'.format(the_file)
 
         validated_file = FixGbk.validate_gbk(path_to_file, check_file_names)       
@@ -74,7 +74,12 @@ for the_file in os.listdir(other_gbk_folder):
         print '{0} is not a valid genbank file, skipping'.format(the_file)
 
 KvasirBlast.make_blast_db('core')
-KvasirBlast.core_hgt_blast()
-KvasirBlast.core_blast_to_db()
-# get_outputs()
+KvasirBlast.make_blast_db('other')
+KvasirBlast.core_hgt_blast(perc_identity='90')
+KvasirBlast.core_hgt_blast(perc_identity='95')
+KvasirBlast.core_hgt_blast(perc_identity='99')
+KvasirBlast.blast_to_db(perc_identity='90')
+KvasirBlast.blast_to_db(perc_identity='95')
+KvasirBlast.blast_to_db(perc_identity='99')
+output_groups()
 

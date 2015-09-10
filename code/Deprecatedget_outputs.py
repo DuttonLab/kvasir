@@ -14,12 +14,10 @@ def get_outputs():
     os.chdir('hgt_data/')
 
     kh.output_hits_csv()
-    kh.output_groups(min_group_size=4)
-    kh.output_compare_matrix()
-    kh.output_distance_matrix()
+    kh.output_groups()
 
-if __name__ == '__main__':
-    import sys
-    os.chdir('/Users/KBLaptop/computation/kvasir/data/output/dutton_genomes2/')
-    mongo_init('dutton_genomes2')
-    get_outputs()
+# if __name__ == '__main__':
+#     import sys
+#     os.chdir('/Users/KBLaptop/computation/kvasir/data/output/dutton_genomes2/')
+#     mongo_init('dutton_genomes2')
+#     get_outputs()
