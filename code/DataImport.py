@@ -15,21 +15,43 @@ from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC
 import KvDataStructures as kv
 
-
 def import_file(some_genbank, collection):
+    """
+    Import records from `some_genbank` into Mongo `collection`
+    * Imports each coding sequence (CDS) as  document of {'type':'gene'}
+    * Imports up to one 16S rRNA sequences as document of {'type':'16S'}
+    * Each document has info on species, contig and location, DNA sequence and (for CDS) amino acid sequence
+    * Each gene in genbank file MUST have `locus_tag` feature. If it doesn't, use `add_locus_tags()`
+        * Note - `add_locus_tags()` doesn't exist yet, will be similar to `FixGbk.validate_gbk()`
+    """
     with open(some_genbank, 'r') as open_file:
-        current_species = get_species_name(some_genbank)
         collection = kv.get_collection(collection)
-
-        print 'Working on importing {0}'.format(current_species)
 
         # Each "record" in genbank file is read, corresponds to individual contigs
         for record in SeqIO.parse(open_file, 'gb'):
-            current_contig = get_contig(record.name)
-            
+            current_contig = record.name
+            try:
+                current_species = record.annotations['source']
+            except KeyError:
+                name = re.search(r'\w+\/(.+)\.\w+$', some_genbank)
+                current_species = name.group(1)
+                
+
+            collection.insert_one({
+                'species':current_species,
+                'contig':current_contig,
+                'dna_seq':str(record.seq),
+                'type':'contig'
+                })
+
             print "Importing {}".format(current_contig)
             ssu_gene = get_16S(record)
             if ssu_gene:
+                try:
+                    locus_tag = ssu_gene[0].qualifiers['locus_tag'][0]
+                except KeyError:
+                    locus_tag = None
+                
                 parsed_location = kv.get_gene_location(ssu_gene[0].location)
                 gene_record = {
                     'species':current_species,
@@ -39,9 +61,9 @@ def import_file(some_genbank, collection):
                         'end':parsed_location[1],
                         'strand':parsed_location[2],
                     },
+                    'locus_tag':locus_tag,
                     'annotation':ssu_gene[0].qualifiers['product'][0],
                     'dna_seq':ssu_gene[1],
-                    'kvtag':ssu_gene[0].qualifiers['kvtag'][0],
                     'type':'16S'
                     }
                 print "adding 16S gene!"
@@ -51,6 +73,11 @@ def import_file(some_genbank, collection):
             for feature in record.features:
                 if feature.type == 'CDS':
                     parsed_location = kv.get_gene_location(feature.location)
+                    try:
+                        locus_tag = feature.qualifiers['locus_tag'][0]
+                    except KeyError:
+                        locus_tag = None
+
                     gene_record = {
                         'species':current_species,
                         'location':{
@@ -60,7 +87,7 @@ def import_file(some_genbank, collection):
                             'strand':parsed_location[2],
                             'index':None
                         },
-                        'kvtag':feature.qualifiers['kvtag'][0],
+                        'locus_tag':locus_tag,
                         'annotation':feature.qualifiers['product'][0],
                         'dna_seq':get_dna_seq(feature, record),
                         'aa_seq':feature.qualifiers['translation'][0],
@@ -87,11 +114,6 @@ def get_16S(gbk_record):
                     return (feature, get_dna_seq(feature, gbk_record))
                 else:
                     return None
-
-def get_species_name(path_to_genbank):
-    import re
-    name = re.search(r"validated_gbk/(.+)_validated\.gb", path_to_genbank)
-    return name.group(1)
 
 # Need to fix search! Only returns "contig"...
 def get_contig(record_name):
