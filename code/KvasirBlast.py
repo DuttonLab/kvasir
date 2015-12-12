@@ -30,7 +30,7 @@ def make_blast_db(source, name=None, remove_source=True):
     """
     # If there's no directory for blast db's, create one
     if not os.path.isdir('blast_databases/'):
-        os.makedirs('blast_databases')
+        os.makedirs('blast_databases/')
     
     output_fasta = None
     

@@ -21,7 +21,7 @@ print 'Here we go!'
 
 core_gbk_folder = os.path.abspath('data/input/core/')
 other_gbk_folder =os.path.abspath('data/input/other/')
-exp_name = datetime.datetime.now().strftime('%Y%m%d%t%H%M')
+exp_name = datetime.datetime.now().strftime('%Y%m%d%H%M')
 
 mongo_init(exp_name)
 reset_database(exp_name)    
