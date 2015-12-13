@@ -7,8 +7,8 @@ Dependencies:
 * MongoDB
   * pymongo
 * BioPython
-* Scikit Bio
-* Pandas
+* ~~Scikit Bio~~
+* ~~Pandas~
 
 **Identification of horizontal gene transfer between sequenced microbial genomes**
 
@@ -21,8 +21,9 @@ Run Kvasir by invoking run_kvasir.py in your working directory:
 
 `python run_kvasir.py /path/to/gb_files name_of_mongoDB`
 
+##The following is out of date... Will get back to this soon
 
-####DataImport:
+~~####DataImport:
 * Imports genbank-formated annotated genomes into Mongo database.
 * .gb files require "locus_tag" feature. If your genomes don't have it, FixGbk.py shoul take care of it for you
 * Mongo database has "collections" and "documents" - a different collection is generated for each species (each separate genbank file) and documents representing each CDS. 
@@ -38,4 +39,4 @@ Generates a multi-fasta file containing every gene in the mongo database, genera
 * new "hits" entry is added to each gene document in MongoDB, which contains a list of `(species, _id)` tuples for each hit (these are used in the next script to gather info about hits)
 
 ####Outputs
-Still a work in progress. So far, have a bunch of output formates working... will detail later.
+Still a work in progress. So far, have a bunch of output formates working... will detail later.~~
