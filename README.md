@@ -1,5 +1,7 @@
 #Kvasir
 
+[![Join the chat at https://gitter.im/kescobo/kvasir](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/kescobo/kvasir?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Dependencies:
 * Python 2.7
 * MongoDB
