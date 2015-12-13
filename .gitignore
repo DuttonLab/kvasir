@@ -3,5 +3,5 @@
 *.sublime-project
 *.sublime-workspace
 *.pyc
-scratch_code.py
 .idea
+user_settings.py

@@ -1,3 +1,4 @@
+# Once set up with user variables, change name to `user_settings.py`
 import os
-INPUT = os.path.expanduser("~/computation/kv_data/input/")
-OUTPUT = os.path.expanduser("~/computation/kv_data/output/")
+INPUT = os.path.expanduser("PATH/TO/INPUT")
+OUTPUT = os.path.expanduser("PATH/TO/OUTPUT")
