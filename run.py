@@ -1,13 +1,17 @@
 import user_settings
 import os
 import sys
-import DataImport
+from subprocess import Popen
+
+from DataImport.gb_parse import parse_genbank
 
 in_dir = user_settings.INPUT
 out_dir = user_settings.OUTPUT
 
 in_file = os.path.join(in_dir, sys.argv[1])
 
-print in_file
-print sys.path
-# DataImport.gb_parse.parse_genbank(os.path.join(in_dir, 'pacbio2_IMG.gbk'))
+mongod = Popen(['mongod', '--dbpath', user_settings.MONGOPATH])
+
+mongo_import(parse_genbank(in_file), 'test_collection')
+
+Popen.kill(mongod)

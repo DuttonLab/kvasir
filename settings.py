@@ -1,4 +1,7 @@
 # Once set up with user variables, change name to `user_settings.py`
-import os
-INPUT = os.path.expanduser("PATH/TO/INPUT")
-OUTPUT = os.path.expanduser("PATH/TO/OUTPUT")
+
+INPUT = "/path/to/input/"
+OUTPUT = "/path/to/output/"
+MONGODB = "/path/to/db"
+
+MONGODB = "database_name"

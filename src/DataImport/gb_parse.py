@@ -19,7 +19,7 @@ def parse_genbank(genbank_file):
 
         for contig in records:
             contig_counter += 1
-
+            print contig_counter
             try:
                 species = contig.annotations['source']
             except KeyError:
@@ -34,7 +34,7 @@ def parse_genbank(genbank_file):
             # todo: does it make sense to make a class for these record types? Ultimately we're just making a dict but...
             record_list.append({
                 'type':'contig',
-                'dna_seq':contig.seq,
+                'dna_seq':str(contig.seq),
                 'contig_id':contig.id,
                 'species':species
             })
@@ -57,6 +57,7 @@ def parse_genbank(genbank_file):
                 except KeyError:
                     annotation = None
 
+                feature_type = None
                 if feature.type == 'CDS':
                     feature_type = 'CDS'
                 elif feature.type == 'rRNA':
@@ -66,13 +67,13 @@ def parse_genbank(genbank_file):
                         feature_type = 'rRNA'
 
                 # grabs DNA sequence from record object
-                dna_seq = str(feature.extract(record))
+                dna_seq = str(feature.extract(contig))
 
                 record_list.append({
                     'type':feature_type,
                     'dna_seq':dna_seq,
                     'aa_seq':aa_seq,
-                    'locus_tag':locus_tag
+                    'locus_tag':locus_tag,
                     'annotation':annotation,
                     'location':{
                         'start':int(feature.location.start),
