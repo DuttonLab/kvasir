@@ -1,5 +1,5 @@
 import pymongo
-from user_settings import MONGODB
+from settings import MONGODB
 
 client = pymongo.MongoClient()
 db = client[MONGODB]

@@ -2,6 +2,8 @@ import pymongo
 from user_settings import MONGODB
 from tempfile import NamedTemporaryFile
 
+filepath = "/Users/KBLaptop/Desktop/test.fna"
+
 client = pymongo.MongoClient()
 db = client[MONGODB]
 
@@ -10,7 +12,7 @@ def db_cds_to_fna(collection):
     # fna_file = NamedTemporaryFile()
     # print fna_file.name
     #
-    with open("/Users/KBLaptop/Desktop/test.fna", 'w+') as fna_file:
+    with open(filepath, 'w+') as fna_file:
         for record in db[collection].find({"type": "CDS"}):
             fna_file.write(">{}|{}|{}\n{}\n".format(
                 collection,
