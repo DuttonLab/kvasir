@@ -1,14 +1,12 @@
-import user_settings
-import os
-import sys
+from settings import *
+from DataImport.gb_parse import parse_genbank_and_insert
+from FindHGT.create_fasta import db_cds_to_fna
 
 
-from DataImport.gb_parse import parse_genbank
+def import_data():
 
-in_dir = user_settings.INPUT
-out_dir = user_settings.OUTPUT
+    parse_genbank_and_insert(INPUT, "test_collection")
 
-in_file = os.path.join(in_dir, sys.argv[1])
+def run_blast():
 
-mongo_import(parse_genbank(in_file), 'test_collection')
-
+    db_cds_to_fna('test_collection')
