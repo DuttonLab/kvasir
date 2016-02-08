@@ -1,11 +1,11 @@
 from settings import *
-from DataImport.gb_parse import parse_genbank_and_insert
+from DataImport.mongo_import import mongo_import_genbank
 from FindHGT.create_fasta import db_cds_to_fna
 
 
 def import_data():
 
-    parse_genbank_and_insert(INPUT, "test_collection")
+    mongo_import_genbank(INPUT, "collection")
 
 def run_blast():
 
