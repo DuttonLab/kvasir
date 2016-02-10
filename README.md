@@ -12,19 +12,19 @@ Dependencies:
 
 **Identification of horizontal gene transfer between sequenced microbial genomes**
 
-##Running Kvasir
-With dependencies installed, fire up a Mongod instance. In the terminal:
-
-`mongod --dbpath path/to/db`
-
-Run Kvasir by invoking run_kvasir.py in your working directory:
-
-`python run_kvasir.py /path/to/gb_files name_of_mongoDB`
-
 ##The following is out of date... Will get back to this soon
 
+##~~Running Kvasir~~
+~~With dependencies installed, fire up a Mongod instance. In the terminal:~~
+
+~~`mongod --dbpath path/to/db`~~
+
+~~Run Kvasir by invoking run_kvasir.py in your working directory:~~
+
+~~`python run_kvasir.py /path/to/gb_files name_of_mongoDB`~~
+
 ####~~DataImport~~:
-* ~~Imports genbank-formated annotated genomes into Mongo database.
+* ~~Imports genbank-formated annotated genomes into Mongo database.~~
 * ~~.gb files require "locus_tag" feature. If your genomes don't have it, FixGbk.py shoul take care of it for you~~
 * ~~Mongo database has "collections" and "documents" - a different collection is generated for each species (each separate genbank file) and documents representing each CDS. ~~
     * ~~CDS documents are like python dictionaries, and contain entries for species, DNA and amino acid protein sequences, contig and location info, and annotation information.~~
