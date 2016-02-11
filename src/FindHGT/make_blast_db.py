@@ -3,7 +3,7 @@ from tempfile import NamedTemporaryFile
 from subprocess import Popen, PIPE
 
 
-def db_cds_to_fna(collection="gene_info"):
+def db_cds_to_fna(collection="genes"):  # See comment on `run.py` ln9
     """
     Takes records of "type":"CDS", writes them to file
     :param collection: string - MongoDB collection name
@@ -29,6 +29,7 @@ def make_blast_db(fasta_file, record_type, output_path):
     :param output_path: string - path and name of output blast database (folder must exist)
     :return:
     """
+
     Popen(
         ['makeblastdb',
          '-in', fasta_file,
