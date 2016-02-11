@@ -1,43 +1,34 @@
 from tempfile import NamedTemporaryFile
-from subprocess import Popen, PIPE
-from make_blast_db import db_cds_to_fna
+from subprocess import Popen
 from DataImport.mongo_import import mongo_import_record
 from bson.objectid import ObjectId
 from Bio.Blast import NCBIXML
 from settings import MONGODB as db
 import os
 
-def blast_all(blast_db, collection="genes"):  # See comment on `run.py` ln9
-    """
-    Take all records of "type":"CDS" from a collection and blast against a database
-    :param collection: string - MongoDB collection name
+def blast_all(query_fasta, blast_db):
+    """ Take all records of "type":"CDS" from a collection and blast against a database
+    :param query_fasta: open fasta file object
     :param blast_db: string - path to blast database
     :return: temporary xml file with blast results
     """
     tmp_results = NamedTemporaryFile()
 
-    # Because I'm doing this in pieces I put this line in this function, but at least for now, this should be the same
-    # fna file that is created when making the blast database. That said, in the future we may want to analyze other
-    # genomes against the same blastdb and would therefore want to do this again.
-    db_fna = db_cds_to_fna(collection)
-
     Popen(
         ['blastn',
-         '-query', db_fna.name,
+         '-query', query_fasta.name,
          '-db', blast_db,
          '-out', tmp_results.name,
-         '-outfmt', '5'  # xml output
-         ], stdout=PIPE  # not sure if this is necessary unless we want to print/record the output
-    )
+         '-outfmt', '5']  # xml output
+    ).wait()  # waits for return code before proceeding
 
     return tmp_results
 
 
 def parse_blast_results_xml(results_file):
-    """
+    """ Parse and insert results of BLAST
 
-    :param results_file:
-    :return:
+    :param results_file: blast results in xml format
     """
 
     results_file.seek(0)
@@ -49,7 +40,7 @@ def parse_blast_results_xml(results_file):
 
             if query_id != hit_id:
                 hsp = alignment.hsps[0]  # there may be multiple hsps - first one is typically best match
-                perc_identity = hsp.identities / hsp.align_length
+                perc_identity = float(hsp.identities) / float(hsp.align_length)
 
                 if not check_blast_pair(query_id, hit_id):
                     mongo_import_record(
@@ -67,22 +58,23 @@ def parse_blast_results_xml(results_file):
 
 
 def check_blast_pair(query, subject):
-    """Check database for the presence of a blast result for given pair of record '_id's
+    """ Check database for the presence of a blast result for given pair of record '_id's
 
     Since blasting seq1 vs seq2 should return the same results as seq2 vs seq1 and we don't want to duplicate data, this
-    checks in order to determine whether to import or not
+    checks in order to determine whether to import or not. Can also be used to get database entry for any gene pair when
+    you know the "_id" value of each.
 
     :param query:
     :param subject:
-    :rtype: Bool
+    :rtype: MongoDB record (dict) or None
     """
     collection = db["blast_results"]
-    query_id, subject_id = ObjectId(query_id), ObjectId(subject_id)
+    query_id, subject_id = ObjectId(query), ObjectId(subject)
 
     # since we don't know order of insert, check both
     pair = {"type": "blast_result", "query": query_id, "subject": subject_id}
     reciprocal = {"type": "blast_result", "query": subject_id, "subject": query_id}
 
-    blast_pair = collection.find_one({"$or": [pair, reciprocal]})  # will evaluate False if no pair is found
+    blast_pair = collection.find_one({"$or": [pair, reciprocal]})  # will evaluate None if no pair is found
 
     return blast_pair

@@ -22,9 +22,8 @@ def blast_db():
 
 
 def blast():
+    fasta = db_cds_to_fna('genes')  # Collection name option? (see ln9 above)
     db_path = os.path.join(OUTPUT, MONGODB.name, "blast_db", "genes")
 
-    blast_all(db_path)
-
-    # parse_blast_results_xml(blast_all(db_path))
-
+    blast_results = blast_all(fasta, db_path)
+    parse_blast_results_xml(blast_results)

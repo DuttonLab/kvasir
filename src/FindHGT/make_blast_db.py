@@ -11,6 +11,7 @@ def db_cds_to_fna(collection="genes"):  # See comment on `run.py` ln9
     :return: string - path of file
     """
     tmp_file = NamedTemporaryFile()
+
     for record in db[collection].find({"type": "CDS"}):
         tmp_file.write(">{}\n{}\n".format(
             record["_id"],
