@@ -96,6 +96,8 @@ def add_features(contig):
                 feature_type = '16s'
             else:
                 feature_type = 'rRNA'
+        else:
+            feature_type = feature.type
 
         # grabs DNA sequence from record object
         dna_seq = str(feature.extract(contig).seq)
