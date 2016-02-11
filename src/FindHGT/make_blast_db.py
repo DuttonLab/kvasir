@@ -1,9 +1,9 @@
 from settings import MONGODB as db
 from tempfile import NamedTemporaryFile
 from subprocess import Popen, PIPE
+import os
 
-
-def db_cds_to_fna(collection="gene_info"):
+def db_cds_to_fna(collection="genes"):
     """
     Takes records of "type":"CDS", writes them to file
     :param collection: string - MongoDB collection name
@@ -29,10 +29,11 @@ def make_blast_db(fasta_file, record_type, output_path):
     :param output_path: string - path and name of output blast database (folder must exist)
     :return:
     """
-    Popen(
+
+    print Popen(
         ['makeblastdb',
          '-in', fasta_file,
          '-dbtype', record_type,
          '-out', output_path,
          ], stdout=PIPE
-    )
+    ).communicate()
