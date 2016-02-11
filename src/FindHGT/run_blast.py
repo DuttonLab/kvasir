@@ -65,7 +65,6 @@ def parse_blast_results_xml(results_file):
                         "blast_results"
                     )
 
-        break
 
 def check_blast_pair(query, subject):
     """Check database for the presence of a blast result for given pair of record '_id's
