@@ -5,9 +5,9 @@ from DataImport.mongo_import import mongo_import_record
 from bson.objectid import ObjectId
 from Bio.Blast import NCBIXML
 from settings import MONGODB as db
+import os
 
-
-def blast_all(blast_db, collection="gene_info"):
+def blast_all(blast_db, collection="genes"):  # See comment on `run.py` ln9
     """
     Take all records of "type":"CDS" from a collection and blast against a database
     :param collection: string - MongoDB collection name
@@ -83,7 +83,6 @@ def check_blast_pair(query, subject):
     pair = {"type": "blast_result", "query": query_id, "subject": subject_id}
     reciprocal = {"type": "blast_result", "query": subject_id, "subject": query_id}
 
-    if collection.find({"$or": [pair, reciprocal]}):
-        return True
-    else:
-        return False
+    blast_pair = collection.find_one({"$or": [pair, reciprocal]})  # will evaluate False if no pair is found
+
+    return blast_pair
