@@ -64,12 +64,11 @@ def add_contig_data(records):
 
         yield contig_record
 
-        for feature in add_features(contig):
+        for feature in add_features(contig, species):
             yield feature
 
-def add_features(contig):
+def add_features(contig, species):
     locus_tag_counter = 0
-
     for feature in contig.features:
         locus_tag_counter += 1
 
@@ -107,6 +106,7 @@ def add_features(contig):
             'aa_seq': aa_seq,
             'locus_tag': locus_tag,
             'annotation': annotation,
+            'species': species,
             'location': {
                 'start': int(feature.location.start),
                 'end': int(feature.location.end),
