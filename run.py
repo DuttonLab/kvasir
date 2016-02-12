@@ -1,12 +1,18 @@
 from settings import *
 from DataImport.mongo_import import mongo_import_genbank
 from FindHGT.create_fasta import db_cds_to_fna
+from Analysis import output
 
 
 def import_data():
 
     mongo_import_genbank(INPUT, "collection")
 
+
 def run_blast():
 
     db_cds_to_fna('test_collection')
+
+
+def analyze():
+    output.get_islands(0.99, 100)
