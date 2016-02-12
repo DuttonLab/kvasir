@@ -37,4 +37,4 @@ def make_blast_db(fasta_file, record_type, output_path):
          '-dbtype', record_type,
          '-out', output_path,
          ], stdout=PIPE
-    )
+    ).wait()
