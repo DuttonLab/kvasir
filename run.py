@@ -12,4 +12,6 @@ def run_blast():
 
 
 def analyze():
-    output.get_islands(0.99, 100)
+    groups = output.hgt_groups(0.99)
+    output.output_groups(groups, OUTPUT)
+
