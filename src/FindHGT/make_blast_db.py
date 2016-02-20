@@ -1,7 +1,7 @@
 from settings import MONGODB as db
 from tempfile import NamedTemporaryFile
 from subprocess import Popen, PIPE
-import os
+
 
 def db_cds_to_fna(collection="genes"):  # See comment on `run.py` ln9
     """

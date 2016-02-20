@@ -8,7 +8,8 @@ import os
 def import_data():
     mongo_import_genbank(INPUT, "genes")  # Perhaps settings.py should include option for collection name?
 
-def run_blast():
+def blast_db():
+    fasta = db_cds_to_fna('genes')  # Collection name option? (see ln9 above)
 
     # Make separate directory in output for Blast databases. Will probably do this for multiple outputs, might be good
     # to have a function in `Analysis.output`
@@ -17,6 +18,7 @@ def run_blast():
         os.makedirs(db_path)
 
     make_blast_db(fasta.name, "nucl", os.path.join(db_path, "genes"))  # Collection name option? (see ln9 above)
+
 
 def blast():
     fasta = db_cds_to_fna('genes')  # Collection name option? (see ln9 above)
