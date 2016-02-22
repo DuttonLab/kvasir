@@ -2,6 +2,7 @@ from settings import *
 from DataImport.mongo_import import mongo_import_genbank
 from FindHGT.make_blast_db import make_blast_db, db_cds_to_fna
 from FindHGT.run_blast import blast_all, parse_blast_results_xml
+from Analysis import output
 import os
 
 
@@ -26,3 +27,8 @@ def blast():
 
     blast_results = blast_all(fasta, db_path)
     parse_blast_results_xml(blast_results)
+
+
+def analyze():
+    groups = output.hgt_groups(0.99)
+    output.output_groups(groups, os.path.join(OUTPUT, 'groups.txt'))
