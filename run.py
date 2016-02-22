@@ -1,6 +1,5 @@
 from settings import *
 from DataImport.mongo_import import mongo_import_genbank
-from FindHGT.create_fasta import db_cds_to_fna
 from Analysis import output
 
 
