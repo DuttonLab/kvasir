@@ -1,7 +1,7 @@
 import os
 import re
 import numpy as np
-from settings import OUTPUT, CIRCOS
+from settings import OUTPUT
 from settings import MONGODB as db
 from Analysis.output import get_hgt
 from Bio import SeqUtils
@@ -38,14 +38,18 @@ def get_karyotypes(length_cutoff=1000):
                     break
 
 
-def get_links(minimum_identity, minimum_length=100):
+def get_links(minimum_identity, minimum_length=100, maximum_identity=1.0):
     outdir = os.path.join(OUTPUT, 'circos', 'links')
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
 
+    if not maximum_identity == 1.0:
+        out_file = os.path.join(outdir, '{}-{}-{}-links.txt'.format(int(minimum_identity * 100), int(maximum_identity * 100), minimum_length))
+    else:
+        out_file = os.path.join(outdir, '{}-{}-links.txt'.format(int(minimum_identity * 100), minimum_length))
 
-    with open(os.path.join(outdir, '{}-{}-links.txt'.format(int(minimum_identity * 100), minimum_length)), 'w+') as out_handle:
-        for s1, s2 in get_hgt(minimum_identity, minimum_length):
+    with open(out_file, 'w+') as out_handle:
+        for s1, s2, hit in get_hgt(minimum_identity, minimum_length, maximum_identity):
             s1_record = db['genes'].find_one({'_id': s1})
             s2_record = db['genes'].find_one({'_id': s2})
 
@@ -110,9 +114,9 @@ thickness     = 1
         if gc:
             out_handle.write("<<include {}>>\n".format(gc))
 
-        out_handle.write("<image>\n<<include {}>>\n</image>\n".format(os.path.join(CIRCOS, 'current', 'etc', 'image.conf')))
-        out_handle.write("<<include {}>>\n".format(os.path.join(CIRCOS, 'current', 'etc', 'colors_fonts_patterns.conf')))
-        out_handle.write("<<include {}>>\n".format(os.path.join(CIRCOS, 'current', 'etc', 'housekeeping.conf')))
+        out_handle.write("<image>\n<<include {}>>\n</image>\n".format(os.path.join(OUTPUT, 'circos', 'current', 'etc', 'image.conf')))
+        out_handle.write("<<include {}>>\n".format(os.path.join(OUTPUT, 'circos', 'current', 'etc', 'colors_fonts_patterns.conf')))
+        out_handle.write("<<include {}>>\n".format(os.path.join(OUTPUT, 'circos', 'current', 'etc', 'housekeeping.conf')))
 
 
 def get_gc():
