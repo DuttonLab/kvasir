@@ -3,7 +3,7 @@ from bson.objectid import ObjectId
 import pandas as pd
 
 
-def get_hgt(minimum_identity, minimum_length=100):
+def get_hgt(minimum_identity, minimum_length=100, maximum_identity=1.0):
     """ Generator yielding blast hits >= certain length and >= certain identity
 
     :param minimum_identity: lowest value of perc_identity to consider (0.0 : 1.0)
@@ -13,7 +13,7 @@ def get_hgt(minimum_identity, minimum_length=100):
     :rtype generator: query id and subject id for each hit
     """
     hgt = db['blast_results'].find(
-        {'perc_identity': {'$gte': minimum_identity},
+        {'perc_identity': {'$gte': minimum_identity, '$lt': maximum_identity},
          'length'       : {'$gte': minimum_length}}
     )
 
@@ -21,7 +21,7 @@ def get_hgt(minimum_identity, minimum_length=100):
         q, s = ObjectId(record['query']), ObjectId(record['subject'])
         if db['genes'].find_one({'_id': q}) and db['genes'].find_one({'_id': s}):  # all hits should refer to a record, but they don't...
             if not db['genes'].find_one({'_id': q})['species'] == db['genes'].find_one({'_id': s})['species']:
-                yield q, s
+                yield q, s, record
 
 def get_islands(minimum_identity, minimum_length=100, dist_between_hits=3000):
     """ Get blast hits within species that are within x base pairs of each other
@@ -32,7 +32,7 @@ def get_islands(minimum_identity, minimum_length=100, dist_between_hits=3000):
     """
     hit_list = []
 
-    for id1, id2 in get_hgt(minimum_identity, minimum_length):
+    for id1, id2, hit in get_hgt(minimum_identity, minimum_length):
         hit_list.extend([id1, id2])
 
     ids = list(set(hit_list))  # set removes duplicates, but mongo needs list for query
@@ -57,7 +57,7 @@ def get_islands(minimum_identity, minimum_length=100, dist_between_hits=3000):
         yield collapse(islands)
 
 
-def get_hits_from_species(hits_list):  # ids_only bit is a hack - needed for get_islands()...
+def get_hits_from_species(hits_list):
     """ iterator returning records from each species in list that matches any in list of `_id`s,
 
     """
