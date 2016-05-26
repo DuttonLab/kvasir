@@ -3,8 +3,9 @@ import re
 import numpy as np
 from settings import OUTPUT
 from settings import MONGODB as db
-from Analysis.output import get_hgt
+from Analysis.output import get_hgt, hgt_groups, find_all_hits
 from Bio import SeqUtils
+import re
 
 
 def safe_species_name(species_name):
@@ -38,35 +39,76 @@ def get_karyotypes(length_cutoff=1000):
                     break
 
 
-def get_links(minimum_identity, minimum_length=100, maximum_identity=1.0):
+def get_links(minimum_identity, minimum_length=100, maximum_identity=1.0, group_no=None, min_dist=3000, annotation=None):
     outdir = os.path.join(OUTPUT, 'circos', 'links')
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
 
-    if not maximum_identity == 1.0:
+    if group_no:
+        out_file = os.path.join(outdir, 'group{}{}_{}-{}-{}-{}-links.txt'.format(
+            group_no,
+            annotation,
+            int(minimum_identity * 100),
+            int(maximum_identity * 100),
+            minimum_length,
+            min_dist)
+        )
+    elif not maximum_identity == 1.0:
         out_file = os.path.join(outdir, '{}-{}-{}-links.txt'.format(int(minimum_identity * 100), int(maximum_identity * 100), minimum_length))
     else:
         out_file = os.path.join(outdir, '{}-{}-links.txt'.format(int(minimum_identity * 100), minimum_length))
 
     with open(out_file, 'w+') as out_handle:
-        for s1, s2, hit in get_hgt(minimum_identity, minimum_length, maximum_identity):
-            s1_record = db['genes'].find_one({'_id': s1})
-            s2_record = db['genes'].find_one({'_id': s2})
+        if group_no:
+            print out_handle.name
+            groups = hgt_groups(minimum_identity, minimum_length, min_dist)
+            groups.sort(key=len, reverse=True)
+            group_index = group_no - 1
+            print group_index
+            group_hits = groups[group_index]
 
-            s1_name = safe_species_name(s1_record['species'])
-            s2_name = safe_species_name(s2_record['species'])
+            for subject in group_hits:
+                if annotation:
+                    if check_annotation(subject, annotation):
+                        for query in find_all_hits(subject, minimum_identity, minimum_length):
+                            write_link(out_handle, subject, query)
+                    else:
+                        pass
+                else:
+                    for query in find_all_hits(subject, minimum_identity, minimum_length):
+                        write_link(out_handle, subject, query)
+        else:
+            for s1, s2, hit in get_hgt(minimum_identity, minimum_length, maximum_identity):
+                write_link(out_handle, s1, s2)
 
-            out_handle.write('{0}-{1} {2} {3} {4}-{5} {6} {7}\n'.format(
-                s1_name,
-                s1_record['location']['contig'],
-                s1_record['location']['start'],
-                s1_record['location']['end'],
-                s2_name,
-                s2_record['location']['contig'],
-                s2_record['location']['start'],
-                s2_record['location']['end'],
-                )
-            )
+
+def write_link(open_file, gene1, gene2):
+    g1_record = db['genes'].find_one({'_id': gene1})
+    g2_record = db['genes'].find_one({'_id': gene2})
+
+    g1_name = safe_species_name(g1_record['species'])
+    g2_name = safe_species_name(g2_record['species'])
+
+    open_file.write('{0}-{1} {2} {3} {4}-{5} {6} {7}\n'.format(
+        g1_name,
+        g1_record['location']['contig'],
+        g1_record['location']['start'],
+        g1_record['location']['end'],
+        g2_name,
+        g2_record['location']['contig'],
+        g2_record['location']['start'],
+        g2_record['location']['end'],
+        )
+    )
+
+
+def check_annotation(gene_id, phrase):
+    gene_record = db['genes'].find_one({'_id': gene_id})
+    if re.search(phrase.lower(), gene_record['annotation'].lower()):
+        return True
+    else:
+        return False
+
 
 
 def get_conf_file(links, name='circos', gc=None,):
