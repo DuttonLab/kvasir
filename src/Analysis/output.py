@@ -13,7 +13,7 @@ def get_hgt(minimum_identity, minimum_length=100, maximum_identity=1.0):
     :rtype generator: query id and subject id for each hit
     """
     hgt = db['blast_results'].find(
-        {'perc_identity': {'$gte': minimum_identity, '$lt': maximum_identity},
+        {'perc_identity': {'$gte': minimum_identity, '$lte': maximum_identity},
          'length'       : {'$gte': minimum_length}}
     )
 
@@ -48,9 +48,10 @@ def get_islands(minimum_identity, minimum_length=100, dist_between_hits=3000):
                 else:
                     location_1 = entry_1['location']
                     location_2 = entry_2['location']
-                    if abs(location_1['end'] - location_2['start']) <= dist_between_hits:
-                        entry_recorded = True
-                        islands.append([entry_1['_id'], entry_2['_id']])
+                    if location_1['contig'] == location_2['contig']:
+                        if abs(location_1['end'] - location_2['start']) <= dist_between_hits:
+                            entry_recorded = True
+                            islands.append([entry_1['_id'], entry_2['_id']])
 
             if not entry_recorded:
                 islands.append([entry_1['_id']])
@@ -106,7 +107,7 @@ def find_all_hits(some_id, minimum_identity, minimum_length=100):
     as_query = {"type": "blast_result", "query": str(some_id)}  # maybe should use ObjectId on import, see issue#10
     as_subject = {"type": "blast_result", "subject": str(some_id)}
 
-    blast_hits = collection.find({"$or": [as_query, as_subject],
+        blast_hits = collection.find({"$or": [as_query, as_subject],
                                  "perc_identity": {"$gte": minimum_identity},
                                  "length":        {"$gte": minimum_length}
                                   }
