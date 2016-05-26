@@ -30,13 +30,31 @@ def blast():
 
 
 def analyze():
-    groups = output.hgt_groups(0.99, minimum_length=500,)
-    output.output_groups(groups, "some_file.csv")
+    groups = output.hgt_groups(0.99, minimum_length=500, dist_between_hits=5000)
+    output.output_groups(groups, os.path.join(OUTPUT, "99-500-5000-groups-test.csv"))
+    # groups = output.hgt_groups(0.99, minimum_length=400, dist_between_hits=5000)
+    # output.output_groups(groups, os.path.join(OUTPUT, "99-400-5000-groups.csv"))
+    # groups = output.hgt_groups(0.99, minimum_length=400, dist_between_hits=5000)
+    # output.output_groups(groups, os.path.join(OUTPUT, "99-00-5000-groups.csv"))
+    # groups = output.hgt_groups(0.99, minimum_length=300, dist_between_hits=5000)
+    # output.output_groups(groups, os.path.join(OUTPUT, "99-300-5000-groups.csv"))
+    # groups = output.hgt_groups(0.99, minimum_length=400, dist_between_hits=5000)
+    # output.output_groups(groups, os.path.join(OUTPUT, "99-400-5000-groups.csv"))
+    # groups = output.hgt_groups(0.99, minimum_length=400, dist_between_hits=5000)
+    # output.output_groups(groups, os.path.join(OUTPUT, "99-400-5000-groups.csv"))
 
 
 def run_circos():
-    circos.get_karyotypes()
-    circos.get_links(0.99, 400)
-    circos.get_gc_conf()
-    circos.get_conf_file("path/to/output/database_name/circos/links/99-400-links.txt",
-                         gc="path/to/output/database_name/circos/GC/gc_plots.conf")
+    # circos.get_karyotypes()
+    circos.get_links(0.99, 500, group_no=2, min_dist=3000, annotation="transposase")
+    circos.get_links(0.99, 500, group_no=1, min_dist=3000, annotation="transposase")
+    # circos.get_links(0.90, 400, 0.95)
+    # circos.get_gc_conf()
+    # circos.get_conf_file("path/to/output/database_name/circos/links/99-400-links.txt",
+    #                      gc="path/to/output/database_name/circos/GC/gc_plots.conf")
+    # circos.get_conf_file("path/to/output/database_name/circos/links/95-400-links.txt",
+    #                      name="ciros_95",
+    #                      gc="path/to/output/database_name/circos/GC/gc_plots.conf")
+    # circos.get_conf_file("path/to/output/database_name/circos/links/90-400-links.txt",
+    #                      name="circos_90",
+    #                      gc="path/to/output/database_name/circos/GC/gc_plots.conf")
