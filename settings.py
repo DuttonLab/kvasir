@@ -1,5 +1,5 @@
 import pymongo
 
-INPUT = "/Users/KBLaptop/computation/kv_data/input/img_core/pacbio2_IMG.gbk"
-OUTPUT = "/Users/KBLaptop/computation/kv_data/output"
+INPUT = "/path/to/input"
+OUTPUT = "/path/to/output"
 MONGODB = pymongo.MongoClient()["database_name"]
