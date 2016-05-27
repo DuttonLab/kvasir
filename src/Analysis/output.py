@@ -107,11 +107,11 @@ def find_all_hits(some_id, minimum_identity, minimum_length=100):
     as_query = {"type": "blast_result", "query": str(some_id)}  # maybe should use ObjectId on import, see issue#10
     as_subject = {"type": "blast_result", "subject": str(some_id)}
 
-        blast_hits = collection.find({"$or": [as_query, as_subject],
-                                 "perc_identity": {"$gte": minimum_identity},
-                                 "length":        {"$gte": minimum_length}
-                                  }
-                             )  # will evaluate None if no pair is found
+    blast_hits = collection.find({"$or": [as_query, as_subject],
+                             "perc_identity": {"$gte": minimum_identity},
+                             "length":        {"$gte": minimum_length}
+                              }
+                         )  # will evaluate None if no pair is found
 
     # we only need to get the hit back
     if blast_hits:

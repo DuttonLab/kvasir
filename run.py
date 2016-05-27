@@ -1,4 +1,6 @@
 from settings import *
+import sys
+sys.path.append('src/')
 from DataImport.mongo_import import mongo_import_genbank
 from FindHGT.make_blast_db import make_blast_db, db_cds_to_fna
 from FindHGT.run_blast import blast_all, parse_blast_results_xml
@@ -18,36 +20,35 @@ def blast_db():
     if not os.path.isdir(db_path):
         os.makedirs(db_path)
 
-    make_blast_db(fasta.name, "nucl", os.path.join(db_path, "genes"))  # Collection name option? (see ln9 above)
+    make_blast_db(fasta.name, "nucl", os.path.join(db_path, "genes"))  # Collection name option? (see ln10 above)
 
 
 def blast():
-    fasta = db_cds_to_fna('genes')  # Collection name option? (see ln9 above)
+    fasta = db_cds_to_fna('genes')  # Collection name option? (see ln10 above)
     db_path = os.path.join(OUTPUT, MONGODB.name, "blast_db", "genes")
 
     blast_results = blast_all(fasta, db_path)
     parse_blast_results_xml(blast_results)
 
 
-def analyze():
-    groups = output.hgt_groups(0.99, minimum_length=500, dist_between_hits=5000)
-    output.output_groups(groups, os.path.join(OUTPUT, "99-500-5000-groups-test.csv"))
-    # groups = output.hgt_groups(0.99, minimum_length=400, dist_between_hits=5000)
-    # output.output_groups(groups, os.path.join(OUTPUT, "99-400-5000-groups.csv"))
-    # groups = output.hgt_groups(0.99, minimum_length=400, dist_between_hits=5000)
-    # output.output_groups(groups, os.path.join(OUTPUT, "99-00-5000-groups.csv"))
-    # groups = output.hgt_groups(0.99, minimum_length=300, dist_between_hits=5000)
-    # output.output_groups(groups, os.path.join(OUTPUT, "99-300-5000-groups.csv"))
-    # groups = output.hgt_groups(0.99, minimum_length=400, dist_between_hits=5000)
-    # output.output_groups(groups, os.path.join(OUTPUT, "99-400-5000-groups.csv"))
-    # groups = output.hgt_groups(0.99, minimum_length=400, dist_between_hits=5000)
-    # output.output_groups(groups, os.path.join(OUTPUT, "99-400-5000-groups.csv"))
+def analyze(minimum_identity, minimum_length=500, dist_between_hits=5000):
+    groups = output.hgt_groups(minimum_identity, minimum_length, dist_between_hits)
+    output.output_groups(
+        groups, os.path.join(
+            OUTPUT, "{}-{}-{}-groups.csv".format(
+                int((minimum_identity)*100), minimum_length, dist_between_hits
+                )
+            )
+        )
 
-
+"""
+WIP
+"""
 def run_circos():
+    pass
     # circos.get_karyotypes()
-    circos.get_links(0.99, 500, group_no=2, min_dist=3000, annotation="transposase")
-    circos.get_links(0.99, 500, group_no=1, min_dist=3000, annotation="transposase")
+    # circos.get_links(0.99, 500, group_no=2, min_dist=3000, annotation="transposase")
+    # circos.get_links(0.99, 500, group_no=1, min_dist=3000, annotation="transposase")
     # circos.get_links(0.90, 400, 0.95)
     # circos.get_gc_conf()
     # circos.get_conf_file("path/to/output/database_name/circos/links/99-400-links.txt",
