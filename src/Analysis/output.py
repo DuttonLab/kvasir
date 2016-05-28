@@ -63,6 +63,7 @@ def get_hits_from_species(hits_list):
 
     """
     for species in db['genes'].distinct('species'):
+        print("---> Getting blast hits for {}".format(species))
         yield [record['_id'] for record in db['genes'].find({'species': species, 'type': 'CDS', '_id': {'$in': hits_list}})]
 
 
@@ -181,4 +182,5 @@ def output_groups(groups_list, output_file, min_group_size=2):
                     name=db_handle['species']
                 )
                 df=df.append(series)
+    print("Creating file at {}".format(output_file))
     df.to_csv(output_file, columns=df_index)

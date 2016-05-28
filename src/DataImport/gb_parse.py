@@ -40,7 +40,7 @@ def add_contig_data(records, genbank_file):
     contig_counter = 0
     contig_ids = []
 
-
+    current_species = None
     for contig in records:
         contig_counter += 1
         try:
@@ -48,6 +48,10 @@ def add_contig_data(records, genbank_file):
         except KeyError:
             # uses filename (without extension) as species name
             species = os.path.splitext(os.path.basename(genbank_file)[0])
+
+        if not species == current_species:
+            print("Importing {}".format(species))
+            current_species = species
 
         if contig.id in contig_ids: # in case the id field is present but not unique
             contig.id = "{}_{}".format(contig.id, contig_counter)

@@ -1,5 +1,5 @@
 from tempfile import NamedTemporaryFile
-from subprocess import Popen
+from subprocess import Popen, PIPE
 from DataImport.mongo_import import mongo_import_record
 from bson.objectid import ObjectId
 from Bio.Blast import NCBIXML
@@ -14,13 +14,14 @@ def blast_all(query_fasta, blast_db):
     """
     tmp_results = NamedTemporaryFile()
 
-    Popen(
+    print(Popen(
         ['blastn',
          '-query', query_fasta.name,
          '-db', blast_db,
          '-out', tmp_results.name,
-         '-outfmt', '5']  # xml output
-    ).wait()  # waits for return code before proceeding
+         '-outfmt', '5'],
+         stdout=PIPE  # xml output
+    ).wait())  # waits for return code before proceeding
 
     return tmp_results
 
@@ -30,9 +31,10 @@ def parse_blast_results_xml(results_file):
 
     :param results_file: blast results in xml format
     """
-
+    counter = 0
     results_file.seek(0)
     for blast_record in NCBIXML.parse(results_file):
+        counter += 1
         query_id = blast_record.query
 
         for alignment in blast_record.alignments:
@@ -55,6 +57,8 @@ def parse_blast_results_xml(results_file):
                         },
                         "blast_results"
                     )
+        if counter % 500 == 0:
+            print("---> {} blast records imported".format(counter))
 
 
 def check_blast_pair(query, subject):

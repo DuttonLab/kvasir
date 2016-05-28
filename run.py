@@ -37,8 +37,8 @@ def blast():
 def analyze(minimum_identity, minimum_length=500, dist_between_hits=5000):
     groups = output.hgt_groups(minimum_identity, minimum_length, dist_between_hits)
     output.output_groups(
-        groups, MONGODB.name, os.path.join(
-            OUTPUT, "{}-{}-{}-groups.csv".format(
+        groups, os.path.join(
+            OUTPUT, MONGODB.name, "{}-{}-{}-groups.csv".format(
                 int((minimum_identity)*100), minimum_length, dist_between_hits
                 )
             )
