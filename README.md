@@ -31,5 +31,6 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> import run
 >>> run.import_data()
 >>> run.blast_db()
+>>> run.blast()
 >>> run.analyze(0.99)
 ```

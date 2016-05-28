@@ -9,10 +9,13 @@ import os
 
 
 def import_data():
-    mongo_import_genbank(INPUT, "genes")  # Perhaps settings.py should include option for collection name?
+    for f in os.listdir(INPUT):
+        if f.endswith(".gb") or f.endswith(".gbk"):
+            print("** Importing {}".format(f))
+            mongo_import_genbank(os.path.join(INPUT, f), "genes")  # Perhaps settings.py should include option for collection name?
 
 def blast_db():
-    fasta = db_cds_to_fna('genes')  # Collection name option? (see ln9 above)
+    fasta = db_cds_to_fna('genes')  # Collection name option? (see ln15 above)
 
     # Make separate directory in output for Blast databases. Will probably do this for multiple outputs, might be good
     # to have a function in `Analysis.output`
@@ -20,11 +23,11 @@ def blast_db():
     if not os.path.isdir(db_path):
         os.makedirs(db_path)
 
-    make_blast_db(fasta.name, "nucl", os.path.join(db_path, "genes"))  # Collection name option? (see ln10 above)
+    make_blast_db(fasta.name, "nucl", os.path.join(db_path, "genes"))  # Collection name option? (see ln15 above)
 
 
 def blast():
-    fasta = db_cds_to_fna('genes')  # Collection name option? (see ln10 above)
+    fasta = db_cds_to_fna('genes')  # Collection name option? (see ln15 above)
     db_path = os.path.join(OUTPUT, MONGODB.name, "blast_db", "genes")
 
     blast_results = blast_all(fasta, db_path)
@@ -34,7 +37,7 @@ def blast():
 def analyze(minimum_identity, minimum_length=500, dist_between_hits=5000):
     groups = output.hgt_groups(minimum_identity, minimum_length, dist_between_hits)
     output.output_groups(
-        groups, os.path.join(
+        groups, MONGODB.name, os.path.join(
             OUTPUT, "{}-{}-{}-groups.csv".format(
                 int((minimum_identity)*100), minimum_length, dist_between_hits
                 )

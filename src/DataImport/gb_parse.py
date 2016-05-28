@@ -14,7 +14,7 @@ def parse_genbank(genbank_file):
         records = SeqIO.parse(in_handle, 'gb')
 
         # ToDo: Need a log file to record added locus_tags, species names etc, preferably with a way to reference back to original file
-        for record in add_contig_data(records):
+        for record in add_contig_data(records, genbank_file):
             yield record
 
 
@@ -36,7 +36,7 @@ def check_16S(feature):
             else:
                 return False
 
-def add_contig_data(records):
+def add_contig_data(records, genbank_file):
     contig_counter = 0
     contig_ids = []
 
