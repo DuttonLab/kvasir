@@ -1,9 +1,10 @@
 from settings import MONGODB as db
 from bson.objectid import ObjectId
 import pandas as pd
+from ssu import get_distance_matrix
 
 
-def get_hgt(minimum_identity, minimum_length=100, maximum_identity=1.0):
+def get_matches(minimum_identity, minimum_length=100, maximum_identity=1.0, ssu_max=0):
     """ Generator yielding blast hits >= certain length and >= certain identity
 
     :param minimum_identity: lowest value of perc_identity to consider (0.0 : 1.0)
@@ -14,28 +15,45 @@ def get_hgt(minimum_identity, minimum_length=100, maximum_identity=1.0):
     """
     hgt = db['blast_results'].find(
         {'perc_identity': {'$gte': minimum_identity, '$lte': maximum_identity},
-         'length'       : {'$gte': minimum_length}}
+         'length'       : {'$gte': minimum_length},
+         }
     )
 
+    if ssu_max:
+        dm = get_distance_matrix("ani")
+
+    print(dm)
     for record in hgt:
         q, s = ObjectId(record['query']), ObjectId(record['subject'])
-        if db['genes'].find_one({'_id': q}) and db['genes'].find_one({'_id': s}):  # all hits should refer to a record, but they don't...
-            if not db['genes'].find_one({'_id': q})['species'] == db['genes'].find_one({'_id': s})['species']:
-                yield q, s, record
+        qr = db['genes'].find_one({'_id': q})
+        sr = db['genes'].find_one({'_id': s})
+        if qr and sr:  # all hits should refer to a record, but they don't...
+            if not qr['species'] == sr['species']:
+                if ssu_max:
+                    if dm.loc[qr["species"], sr["species"]] < ssu_max:
+                        yield q, s, record
+                    else:
+                        pass
+                else:
+                    yield q, s, record
 
-def get_islands(minimum_identity, minimum_length=100, dist_between_hits=3000):
+
+def get_islands(minimum_identity, minimum_length=100, dist_between_hits=3000, ssu_max=0):
     """ Get blast hits within species that are within x base pairs of each other
     :param minimum_identity:
     :param minimum_length:
     :param dist_between_hits: number of base-pairs between hits considered significant
     :return:
     """
-    hit_list = []
+    hit_list = set([])
+    counter = 0
+    for id1, id2, hit in get_matches(minimum_identity, minimum_length, ssu_max=ssu_max):
+        counter += 2
+        if counter % 500 == 0:
+            print("checking {} hits".format(counter))
+        hit_list.update([id1, id2])
 
-    for id1, id2, hit in get_hgt(minimum_identity, minimum_length):
-        hit_list.extend([id1, id2])
-
-    ids = list(set(hit_list))  # set removes duplicates, but mongo needs list for query
+    ids = list(hit_list)  # set removes duplicates, but mongo needs list for query
     # Yields list of islands for each species. There's probably a way more efficient way to do this.
     for species_id_list in get_hits_from_species(ids):
         species_hits_list = [db['genes'].find_one({'_id': x}) for x in species_id_list]
@@ -96,7 +114,7 @@ def collapse(list_of_iterables):
     return sorted(result, key=len, reverse=True)
 
 
-def find_all_hits(some_id, minimum_identity, minimum_length=100):
+def find_all_hits(some_id, minimum_identity, minimum_length=100, ssu_max=0):
     """ Generator yielding blast hits
 
     :param some_id: ObjectID
@@ -123,13 +141,13 @@ def find_all_hits(some_id, minimum_identity, minimum_length=100):
                 yield ObjectId(blast_hit['query'])
 
 
-def hgt_groups(minimum_identity, minimum_length=100, dist_between_hits=3000):
+def hgt_groups(minimum_identity, minimum_length=100, dist_between_hits=3000, ssu_max=0):
     """
     Returns mutilspecies groups of genes as list of lists.
 
     """
     groups_list = []
-    for islands in get_islands(minimum_identity, minimum_length, dist_between_hits):
+    for islands in get_islands(minimum_identity, minimum_length, dist_between_hits, ssu_max=ssu_max):
 
         # each sublist represents one island...
         for island in islands:

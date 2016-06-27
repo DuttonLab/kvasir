@@ -3,16 +3,16 @@ from tempfile import NamedTemporaryFile
 from subprocess import Popen, PIPE
 
 
-def db_cds_to_fna(collection="genes"):  # See comment on `run.py` ln9
+def db_to_fna(collection="genes", seqtype="CDS"):  # See comment on `run.py` ln9
     """
-    Takes records of "type":"CDS", writes them to file
+    Takes records of ``"type":seqtype` (like "CDS" or "16s"), writes them to file
     :param collection: string - MongoDB collection name
     :param open_file: file object open for writing
     :return: string - path of file
     """
     tmp_file = NamedTemporaryFile()
 
-    for record in db[collection].find({"type": "CDS"}):
+    for record in db[collection].find({"type": seqtype}):
         tmp_file.write(">{}\n{}\n".format(
             record["_id"],
             record["dna_seq"]

@@ -1,5 +1,5 @@
 import pymongo
 
-INPUT = "/path/to/input/"  # path to folder with genbank files
-OUTPUT = "/path/to/output"  # path to output folder
-MONGODB = pymongo.MongoClient()["database_name"]
+INPUT = "/Users/KBLaptop/computation/Science/kv_data/input/fixed/"
+OUTPUT = "/Users/KBLaptop/computation/Science/kv_data/output"
+MONGODB = pymongo.MongoClient()["2016-06-23_fixed"]

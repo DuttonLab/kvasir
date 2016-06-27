@@ -3,7 +3,7 @@ import re
 import numpy as np
 from settings import OUTPUT
 from settings import MONGODB as db
-from Analysis.output import get_hgt, hgt_groups, find_all_hits
+from Analysis.output import get_matches, hgt_groups, find_all_hits
 from Bio import SeqUtils
 import re
 
@@ -78,7 +78,7 @@ def get_links(minimum_identity, minimum_length=100, maximum_identity=1.0, group_
                     for query in find_all_hits(subject, minimum_identity, minimum_length):
                         write_link(out_handle, subject, query)
         else:
-            for s1, s2, hit in get_hgt(minimum_identity, minimum_length, maximum_identity):
+            for s1, s2, hit in get_matches(minimum_identity, minimum_length, maximum_identity):
                 write_link(out_handle, s1, s2)
 
 

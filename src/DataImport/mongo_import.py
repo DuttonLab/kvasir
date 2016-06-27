@@ -10,11 +10,14 @@ def mongo_import_record(record, collection):
     """
     db[collection].insert_one(record)
 
-def mongo_import_genbank(genbank_file, collection):
+def mongo_import_genbank(genbank_file, collection="genes"):
     """ Parse genbank file and import into MongoDB
 
     :param genbank_file: genbank file containing genomic information
     :param collection:
     """
     for record in parse_genbank(genbank_file):
-        mongo_import_record(record, collection)
+        if record["type"] == "ssu":
+            mongo_import_record(record, "ssu")
+        else:
+            mongo_import_record(record, collection)
