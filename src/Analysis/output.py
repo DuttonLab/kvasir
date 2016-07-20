@@ -184,21 +184,24 @@ def output_groups(groups_list, output_file, min_group_size=2):
             group_no += 1
             for entry in group:
                 db_handle = db['genes'].find_one({'_id': ObjectId(entry)})
-                annotation = db_handle['annotation'].replace(',', '')  # prevents CSV screw-up
-                series = pd.Series(
-                    [str(group_no).zfill(3),
-                    db_handle['locus_tag'],
-                    db_handle['location']['contig'],
-                    db_handle['location']['start'],
-                    db_handle['location']['end'],
-                    db_handle['location']['strand'],
-                    annotation,
-                    str(db_handle['_id']),
-                    db_handle['dna_seq']
-                    ],
-                    index=df_index,
-                    name=db_handle['species']
-                )
-                df=df.append(series)
+                if db_handle:
+                    annotation = db_handle['annotation'].replace(',', '')  # prevents CSV screw-up
+                    series = pd.Series(
+                        [str(group_no).zfill(3),
+                        db_handle['locus_tag'],
+                        db_handle['location']['contig'],
+                        db_handle['location']['start'],
+                        db_handle['location']['end'],
+                        db_handle['location']['strand'],
+                        annotation,
+                        str(db_handle['_id']),
+                        db_handle['dna_seq']
+                        ],
+                        index=df_index,
+                        name=db_handle['species']
+                    )
+                    df=df.append(series)
+                else:
+                    print("No database entry found for {}".format(entry))
     print("Creating file at {}".format(output_file))
     df.to_csv(output_file, columns=df_index)
