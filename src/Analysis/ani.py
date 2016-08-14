@@ -1,10 +1,11 @@
 import os
 import pandas as pd
 from settings import MONGODB as db
+import re
 from subprocess import Popen, PIPE
 
 species = db["genes"].distinct("species")
-name_dict = {x.replace(" ", "_").replace(".", "_").replace(")", "").replace("(", "").replace("__", "_"):x for x in species}
+name_dict = {sub(r"[. -\(\)]", "_", x):x for x in species}
 
 l = len(species)
 data = {s:[0 for x in range(l)] for s in species}
