@@ -19,11 +19,11 @@ def parse_genbank(genbank_file):
         for record in add_contig_data(records, genbank_file):
             yield record
 
-    if not has_ssu:
-        print("{} Didn't have ssu record".format(genbank_file))
-        record = manual_ssu()
-        if record:
-            yield record
+    # if not has_ssu:
+    #     print("{} Didn't have ssu record".format(genbank_file))
+    #     record = manual_ssu()
+    #     if record:
+    #         yield record
 
 def manual_ssu():
     add_ssu = raw_input("Do you want to enter an ssu sequence? [y/n]")
@@ -72,6 +72,8 @@ def check_16S(feature):
 
 def add_contig_data(records, genbank_file):
     contig_counter = 0
+    global locus_tag_counter
+    locus_tag_counter = 0
     contig_ids = []
 
     current_species = None
@@ -106,7 +108,7 @@ def add_contig_data(records, genbank_file):
             yield feature
 
 def add_features(contig, species):
-    locus_tag_counter = 0
+    global locus_tag_counter
     for feature in contig.features:
         locus_tag_counter += 1
 

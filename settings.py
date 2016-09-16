@@ -1,5 +1,5 @@
 import pymongo
 
-INPUT = "/Users/KBLaptop/computation/Science/kv_data/input/fixed/"
-OUTPUT = "/Users/KBLaptop/computation/Science/kv_data/output"
+INPUT = "/path/to/input/"
+OUTPUT = "/path/to/output"
 MONGODB = pymongo.MongoClient()["database_name"]
