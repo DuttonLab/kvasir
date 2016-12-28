@@ -47,7 +47,7 @@ def add_contig_data(records, genbank_file):
             species = contig.annotations['source']
         except KeyError:
             # uses filename (without extension) as species name
-            species = os.path.splitext(os.path.basename(genbank_file)[0])
+            species = os.path.splitext(os.path.basename(genbank_file))[0]
 
         if not species == current_species:
             print("Importing {}".format(species))
