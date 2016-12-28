@@ -1,4 +1,4 @@
-from settings import *
+from user_settings import *
 import sys
 sys.path.append('src/')
 from DataImport.mongo_import import mongo_import_genbank
@@ -36,8 +36,8 @@ def blast():
         mongo_import_record(result, "blast_results")
 
 
-def analyze(minimum_identity, minimum_length=500, dist_between_hits=5000):
-    groups = output.hgt_groups(minimum_identity, minimum_length, dist_between_hits)
+def analyze(minimum_identity, minimum_length=500, dist_between_hits=5000, ssu_max=0.9):
+    groups = output.hgt_groups(minimum_identity, minimum_length, dist_between_hits, ssu_max)
     output.output_groups(
         groups, os.path.join(
             OUTPUT, MONGODB.name, "{}-{}-{}-groups.csv".format(

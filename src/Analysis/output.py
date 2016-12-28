@@ -22,7 +22,6 @@ def get_matches(minimum_identity, minimum_length=100, maximum_identity=1.0, ssu_
     if ssu_max:
         dm = get_distance_matrix("ani")
 
-    print(dm)
     for record in hgt:
         q, s = ObjectId(record['query']), ObjectId(record['subject'])
         qr = db['genes'].find_one({'_id': q})

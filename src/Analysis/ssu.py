@@ -113,6 +113,6 @@ def get_distance_matrix(collection="ssu"):
     for s1 in species:
         for s2 in species:
             dist = MONGODB[collection].find_one({"query":s1, "subject":s2})["perc_identity"]
-            dm.loc[s1, s2] = dist / 100.0
+            dm.loc[s1, s2] = dist # / 100.0
 
     return dm
