@@ -1,5 +1,5 @@
 from settings import MONGODB as db
-from gb_parse import parse_genbank
+from DataImport.gb_parse import parse_genbank
 
 
 def mongo_import_record(record, collection):

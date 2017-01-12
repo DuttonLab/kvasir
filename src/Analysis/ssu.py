@@ -32,7 +32,7 @@ def get_ssu(collection="genes"):
 
 
 def write_ssu(collection="genes"):
-    tmp_file = NamedTemporaryFile()
+    tmp_file = NamedTemporaryFile(mode="w+")
     for ssu in get_ssu(collection):
         if ssu:
             tmp_file.write(">{}\n{}\n".format(ssu[0], ssu[1]))
@@ -54,8 +54,8 @@ def blast_ssu():
 
     db_path = os.path.join(OUTPUT, MONGODB.name, "blast_db", "ssu")
 
-    blast_results = blast_all(fasta, db_path, "50")
-
+    blast_results = blast_all(fasta, db_path, .8)
+    
     for result in parse_blast_results_xml(blast_results, "16s"):
         query = MONGODB["genes"].find_one({"_id":ObjectId(result["query"])})
         subject = MONGODB["genes"].find_one({"_id":ObjectId(result["subject"])})
@@ -65,7 +65,7 @@ def blast_ssu():
                 "type":"ssu_result"}
         mongo_import_record(dist, "blast_results")
 
-def check_ssu_pair(query, subject, ssu_max=0, distance_db="blast_results"):
+def check_ssu_pair(query, subject, ssu_max=1.0, distance_db="blast_results"):
     query_species = MONGODB["genes"].find_one({"_id":ObjectId(query)})["species"]
     subject_species = MONGODB["genes"].find_one({"_id":ObjectId(subject)})["species"]
 

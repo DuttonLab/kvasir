@@ -1,5 +1,5 @@
 import pymongo
 
-INPUT = "/path/to/input/"
-OUTPUT = "/path/to/output"
-MONGODB = pymongo.MongoClient()["database_name"]
+INPUT = "/Users/ksb/computation/science/genomes/kv_input"
+OUTPUT = "/Users/ksb/computation/science/genomes/kv_output"
+MONGODB = pymongo.MongoClient()["urogenital"]

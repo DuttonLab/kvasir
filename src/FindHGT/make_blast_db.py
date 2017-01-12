@@ -10,15 +10,14 @@ def db_to_fna(collection="genes", seqtype="CDS"):  # See comment on `run.py` ln9
     :param open_file: file object open for writing
     :return: string - path of file
     """
-    tmp_file = NamedTemporaryFile()
-
+    tmp_file = NamedTemporaryFile(mode="w+")
     for record in db[collection].find({"type": seqtype}):
         tmp_file.write(">{}\n{}\n".format(
             record["_id"],
             record["dna_seq"]
             )
         )
-
+    tmp_file.seek(0)
     return tmp_file
 
 

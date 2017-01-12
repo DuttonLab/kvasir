@@ -5,35 +5,33 @@ from Bio.Blast import NCBIXML
 from settings import MONGODB as db
 import os
 
-def blast_all(query_fasta, blast_db, perc_identity='95'):
+def blast_all(query_fasta, blast_db, perc_identity=.95):
     """BLAST `query_fasta` against a database
     :param query_fasta: open fasta file object
     :param blast_db: string - path to blast database
     :return: temporary xml file with blast results
     """
-    tmp_results = NamedTemporaryFile()
+    tmp_results = NamedTemporaryFile(mode="w+")
     print("Blasting all by all")
     Popen(
         ['blastn',
          '-query', query_fasta.name,
          '-db', blast_db,
          '-out', tmp_results.name,
-         '-perc_identity', perc_identity,
+         '-perc_identity', str(perc_identity*100),
          '-outfmt', '5'],
          stdout=PIPE  # xml output
     ).wait()  # waits for return code before proceeding
 
-    tmp_results.seek(0, 2)
     return tmp_results
 
 
-def parse_blast_results_xml(results_file, seqtype="CDS"):
+def parse_blast_results_xml(results_file, seqtype="CDS", ssu_max=1.0):
     """ Parse and insert results of BLAST
 
     :param results_file: blast results in xml format
     """
     counter = 1
-    results_file.seek(0)
     print("Getting Blast Records")
     for blast_record in NCBIXML.parse(results_file):
 
@@ -57,8 +55,8 @@ def parse_blast_results_xml(results_file, seqtype="CDS"):
                     "bit_score": hsp.bits,
                     "e-value": hsp.expect
                     }
-        if counter % 500 == 0:
-            print("---> {} blast records retrieved".format(counter))
+            if counter % 500 == 0:
+                print("---> {} blast records retrieved".format(counter))
 
 
 def check_blast_pair(query, subject):
@@ -84,11 +82,9 @@ def check_blast_pair(query, subject):
     return blast_pair
 
 
-def check_species(query, subject, ssu=0):
+def check_species(query, subject, ssu_max=1.0):
     """ Check to ensure species are not the same
     - Defaults to checking names (hits from same species are discarded).
-    - If ssu is set, will check 16s similarity (eg ssu = 0.97 will exclude hits
-    that are greater than 97\% identical).
     """
     collection = db["genes"]
     query_id, subject_id = ObjectId(query), ObjectId(subject)
@@ -100,8 +96,10 @@ def check_species(query, subject, ssu=0):
         l1 = " ".join(species1.lower().split()[0:2])
         l2 = " ".join(species2.lower().split()[0:2])
         if l1 == l2:
+            print("{} and {} are the same! Skipping".format(l1, l2))
             return True
         else:
+            print("{} and {} are different! importing".format(l1, l2))
             return False
     except:
         print("something went wrong")

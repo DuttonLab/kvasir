@@ -1,11 +1,11 @@
-from user_settings import *
+from settings import *
 import sys
 sys.path.append('src/')
 from DataImport.mongo_import import mongo_import_genbank
 from FindHGT.make_blast_db import make_blast_db, db_to_fna
 from FindHGT.run_blast import blast_all, parse_blast_results_xml
 from DataImport.mongo_import import mongo_import_record
-from Analysis import output, circos
+from Analysis import output
 import os
 
 
@@ -31,7 +31,7 @@ def blast():
     fasta = db_to_fna('genes')  # Collection name option? (see ln15 above)
     db_path = os.path.join(OUTPUT, MONGODB.name, "blast_db", "genes")
 
-    blast_results = blast_all(fasta, db_path)
+    blast_results = blast_all(fasta, db_path, perc_identity=0.99)
     for result in parse_blast_results_xml(blast_results):
         mongo_import_record(result, "blast_results")
 
