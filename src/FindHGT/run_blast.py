@@ -33,30 +33,36 @@ def parse_blast_results_xml(results_file, seqtype="CDS", ssu_max=1.0):
     """
     counter = 1
     print("Getting Blast Records")
-    for blast_record in NCBIXML.parse(results_file):
+    try:
+        for blast_record in NCBIXML.parse(results_file):
 
-        query_id = blast_record.query
+            query_id = blast_record.query
 
-        for alignment in blast_record.alignments:
-            hit_id = alignment.hit_def
+            for alignment in blast_record.alignments:
+                hit_id = alignment.hit_def
+                same, sp1, sp2 = check_species(query_id, hit_id)
 
-            if query_id != hit_id and not check_species(query_id, hit_id) and not check_blast_pair(query_id, hit_id):
-                counter += 1
-                hsp = alignment.hsps[0]  # there may be multiple hsps - first one is typically best match
-                perc_identity = float(hsp.identities) / float(hsp.align_length)
+                if query_id != hit_id and not same and not check_blast_pair(query_id, hit_id):
+                    counter += 1
+                    hsp = alignment.hsps[0]  # there may be multiple hsps - first one is typically best match
+                    perc_identity = float(hsp.identities) / float(hsp.align_length)
 
-                yield {
-                    "type": "blast_result",
-                    "seqtype":seqtype,
-                    "query": query_id,
-                    "subject": hit_id,
-                    "perc_identity": perc_identity,
-                    "length": hsp.align_length,
-                    "bit_score": hsp.bits,
-                    "e-value": hsp.expect
-                    }
-            if counter % 500 == 0:
-                print("---> {} blast records retrieved".format(counter))
+                    yield {
+                        "type": "blast_result",
+                        "seqtype":seqtype,
+                        "query": query_id,
+                        "query_species": sp1,
+                        "subject": hit_id,
+                        "subject_species":sp2,
+                        "perc_identity": perc_identity,
+                        "length": hsp.align_length,
+                        "bit_score": hsp.bits,
+                        "e-value": hsp.expect
+                        }
+                if counter % 500 == 0:
+                    print("---> {} blast records retrieved".format(counter))
+    except ValueError:
+        print("No hits for {}".format("species"))
 
 
 def check_blast_pair(query, subject):
@@ -96,11 +102,9 @@ def check_species(query, subject, ssu_max=1.0):
         l1 = " ".join(species1.lower().split()[0:2])
         l2 = " ".join(species2.lower().split()[0:2])
         if l1 == l2:
-            print("{} and {} are the same! Skipping".format(l1, l2))
-            return True
+            return True, species1, species2
         else:
-            print("{} and {} are different! importing".format(l1, l2))
-            return False
+            return False, species1, species2
     except:
         print("something went wrong")
-        return False
+        return False, "", ""

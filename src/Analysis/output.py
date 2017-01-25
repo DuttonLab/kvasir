@@ -16,11 +16,12 @@ def get_matches(minimum_identity, minimum_length=100, maximum_identity=1.0, ssu_
     hgt = db['blast_results'].find(
         {'perc_identity': {'$gte': minimum_identity, '$lte': maximum_identity},
          'length'       : {'$gte': minimum_length},
+         'type'         : 'blast_result'
          }
     )
 
     if ssu_max:
-        dm = get_distance_matrix("ani")
+        dm = get_distance_matrix("ssu")
 
     for record in hgt:
         q, s = ObjectId(record['query']), ObjectId(record['subject'])
@@ -48,7 +49,7 @@ def get_islands(minimum_identity, minimum_length=100, dist_between_hits=3000, ss
     counter = 0
     for id1, id2, hit in get_matches(minimum_identity, minimum_length, ssu_max=ssu_max):
         counter += 2
-        if counter % 500 == 0:
+        if counter % 1000 == 0:
             print("checking {} hits".format(counter))
         hit_list.update([id1, id2])
 
