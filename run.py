@@ -32,22 +32,18 @@ def blast():
     db_path = os.path.join(OUTPUT, MONGODB.name, "blast_db", "genes")
 
     for species in MONGODB["genes"].distinct("species"):
-        if not species.startswith("Propionibacterium acnes") and not MONGODB["blast_results"].find_one({"query_species":species}):
-            if not MONGODB["blast_results"].find_one({"species":species}):
-                print("blasting {}".format(species))
-                tmp_file = NamedTemporaryFile(mode="w+")
-                for record in MONGODB["genes"].find({"type": "CDS", "species":species}):
-                    tmp_file.write(">{}\n{}\n".format(
-                        record["_id"],
-                        record["dna_seq"]
-                        )
-                    )
-                tmp_file.seek(0)
-                blast_results = blast_all(tmp_file, db_path, perc_identity=0.99)
-                for result in parse_blast_results_xml(blast_results):
-                    mongo_import_record(result, "blast_results")
-        else:
-            print("skipping {}".format(species))
+        print("blasting {}".format(species))
+        tmp_file = NamedTemporaryFile(mode="w+")
+        for record in MONGODB["genes"].find({"type": "CDS", "species":species}):
+            tmp_file.write(">{}\n{}\n".format(
+                record["_id"],
+                record["dna_seq"]
+                )
+            )
+        tmp_file.seek(0)
+        blast_results = blast_all(tmp_file, db_path, perc_identity=0.50)
+        for result in parse_blast_results_xml(blast_results):
+                mongo_import_record(result, "blast_results")
 
 
 def analyze(minimum_identity, minimum_length=500, dist_between_hits=5000, ssu_max=0.9):
