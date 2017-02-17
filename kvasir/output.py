@@ -1,7 +1,7 @@
 from settings import MONGODB as db
 from bson.objectid import ObjectId
 import pandas as pd
-from Analysis.ssu import get_distance_matrix
+from ssu import get_distance_matrix
 
 
 def get_matches(minimum_identity, minimum_length=100, maximum_identity=1.0, ssu_max=0):
