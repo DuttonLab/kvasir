@@ -71,7 +71,7 @@ At some point, I'll write a convenience script to check through your genomes to 
 
 ### BLAST Searching
 
-This is the meat of the analysis, and to make it work you need one more tool - [BLAST+](https://www.ncbi.nlm.nih.gov/books/NBK279671/) command line tools. This needs to be installed and accessible from your `$PATH`. In other words, you should be able to run `which blastn` and get a path spit back at you. If not - do some googling.
+To make the next part work you need one more thing - the [BLAST+](https://www.ncbi.nlm.nih.gov/books/NBK279671/) command line tools. This needs to be installed and accessible from your `$PATH`. In other words, you should be able to run `which blastn` and get a path spit back at you. If not - do some googling. I can't help you.
 
 Assuming this is working (you've still got `mongod` running right?), it's time to start blasting. There are a couple of commands in the `blast.py` script. First, you've gotta make a blast database with all of the the genes in your database using `makedb`. This command will make 3 files, in the current directory by default, or in the directory you specify with `-b`
 
@@ -85,11 +85,29 @@ Next, blastall will go through each species in your database and blast it agains
 
 ```
 # python3 bin/blast.py cheese1 -c blastall -b ~/blastdbs
-INFO:root:blasting Glutamicibacter bergerei BW77
+INFO:root:blasting Awesomeus speciesus strain A
 INFO:root:Blasting all by all
 INFO:root:Getting Blast Records
 INFO:root:---> 500 blast records retrieved
 ...
 ```
 
-In this case - I've put in a check so if you run this a second time, 
+In this case - I've put in a check so if you run this a second time, it will skip blasting any species that already have hits found in the database. You can use the `-f` flag to override this, but I wouldn't do that, because then you'll have a bunch of duplicates. If you made a mistake and want to re-run it, I suggest clearing out the `blast_results` collection of your database. In python:
+
+```python
+> import pymongo
+> db = pymongo.MongoClient()["cheese1"] # substitute "cheese1" for the name of your genome set
+> db["blast_results"].delete_many({"query_species":"Awesomeus speciesus strain A"})
+```
+
+... or if you want to remove all blast results and start over:
+
+```python
+db["blast_results"].drop()
+```
+
+Eventually, I will add a tool so that you can just add a single species or a group of new species and blast them separately, but for now, you'll have to start from scratch each time.
+
+### Analysis
+
+If your genome set contains only one example of any given species, you're in luck! At this step, you can run the HGT analysis, which will look for all protein coding genes that are >99% identical, and put them into groups. 
