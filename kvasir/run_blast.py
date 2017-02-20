@@ -2,8 +2,9 @@ from tempfile import NamedTemporaryFile
 from subprocess import Popen, PIPE
 from bson.objectid import ObjectId
 from Bio.Blast import NCBIXML
-from settings import MONGODB as db
+import logging
 import os
+
 
 def blast_all(query_fasta, blast_db, perc_identity=.95):
     """BLAST `query_fasta` against a database
@@ -12,7 +13,7 @@ def blast_all(query_fasta, blast_db, perc_identity=.95):
     :return: temporary xml file with blast results
     """
     tmp_results = NamedTemporaryFile(mode="w+")
-    print("Blasting all by all")
+    logging.info("Blasting all by all")
     Popen(
         ['blastn',
          '-query', query_fasta.name,
@@ -26,13 +27,13 @@ def blast_all(query_fasta, blast_db, perc_identity=.95):
     return tmp_results
 
 
-def parse_blast_results_xml(results_file, seqtype="CDS", ssu_max=1.0):
+def parse_blast_results_xml(db, results_file, seqtype="CDS"):
     """ Parse and insert results of BLAST
 
     :param results_file: blast results in xml format
     """
     counter = 1
-    print("Getting Blast Records")
+    logging.info("Getting Blast Records")
     try:
         for blast_record in NCBIXML.parse(results_file):
 
@@ -40,10 +41,12 @@ def parse_blast_results_xml(results_file, seqtype="CDS", ssu_max=1.0):
 
             for alignment in blast_record.alignments:
                 hit_id = alignment.hit_def
-                same, sp1, sp2 = check_species(query_id, hit_id)
+                same, sp1, sp2 = check_species(db, query_id, hit_id)
 
-                if query_id != hit_id and not same and not check_blast_pair(query_id, hit_id):
+                if query_id != hit_id and not same and not check_blast_pair(db, query_id, hit_id):
                     counter += 1
+                    if counter % 500 == 0: logging.info("---> {} blast records retrieved".format(counter))
+
                     hsp = alignment.hsps[0]  # there may be multiple hsps - first one is typically best match
                     perc_identity = float(hsp.identities) / float(hsp.align_length)
 
@@ -59,13 +62,12 @@ def parse_blast_results_xml(results_file, seqtype="CDS", ssu_max=1.0):
                         "bit_score": hsp.bits,
                         "e-value": hsp.expect
                         }
-                if counter % 500 == 0:
-                    print("---> {} blast records retrieved".format(counter))
+
     except ValueError:
-        print("No hits for {}".format("species"))
+        logging.warning("No hits for {}".format("species"))
 
 
-def check_blast_pair(query, subject):
+def check_blast_pair(db, query, subject):
     """ Check database for the presence of a blast result for given pair of record '_id's
 
     Since blasting seq1 vs seq2 should return the same results as seq2 vs seq1 and we don't want to duplicate data, this
@@ -88,7 +90,7 @@ def check_blast_pair(query, subject):
     return blast_pair
 
 
-def check_species(query, subject, ssu_max=1.0):
+def check_species(db, query, subject):
     """ Check to ensure species are not the same
     - Defaults to checking names (hits from same species are discarded).
     """
@@ -106,5 +108,5 @@ def check_species(query, subject, ssu_max=1.0):
         else:
             return False, species1, species2
     except:
-        print("something went wrong")
+        logging.warning("Something went wrong when checking species")
         return False, "", ""

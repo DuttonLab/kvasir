@@ -1,54 +1,8 @@
 from Bio import SeqIO
 import os
 from re import search
+import logging
 
-
-def parse_genbank(genbank_file):
-    """ Generator yielding contig and gene records
-
-    Retrieves data from a genbank file to prepare for import to MongoDB
-    :param genbank_file: a file ending with ".gb" or ".gbk" that contains genomic information
-    :rtype generator[dict]: each iteration yields a record (dict) for insertion into MongoDB
-    """
-    global has_ssu
-    has_ssu = False
-    with open(genbank_file, 'r') as in_handle:
-        records = SeqIO.parse(in_handle, 'gb')
-
-        # ToDo: Need a log file to record added locus_tags, species names etc, preferably with a way to reference back to original file
-        for record in add_contig_data(records, genbank_file):
-            yield record
-
-    # if not has_ssu:
-    #     print("{} Didn't have ssu record".format(genbank_file))
-    #     record = manual_ssu()
-    #     if record:
-    #         yield record
-
-def manual_ssu():
-    add_ssu = raw_input("Do you want to enter an ssu sequence? [y/n]")
-    if add_ssu.lower() == "y" or add_ssu.lower() == "yes":
-        species = raw_input("Enter species name: ")
-        ssu = raw_input("Enter SSU sequence (eg. \"ATTCCA...\"): ")
-        feature_record = {
-            'type': "16s",
-            'dna_seq': ssu,
-            'aa_seq': None,
-            'locus_tag': "ssutag01",
-            'annotation': "16S small ribosomal subunit, SSU",
-            'species': species,
-            'location': {
-                'start': 1,
-                'end': len(ssu),
-                'strand': 1,
-                'contig': "manual_entry"},
-            }
-        return feature_record
-    elif add_ssu.lower() == "n" or add_ssu.lower() == "no":
-        return None
-    else:
-        print("Please enter 'y' or 'n'")
-        manual_ssu()
 
 def check_16S(feature):
     """
@@ -62,19 +16,37 @@ def check_16S(feature):
         except KeyError:
             return False
 
-        if search(r"16[sS]|ssu|SSU", annotation):
-            if len(feature) > 700:
-                return True
-            else:
-                return False
+        if search(r"16[sS]|ssu|SSU", annotation) and len(feature) > 700:
+            return True
+        else:
+            return False
     else:
         return False
 
+
+def parse_genbank(genbank_file):
+    """ Generator yielding contig and gene records
+
+    Retrieves data from a genbank file to prepare for import to MongoDB
+    :param genbank_file: a file ending with ".gb" or ".gbk" that contains genomic information
+    :rtype generator[dict]: each iteration yields a record (dict) for insertion into MongoDB
+    """
+    with open(genbank_file, 'r') as in_handle:
+        records = SeqIO.parse(in_handle, 'gb')
+
+        # TODO: Need a log file to record added locus_tags, species names etc, preferably with a way to reference back to original file
+        for record in add_contig_data(records, genbank_file):
+            yield record
+
+
 def add_contig_data(records, genbank_file):
-    contig_counter = 0
+    """
+    Called by `parse_genbank()` - yields contig record, and then individual gene records
+    for each gene within a contig.
+    :param records: generator - SeqIO parse object
+    :rtype generator[dict]: each iteration yields a record (dict) for insertion into MongoDB
+    """
     global locus_tag_counter
-    locus_tag_counter = 0
-    contig_ids = []
 
     current_species = None
     for contig in records:
@@ -83,16 +55,17 @@ def add_contig_data(records, genbank_file):
             species = contig.annotations['source']
         except KeyError:
             # uses filename (without extension) as species name
-            species = os.path.splitext(os.path.basename(genbank_file))[0]
+            f = os.path.splitext(os.path.basename(genbank_file))
+            logging.warning('{} in file {} does not have \"source\" attribute, using "{}" as species'.format(
+                contig.id,
+                genbank_file,
+                f[0]
+            ))
+            species = f[0]
 
         if not species == current_species:
             print("Importing {}".format(species))
             current_species = species
-
-        if contig.id in contig_ids: # in case the id field is present but not unique
-            contig.id = "{}_{}".format(contig.id, contig_counter)
-        else:
-            contig_ids.append(contig.id)
 
         # ToDo: append list of gene records contained within contig?
         contig_record = {
@@ -101,16 +74,18 @@ def add_contig_data(records, genbank_file):
             'contig_id': contig.id,
             'species': species
         }
-
         yield contig_record
 
         for feature in add_features(contig, species):
             yield feature
 
 def add_features(contig, species):
-    global locus_tag_counter
+    """
+    Called by `add_contig_data()` - yields individual gene records for each gene within a contig.
+    :param records: generator - SeqIO parse object
+    :rtype generator[dict]: each iteration yields a record (dict) for insertion into MongoDB
+    """
     for feature in contig.features:
-        locus_tag_counter += 1
 
         try:
             aa_seq = feature.qualifiers['translation'][0]
@@ -120,8 +95,8 @@ def add_features(contig, species):
         try:
             locus_tag = feature.qualifiers['locus_tag'][0]
         except KeyError:
-            locus_tag = 'kv_{}'.format(str(locus_tag_counter).zfill(5))
-
+            locus_tag = None
+            logging.warning("No locus_tag found for feature - this will cause issues")
         try:
             annotation = feature.qualifiers['product'][0]
         except KeyError:
@@ -130,8 +105,6 @@ def add_features(contig, species):
         feature_type = None
         if feature.type == 'rRNA':
             if check_16S(feature):
-                global has_ssu
-                has_ssu = True
                 feature_type = '16s'
             else:
                 feature_type = 'rRNA'

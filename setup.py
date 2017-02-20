@@ -7,7 +7,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    name = "an_example_pypi_project",
+    name = "kvasir",
     version = "0.6",
     author = "Kevin Bonham, PhD",
     author_email = "kevbonham@gmail.computation",
@@ -16,6 +16,8 @@ setup(
     keywords = "HGT biology bacteria genomics",
     url = "http://github.com/kescobo/kvasir",
     packages=['kvasir', 'tests'],
+    scripts=[os.path.join('bin', 'blast.py'),
+             os.path.join('bin', 'import_genomes.py')],
     long_description=read('README.md'),
     classifiers=[
         "Development Status :: 4 - Beta",
