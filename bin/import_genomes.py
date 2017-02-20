@@ -1,7 +1,7 @@
 import pymongo
 import argparse
 import os
-from kvasir.mongo_import import mongo_import_genbank
+from .kvasir.mongo_import import mongo_import_genbank
 
 parser = argparse.ArgumentParser(description='Import genbank files')
 
