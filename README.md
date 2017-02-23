@@ -42,7 +42,7 @@ Kvasir can import genomes in [Genbank](https://www.ncbi.nlm.nih.gov/Sitemap/samp
 Each genome set should have a unique name - this will be the first argument for every script. For the following examples, I'll be looking at cheese genomes and the set will have the name `cheese1`
 
 ```
-$ python bin/import_genomes.py cheese1 -i path/to/genbank/files
+$ python bin/kv_import.py cheese1 -i path/to/genbank/files
 ```
 
 I haven't yet built a way to check if you're trying to import the same genome multiple times, so use with caution! If you're not sure if you've already imported a file, you can query your MongoDB with the species name (see below for info on what is used as the species name). If you're not sure if you've imported *Awesomeus speciesus strain A*, launch python, and try the following:
@@ -76,7 +76,7 @@ To make the next part work you need one more thing - the [BLAST+](https://www.nc
 Assuming this is working (you've still got `mongod` running right?), it's time to start blasting. There are a couple of commands in the `blast.py` script. First, you've gotta make a blast database with all of the the genes in your database using `makedb`. This command will make 3 files, in the current directory by default, or in the directory you specify with `-b`
 
 ```
-# python3 bin/blast.py cheese1 -c makedb -b ~/blastdbs
+# python3 bin/kv_blast.py cheese1 -c makedb -b ~/blastdbs
 INFO:root:making BLAST database with protein coding sequences from cheese1 at /Users/ksb/blastdbs
 INFO:root:BLAST db created at /Users/ksb/blastdbs
 ```
@@ -84,7 +84,7 @@ INFO:root:BLAST db created at /Users/ksb/blastdbs
 Next, blastall will go through each species in your database and blast it against that database. Each hit will then be stored in your MongoDB with some metadata.
 
 ```
-# python3 bin/blast.py cheese1 -c blastall -b ~/blastdbs
+# python3 bin/kv_blast.py cheese1 -c blastall -b ~/blastdbs
 INFO:root:blasting Awesomeus speciesus strain A
 INFO:root:Blasting all by all
 INFO:root:Getting Blast Records
@@ -110,4 +110,4 @@ Eventually, I will add a tool so that you can just add a single species or a gro
 
 ### Analysis
 
-If your genome set contains only one example of any given species, you're in luck! At this step, you can run the HGT analysis, which will look for all protein coding genes that are >99% identical, and put them into groups. 
+If your genome set contains only one example of any given species, you're in luck! At this step, you can run the HGT analysis, which will look for all protein coding genes that are >99% identical, and put them into groups.
