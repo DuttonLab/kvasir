@@ -29,7 +29,7 @@ if args.command == "ani":
     species = DB["genes"].distinct("species")
     for sp1, sp2 in combinations(species, 2):
         logging.debug
-        if sp1.split()[0] == sp2.split()[0]:
+        if sp1.split().split("_")[0].split("_")[0] == sp2.split()[0].split("_")[0]:
             record_exists = DB["species_distance"].find_one(
                     {"$or":[{"species_1":sp1, "species_2":sp2}, {"species_1":sp2, "species_2":sp1}]})
             if record_exists:
@@ -60,6 +60,3 @@ elif args.command == "distance_matrix":
             p = os.path.join(p, "distance_matrix.csv")
 
         dm.to_csv(p)
-
-for r in DB["species_distance"].find({"type":"test"}):
-    print(r)
