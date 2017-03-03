@@ -1,88 +1,69 @@
-from settings import MONGODB as db
-from bson.objectid import ObjectId
 import pandas as pd
-from ssu import get_distance_matrix
+import logging
+from bson.objectid import ObjectId
+from kvasir.distance import get_distance_matrix
 
 
-def get_matches(minimum_identity, minimum_length=100, maximum_identity=1.0, ssu_max=0):
-    """ Generator yielding blast hits >= certain length and >= certain identity
+def get_hits_from_species(species, minimum_identity, db, minimum_length=100, minimum_species_distance=0, dtype="ani", ):
+    """ Generator yielding blast hits for a speices >= certain length and >= certain identity
 
     :param minimum_identity: lowest value of perc_identity to consider (0.0 : 1.0)
     :type minimum_identity: Float
-    :param minimum_length:
+    :param minimum_length: minimum length of blast hit
     :type minimum_length: Int
     :rtype generator: query id and subject id for each hit
     """
-    hgt = db['blast_results'].find(
-        {'perc_identity': {'$gte': minimum_identity, '$lte': maximum_identity},
+    logging.info("---> Getting blast hits for {}".format(species))
+
+    hits = set([])
+    if minimum_species_distance:
+        dm = get_distance_matrix(db, dtype)
+
+    for record in db['blast_results'].find(
+        {"query_species": species,
+         'perc_identity': {'$gte': minimum_identity},
          'length'       : {'$gte': minimum_length},
-         'type'         : 'blast_result'
-         }
-    )
+         }):
+         if not minimum_species_distance or dm.loc[record["query_species"], record["subject_species"]] > minimum_species_distance:
+             hits.update(ObejctID(record["query"]))
+    for record in db['blast_results'].find(
+        {"subject_species": species,
+         'perc_identity': {'$gte': minimum_identity},
+         'length'       : {'$gte': minimum_length},
+         }):
+         if not minimum_species_distance or dm.loc[record["subject_species"], record["subject_species"]] > minimum_species_distance:
+             hits.update(ObjectId(record["subject"]))
 
-    if ssu_max:
-        dm = get_distance_matrix("ssu")
-
-    for record in hgt:
-        q, s = ObjectId(record['query']), ObjectId(record['subject'])
-        qr = db['genes'].find_one({'_id': q})
-        sr = db['genes'].find_one({'_id': s})
-        if qr and sr:  # all hits should refer to a record, but they don't...
-            if not qr['species'] == sr['species']:
-                if ssu_max:
-                    if dm.loc[qr["species"], sr["species"]] < ssu_max:
-                        yield q, s, record
-                    else:
-                        pass
-                else:
-                    yield q, s, record
+    for _id in hits:
+        yield _id
 
 
-def get_islands(minimum_identity, minimum_length=100, dist_between_hits=3000, ssu_max=0):
+def get_islands(species, minimum_identity, db, dtype, minimum_length=100, dist_between_hits=3000, minimum_species_distance=0, dtype="ani"):
     """ Get blast hits within species that are within x base pairs of each other
     :param minimum_identity:
     :param minimum_length:
     :param dist_between_hits: number of base-pairs between hits considered significant
     :return:
     """
-    hit_list = set([])
-    counter = 0
-    for id1, id2, hit in get_matches(minimum_identity, minimum_length, ssu_max=ssu_max):
-        counter += 2
-        if counter % 1000 == 0:
-            print("checking {} hits".format(counter))
-        hit_list.update([id1, id2])
+    hits = get_hits_from_species(
+        species, minimum_identity db, dtype,
+        minimum_length, minimum_species_distance, dtype
+        ) # iterator
 
-    ids = list(hit_list)  # set removes duplicates, but mongo needs list for query
-    # Yields list of islands for each species. There's probably a way more efficient way to do this.
-    for species_id_list in get_hits_from_species(ids):
-        species_hits_list = [db['genes'].find_one({'_id': x}) for x in species_id_list]
-        islands = []
-        for entry_1 in species_hits_list:
-            entry_recorded = False
-            for entry_2 in species_hits_list:
-                if entry_1 == entry_2:
-                    pass
-                else:
-                    location_1 = entry_1['location']
-                    location_2 = entry_2['location']
-                    if location_1['contig'] == location_2['contig']:
-                        if abs(location_1['end'] - location_2['start']) <= dist_between_hits:
-                            entry_recorded = True
-                            islands.append([entry_1['_id'], entry_2['_id']])
+    hit_list = [db['genes'].find_one({'_id': x}) for x in hits]
+    hit_list = sorted(hit_list, key=lambda x: (x["location"]["contig"], x["location"]["start"]))
+    islands = []
 
-            if not entry_recorded:
-                islands.append([entry_1['_id']])
-        yield collapse(islands)
+    last = {"contig":None, "end":0}
+    for hit in hit_list:
+        loc = hit["location"]
+        if loc["contig"] == last["contig"] and loc["start"] - last["end"] <= dist_between_hits:
+            islands[-1].append(hit)
+        else:
+            islands.append([hit])
+        last = loc
 
-
-def get_hits_from_species(hits_list):
-    """ iterator returning records from each species in list that matches any in list of `_id`s,
-
-    """
-    for species in db['genes'].distinct('species'):
-        print("---> Getting blast hits for {}".format(species))
-        yield [record['_id'] for record in db['genes'].find({'species': species, 'type': 'CDS', '_id': {'$in': hits_list}})]
+    return islands
 
 
 def collapse(list_of_iterables):
@@ -114,19 +95,17 @@ def collapse(list_of_iterables):
     return sorted(result, key=len, reverse=True)
 
 
-def find_all_hits(some_id, minimum_identity, minimum_length=100, ssu_max=0):
+def find_all_hits(some_id, db, minimum_identity, minimum_length=100, minimum_species_distance=0):
     """ Generator yielding blast hits
 
     :param some_id: ObjectID
     :return: generator
     """
-    collection = db["blast_results"]
-
     # since we don't know order of insert, check both
-    as_query = {"type": "blast_result", "query": str(some_id)}  # maybe should use ObjectId on import, see issue#10
-    as_subject = {"type": "blast_result", "subject": str(some_id)}
+    as_query = {"type": "blast_result", "query": some_id}
+    as_subject = {"type": "blast_result", "subject": some_id}
 
-    blast_hits = collection.find({"$or": [as_query, as_subject],
+    blast_hits = db["blast_results"].find({"$or": [as_query, as_subject],
                              "perc_identity": {"$gte": minimum_identity},
                              "length":        {"$gte": minimum_length}
                               }
@@ -135,25 +114,25 @@ def find_all_hits(some_id, minimum_identity, minimum_length=100, ssu_max=0):
     # we only need to get the hit back
     if blast_hits:
         for blast_hit in blast_hits:
-            if blast_hit['query'] == str(some_id):
+            if blast_hit['query'] == some_id:
                 yield ObjectId(blast_hit['subject'])
-            elif blast_hit['subject'] == str(some_id):
+            elif blast_hit['subject'] == some_id:
                 yield ObjectId(blast_hit['query'])
 
 
-def hgt_groups(minimum_identity, minimum_length=100, dist_between_hits=3000, ssu_max=0):
+def hgt_groups(db, minimum_identity, minimum_length=100, dist_between_hits=3000, minimum_species_distance=0, dtype="ani"):
     """
     Returns mutilspecies groups of genes as list of lists.
 
     """
-    groups_list = []
-    for islands in get_islands(minimum_identity, minimum_length, dist_between_hits, ssu_max=ssu_max):
-
+    islands = {}
+    for species in db["genes"].distinct("species"):
+        islands[species] = get_islands(species, db, minimum_identity, minimum_length, dist_between_hits, minimum_species_distance=minimum_species_distance, dtype)
         # each sublist represents one island...
-        for island in islands:
-            hit_set = set() # container for hits
-            for gene_id in island:
-                gene_hits = find_all_hits(gene_id, minimum_identity, minimum_length)
+    for island in islands:
+        hit_set = set() # container for hits
+        for gene_id in island:
+            gene_hits = find_all_hits(gene_id, db, minimum_identity, minimum_length)
 
                 # Pulls each hit id, then appends it to group_set
                 for hit in gene_hits:

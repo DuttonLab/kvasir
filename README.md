@@ -152,6 +152,15 @@ $ python bin/kv_distance.py cheese1 -c distance_matrix -o ~/Desktop/returned_ssu
 
 Be sure your distance is actually a distance, and is between 0:1. So if two species have a 16S gene that is 85% identical, the distance should be 0.15.
 
-In the next section, the default is to not use the species distance parameter or more precisely, the minimum distance (`min_dist`) parameter is set to 0. If you have closely related species, but don't set this, it will look like you have a lot more HGT than you actually do. In the paper, for ANI we used `min_dist = 0.11`. 
+In the next section, the default is to not use the species distance parameter or more precisely, the minimum distance (`min_dist`) parameter is set to 0. If you have closely related species, but don't set this, it will look like you have a lot more HGT than you actually do. In the paper, for ANI we used `min_dist = 0.11`.
 
 #### Getting HGT groups
+Now the fun stuff!
+
+```sh
+$ python bin/kv_analysis.py -c groups -o ~/Desktop/groups.csv
+```
+
+This could take some time, depending on the number of species and how much HGT there is.
+
+You can also tweak some parameters like minimum size of a protein coding sequence, distance between genes to be considered the same group, minimum identity to be considered HGT, and minimum species distance with various flags. Try using `python bin/kv_analysis.py -h` to see what options you have.
