@@ -32,7 +32,7 @@ def get_ani(species_1, species_2, db):
 
 
 def get_distance_matrix(db, dtype="ani"):
-    species = db["species_distance"].distinct("species_1", {"type":dtype})
+    species = db["genes"].distinct("species")
     dm = pd.DataFrame([[1 for s in species] for s in species], index=species, columns=species)
     for s in species:
         dm.loc[s, s] = 0

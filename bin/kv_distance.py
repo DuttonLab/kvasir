@@ -7,7 +7,7 @@ from itertools import combinations, product
 from kvasir.mongo_import import mongo_import_distance, mongo_import_distance_matrix
 from kvasir.distance import get_ani, get_distance_matrix
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 parser = argparse.ArgumentParser(description='Kvasir Analysis commands')
 
@@ -27,9 +27,10 @@ DB = pymongo.MongoClient()[args.mongodb]
 
 if args.command == "ani":
     species = DB["genes"].distinct("species")
+    logging.debug(species)
     for sp1, sp2 in combinations(species, 2):
-        logging.debug
-        if sp1.split().split("_")[0].split("_")[0] == sp2.split()[0].split("_")[0]:
+        logging.debug("checking {} against {}".format(sp1, sp2))
+        if sp1.split()[0].split("_")[0] == sp2.split()[0].split("_")[0]:
             record_exists = DB["species_distance"].find_one(
                     {"$or":[{"species_1":sp1, "species_2":sp2}, {"species_1":sp2, "species_2":sp1}]})
             if record_exists:
@@ -43,7 +44,7 @@ if args.command == "ani":
                 logging.info("    ANI = {} | importing".format(d))
                 mongo_import_distance(sp1, sp2, d, DB, dtype="ani")
             else:
-                logging.error("{} and {} already have an ANI in the database, stopping. Use -f to overwrite".format(sp1, sp2))
+                logging.error("{} and {} already have an ANI in the database, skipping. Use -f to overwrite".format(sp1, sp2))
                 raise Exception("Careful! You may be trying to duplicate data")
 elif args.command == "distance_matrix":
     if args.input:
