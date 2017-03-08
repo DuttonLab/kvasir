@@ -11,7 +11,17 @@ parser = argparse.ArgumentParser(description='Import genbank files')
 parser.add_argument("mongodb", help="The name of MongoDB database", required=True)
 parser.add_argument("-i", "--input", help="File or directory to import", required=True)
 
+parser.add_argument("-v", "--verbose", help="Display debug status messages", action="store_true")
+parser.add_argument("-q", "--quiet", help="Suppress most output", action="store_true")
+
 args = parser.parse_args()
+
+if args.verbose:
+    logging.basicConfig(level=logging.DEBUG)
+elif args.quiet:
+    logging.basicConfig(level=logging.WARNING)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 INPUT = args.input
 DB = pymongo.MongoClient()[args.mongodb]

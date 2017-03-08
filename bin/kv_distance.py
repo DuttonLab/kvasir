@@ -21,7 +21,17 @@ parser.add_argument("-t", "--distance-type", help="Type of distance to get from 
 
 parser.add_argument("-f", "--force", help="Overwrite duplicate records", action="store_true")
 
+parser.add_argument("-v", "--verbose", help="Display debug status messages", action="store_true")
+parser.add_argument("-q", "--quiet", help="Suppress most output", action="store_true")
+
 args = parser.parse_args()
+
+if args.verbose:
+    logging.basicConfig(level=logging.DEBUG)
+elif args.quiet:
+    logging.basicConfig(level=logging.WARNING)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 DB = pymongo.MongoClient()[args.mongodb]
 

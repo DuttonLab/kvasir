@@ -4,8 +4,6 @@ import os
 import logging
 from kvasir.output import hgt_groups, output_groups
 
-logging.basicConfig(level=logging.INFO)
-
 parser = argparse.ArgumentParser(description='Kvasir Analysis commands')
 
 parser.add_argument("mongodb", help="The name of MongoDB database")
@@ -13,6 +11,9 @@ parser.add_argument("mongodb", help="The name of MongoDB database")
 parser.add_argument("-c", "--command",
     help="which analysis command to run (groups, species_hits)",
     choices=["groups"], required=True)
+
+parser.add_argument("-v", "--verbose", help="Display debug status messages", action="store_true")
+parser.add_argument("-q", "--quiet", help="Suppress most output", action="store_true")
 
 parser.add_argument("--identity",
     help="minimum identity for BLAST hits",
@@ -37,6 +38,13 @@ parser.add_argument("-o", "--output",
     help="File path for output (usable with distance_matrix)", default="./")
 
 args = parser.parse_args()
+
+if args.verbose:
+    logging.basicConfig(level=logging.DEBUG)
+elif args.quiet:
+    logging.basicConfig(level=logging.WARNING)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 DB = pymongo.MongoClient()[args.mongodb]
 
