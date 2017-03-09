@@ -7,6 +7,7 @@ Dependencies:
 * MongoDB
   * pymongo
 * BioPython
+* Pandas
 * BLAST+ CLI
 
 **Identification of horizontal gene transfer between sequenced microbial genomes**
@@ -158,7 +159,7 @@ In the next section, the default is to not use the species distance parameter or
 Now the fun stuff!
 
 ```sh
-$ python bin/kv_analysis.py -c groups -o ~/Desktop/groups.csv
+$ python bin/kv_analysis.py cheese1 -c groups -o ~/Desktop/groups.csv
 ```
 
 This could take some time, depending on the number of species and how much HGT there is.
