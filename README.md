@@ -164,3 +164,5 @@ $ python bin/kv_analysis.py -c groups -o ~/Desktop/groups.csv
 This could take some time, depending on the number of species and how much HGT there is.
 
 You can also tweak some parameters like minimum size of a protein coding sequence, distance between genes to be considered the same group, minimum identity to be considered HGT, and minimum species distance with various flags. Try using `python bin/kv_analysis.py -h` to see what options you have.
+
+Eventually, there will be more options for analysis, but that's all for the moment.
