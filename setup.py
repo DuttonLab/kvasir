@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name = "kvasirHGT",
-    version = "0.6",
+    version = "v0.61",
     author = "Kevin Bonham, PhD",
     author_email = "kevbonham@gmail.com",
     description = "A package to identify HGT in bacterial genomes",
