@@ -50,7 +50,6 @@ def add_contig_data(records, genbank_file):
 
     current_species = None
     for contig in records:
-        contig_counter += 1
         try:
             species = contig.annotations['source']
         except KeyError:
