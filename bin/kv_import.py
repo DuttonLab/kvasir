@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import pymongo
 import argparse
 import os
@@ -8,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 
 parser = argparse.ArgumentParser(description='Import genbank files')
 
-parser.add_argument("mongodb", help="The name of MongoDB database", required=True)
+parser.add_argument("mongodb", help="The name of MongoDB database")
 parser.add_argument("-i", "--input", help="File or directory to import", required=True)
 
 parser.add_argument("-v", "--verbose", help="Display debug status messages", action="store_true")
