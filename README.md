@@ -3,7 +3,7 @@
 [![DOI](https://zenodo.org/badge/22309/kescobo/kvasir.svg)](https://zenodo.org/badge/latestdoi/22309/kescobo/kvasir) [![Join the chat at https://gitter.im/kescobo/kvasir](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/kescobo/kvasir?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Dependencies:
-* Python 3+
+* Python 2.7 or 3.6
 * MongoDB
   * pymongo
 * BioPython
@@ -89,7 +89,7 @@ To make the next part work you need one more thing - the [BLAST+](https://www.nc
 Assuming this is working (you've still got `mongod` running right?), it's time to start blasting. There are a couple of commands in the `blast.py` script. First, you've gotta make a blast database with all of the the genes in your database using `makedb`. This command will make 3 files, in the current directory by default, or in the directory you specify with `-b`
 
 ```
-# python3 bin/kv_blast.py cheese1 -c makedb -b ~/blastdbs
+# kv_blast.py cheese1 makedb -b ~/blastdbs
 INFO:root:making BLAST database with protein coding sequences from cheese1 at /Users/ksb/blastdbs
 INFO:root:BLAST db created at /Users/ksb/blastdbs
 ```
@@ -97,7 +97,7 @@ INFO:root:BLAST db created at /Users/ksb/blastdbs
 Next, blastall will go through each species in your database and blast it against that database. Each hit will then be stored in your MongoDB with some metadata.
 
 ```sh
-$ python3 bin/kv_blast.py cheese1 -c blastall -b ~/blastdbs
+$ kv_blast.py cheese1 blastall -b ~/blastdbs
 INFO:root:blasting Awesomeus speciesus strain A
 INFO:root:Blasting all by all
 INFO:root:Getting Blast Records
@@ -131,7 +131,7 @@ There are a few ways to approach this, and in kvasir they're unified under the i
 If the genbank files you imported have a `SOURCE` line for the name of your organism, and it's formatted as `<genus> <species> <strain>`, you can use the script to calculate the distance based on Average Nucleotide Identity (ANI). This is calculated using a ruby script from [enveomics](https://github.com/lmrodriguezr/enveomics/blob/master/Scripts/ani.rb). Measuring ANI using this method is only appropriate for closely related genomes, and as it stands, the script grabs all species in your MongoDB and calls the ANI script on pairs that have the same genus.
 
 ```sh
-$ kv_distance.py cheese1 -c ani
+$ kv_distance.py cheese1 ani
 ```
 
 This script pulls species from the MongoDB and then looks for all pairs of names to see if they're the same genus. It does that a bit naively, using `split()[0].split("_")[0]`, which will split the species name at spaces or `_`, and then take the first thing. So if you're looking at "Awesomeus speciesus strain A", this command will check if you have anything else with "Awesomeus" as the genus, like "Awesomeus_speciesus_strain_B", and will calculate the ANI between them and add them to a "species_distance" database in the MongoDB.
@@ -154,13 +154,13 @@ If ANI is not appropriate, or you have a different way to measure species distan
 Assuming this is saved in a file `~/Desktop/ssu_dm.csv`, you can do:
 
 ```sh
-$ kv_distance.py cheese1 -c distance_matrix -i ~/Desktop/ssu_dm.csv -t ssu
+$ kv_distance.py cheese1 distance_matrix -i ~/Desktop/ssu_dm.csv -t ssu
 ```
 
 The `-t` parameter is the "distance type", which can be anything you want. The ANI script above uses `-t ani` by default. If you want to get your ssu distance matrix out at a different time, use:
 
 ```sh
-$ kv_distance.py cheese1 -c distance_matrix -o ~/Desktop/returned_ssu_dm.csv -t ssu
+$ kv_distance.py cheese1 distance_matrix -o ~/Desktop/returned_ssu_dm.csv -t ssu
 ```
 
 Be sure your distance is actually a distance, and is between 0:1. So if two species have a 16S gene that is 85% identical, the distance should be 0.15.
@@ -171,7 +171,7 @@ In the next section, the default is to not use the species distance parameter or
 Now the fun stuff!
 
 ```sh
-$ kv_analysis.py cheese1 -c groups -o ~/Desktop/groups.csv
+$ kv_analysis.py cheese1 groups -o ~/Desktop/groups.csv
 ```
 
 This could take some time, depending on the number of species and how much HGT there is.

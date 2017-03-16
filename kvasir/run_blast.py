@@ -45,7 +45,6 @@ def parse_blast_results_xml(db, results_file, seqtype="CDS"):
 
                 if query_id != hit_id and not same and not check_blast_pair(db, query_id, hit_id):
                     counter += 1
-                    if counter % 500 == 0: logging.info("---> {} blast records retrieved".format(counter))
 
                     hsp = alignment.hsps[0]  # there may be multiple hsps - first one is typically best match
                     perc_identity = float(hsp.identities) / float(hsp.align_length)
@@ -62,6 +61,8 @@ def parse_blast_results_xml(db, results_file, seqtype="CDS"):
                         "bit_score": hsp.bits,
                         "e-value": hsp.expect
                         }
+
+        logging.info("---> {} blast records retrieved".format(counter))
 
     except ValueError:
         logging.warning("No hits for {}".format("species"))

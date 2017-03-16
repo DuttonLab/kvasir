@@ -9,27 +9,39 @@ from kvasir.make_blast_db import db_to_fna, make_blast_db
 from kvasir.run_blast import blast_all, parse_blast_results_xml
 from tempfile import NamedTemporaryFile
 
-logging.basicConfig(level=logging.INFO)
 
 parser = argparse.ArgumentParser(description='Kvasir BLAST commands')
 
 parser.add_argument("mongodb", help="The name of MongoDB database")
 parser.add_argument("-b", "--blastpath", help="path to BLAST database", default="./")
-parser.add_argument("-c", "--command", help="which blast command to run (makedb, blastall, blastone)",
-    choices=["makedb", "blastall", "blastone"], required=True)
+parser.add_argument("command", help="which blast command to run (makedb, blastall, blastone)",
+    choices=["makedb", "blastall", "blastone"])
 parser.add_argument("-f", "--force", help="Override errors (eg re-importing blast for same species)", action="store_true")
 
 parser.add_argument("-v", "--verbose", help="Display debug status messages", action="store_true")
 parser.add_argument("-q", "--quiet", help="Suppress most output", action="store_true")
+parser.add_argument("--debug", help="set logging to debug", action="store_true")
+
+parser.add_argument("-l", "--log",
+    help="File path for log file")
 
 args = parser.parse_args()
 
-if args.verbose:
-    logging.basicConfig(level=logging.DEBUG)
+logpath = None
+if args.log:
+    logpath = os.path.abspath(args.log)
+    if os.path.isdir(logpath):
+        logpath = os.path.join(logpath, "kvasir.log")
+
+if args.debug:
+    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s || %(levelname)s: %(message)s", filename=logpath)
+elif args.verbose:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s || %(levelname)s: %(message)s", filename=logpath)
 elif args.quiet:
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.ERROR, format="%(asctime)s || %(levelname)s: %(message)s", filename=logpath)
 else:
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARNING, format="%(asctime)s || %(levelname)s: %(message)s", filename=logpath)
+
 
 DB = pymongo.MongoClient()[args.mongodb]
 BLASTPATH = os.path.abspath(args.blastpath)

@@ -16,20 +16,22 @@ def get_hits_from_species(species, minimum_identity, db, minimum_length=100, min
     :type minimum_length: Int
     :rtype generator: _id each hit
     """
-    logging.info(" Getting blast hits for {}".format(species))
-    logging.debug("====> Getting hits for {}".format(species))
+    logging.info("=> Getting blast hits for {}".format(species))
     if minimum_species_distance:
-        logging.debug("    > using distance matrix".format(species))
+        logging.debug("   > using distance matrix".format(species))
 
     for record in db['blast_results'].find(
             {"$or":[{"query_species": species},{"subject_species":species}],
              'perc_identity': {'$gte': minimum_identity},
              'length'       : {'$gte': minimum_length},
             }):
+        logging.debug("     > Found hit in {}:".format(species))
         if not minimum_species_distance or dm.loc[record["query_species"], record["subject_species"]] > minimum_species_distance:
             if record["query_species"] == species:
+                logging.debug("       > {}".format(record["query"]))
                 yield ObjectId(record["query"])
             elif record["subject_species"] == species:
+                logging.debug("       > {}".format(record["subject"]))
                 yield ObjectId(record["subject"])
 
 
@@ -40,7 +42,7 @@ def get_islands(species, minimum_identity, db, minimum_length=100, dist_between_
     :param dist_between_hits: number of base-pairs between hits considered significant
     :return:
     """
-    logging.debug("==== > Getting islands from {}".format(species))
+    logging.debug("=> Getting islands from {}".format(species))
     hits = get_hits_from_species(
         species, minimum_identity, db,
         minimum_length, minimum_species_distance, dm
@@ -52,7 +54,7 @@ def get_islands(species, minimum_identity, db, minimum_length=100, dist_between_
 
     last = {"contig":None, "end":0}
 
-    logging.debug("    = > got hits, building islands".format(species))
+    logging.debug("   > got hits, building islands".format(species))
     for hit in hit_list:
         loc = hit["location"]
         if loc["contig"] == last["contig"] and loc["start"] - last["end"] <= dist_between_hits:
@@ -127,6 +129,8 @@ def hgt_groups(minimum_identity, db, minimum_length=100, dist_between_hits=3000,
     if minimum_species_distance:
         logging.debug("    > getting distance matrix")
         dm = get_distance_matrix(db, dtype)
+    else:
+        dm = None
 
     groups = []
     for species in db["genes"].distinct("species"):
@@ -147,6 +151,7 @@ def hgt_groups(minimum_identity, db, minimum_length=100, dist_between_hits=3000,
             if not iindx in recorded:
                 groups.append(set(islands[iindx]))
         groups = collapse(groups)
+    logging.info("=> Found {} groups".format(len(groups)))
     return groups
 
 def output_groups(groups_list, output_file, db, min_group_size=2):
@@ -155,8 +160,8 @@ def output_groups(groups_list, output_file, db, min_group_size=2):
 
     - Optional: set minimum number of CDS to be considered a group
     """
-    df_index = ['group', 'locus_tag','contig','start','end','strand','annotation', 'id', 'dna_seq']
-    df = pd.DataFrame()
+    df_columns = ['species','group','locus_tag','contig','start','end','strand','annotation','id', 'dna_seq']
+    df = pd.DataFrame(columns=df_columns)
     group_no= 0
     groups_list.sort(key=len, reverse=True)
 
@@ -167,8 +172,9 @@ def output_groups(groups_list, output_file, db, min_group_size=2):
                 db_handle = db['genes'].find_one({'_id': ObjectId(entry)})
                 if db_handle:
                     annotation = db_handle['annotation'].replace(',', '')  # prevents CSV screw-up
-                    series = pd.Series(
-                        [str(group_no).zfill(3),
+                    newrow = pd.DataFrame([
+                        [db_handle["species"],
+                        str(group_no).zfill(3),
                         db_handle['locus_tag'],
                         db_handle['location']['contig'],
                         db_handle['location']['start'],
@@ -177,14 +183,11 @@ def output_groups(groups_list, output_file, db, min_group_size=2):
                         annotation,
                         str(db_handle['_id']),
                         db_handle['dna_seq']
-                        ],
-                        index=df_index,
-                        name=db_handle['species']
-                    )
-                    df=df.append(series)
+                        ]], columns = df_columns)
+                    df=df.append(newrow)
                 else:
                     logging.warning("No database entry found for {}".format(entry))
 
-    df.sort_values(["group", "contig", "start"])
-    print("Creating file at {}".format(output_file))
-    df.to_csv(output_file, columns=df_index)
+    df = df.sort_values(["group", "species", "contig", "start"])
+    logging.info("Creating file at {}".format(output_file))
+    df.to_csv(output_file, columns=df_columns)

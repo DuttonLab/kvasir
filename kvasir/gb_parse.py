@@ -46,7 +46,6 @@ def add_contig_data(records, genbank_file):
     :param records: generator - SeqIO parse object
     :rtype generator[dict]: each iteration yields a record (dict) for insertion into MongoDB
     """
-    global locus_tag_counter
 
     current_species = None
     for contig in records:
@@ -95,7 +94,8 @@ def add_features(contig, species):
             locus_tag = feature.qualifiers['locus_tag'][0]
         except KeyError:
             locus_tag = None
-            logging.warning("No locus_tag found for feature - this will cause issues")
+            global locus_tag_flag
+            locus_tag_flag= True
         try:
             annotation = feature.qualifiers['product'][0]
         except KeyError:
