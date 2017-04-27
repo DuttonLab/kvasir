@@ -49,9 +49,9 @@ if os.path.isdir(INPUT):
             mongo_import_genbank(os.path.join(INPUT, f), DB, "genes")
             success = 1
 elif os.path.isfile:
-    if f.endswith(".gb") or f.endswith(".gbk"):
-        logging.inf("** Importing {} **".format(f))
-        mongo_import_genbank(os.path.join(INPUT, f), DB, "genes")
+    if INPUT.endswith(".gb") or f.endswith(".gbk"):
+        logging.info("** Importing {} **".format(INPUT))
+        mongo_import_genbank(INPUT, DB, "genes")
         success = 1
 
 if not success:
