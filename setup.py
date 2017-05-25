@@ -15,7 +15,8 @@ setup(
     scripts=[os.path.join('bin', 'kv_blast.py'),
              os.path.join('bin', 'kv_analysis.py'),
              os.path.join('bin', 'kv_import.py'),
-             os.path.join('bin', 'kv_distance.py')],
+             os.path.join('bin', 'kv_distance.py'),
+             os.path.join('bin', 'ani.rb')],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Scientific/Engineering :: Bio-Informatics",

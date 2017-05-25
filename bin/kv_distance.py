@@ -65,7 +65,7 @@ if args.command == "ani":
 
             if not record_exists:
                 d = 1 - get_ani(sp1, sp2, DB)
-                logging.info("    ANI = {} | importing".format(d))
+                logging.info("    1 - ANI = {} | importing distance".format(d))
                 mongo_import_distance(sp1, sp2, d, DB, dtype="ani")
             else:
                 logging.error("{} and {} already have an ANI in the database, skipping. Use -f to overwrite".format(sp1, sp2))

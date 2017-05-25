@@ -1,4 +1,4 @@
-import subprocess
+from subprocess import Popen, PIPE
 import os
 import logging
 import pandas as pd
@@ -24,11 +24,23 @@ def get_ani(species_1, species_2, db):
     for contig in db["genes"].find({"type":"contig", "species":species_2}):
         f2.write(">{}\n{}\n".format(contig["contig_id"], contig["dna_seq"]))
 
-    return float(subprocess.Popen([
+    ani = Popen([
                 "ruby", "{}/ani.rb".format(modpath), "--auto", "--quiet",
                 "-1", f1.name,
-                "-2", f2.name,
-                ]).communicate()[0]) / 100
+                "-2", f2.name
+                ], stdout=PIPE).communicate()[0]
+
+    logging.debug("ani for {} and {}".format(species_1, species_2))
+    logging.debug("ani variable: {} | variable type: {}".format(ani, type(ani)))
+
+    if ani:
+        logging.info(
+            "Compared {} and {}, ANI = {}".format(species_1, species_2, ani))
+        return float(ani) / 100
+    else:
+        logging.warning(
+            "Tried to compare {} and {}, but got no ANI. Returning 0".format(species_1, species_2))
+        return 0
 
 
 def get_distance_matrix(db, dtype="ani"):

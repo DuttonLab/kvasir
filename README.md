@@ -89,15 +89,15 @@ To make the next part work you need one more thing - the [BLAST+](https://www.nc
 Assuming this is working (you've still got `mongod` running right?), it's time to start blasting. There are a couple of commands in the `blast.py` script. First, you've gotta make a blast database with all of the the genes in your database using `makedb`. This command will make 3 files, in the current directory by default, or in the directory you specify with `-b`
 
 ```
-# kv_blast.py cheese1 makedb -b ~/blastdbs
+# kv_blast.py cheese1 makedb -v -b ~/blastdbs
 INFO:root:making BLAST database with protein coding sequences from cheese1 at /Users/ksb/blastdbs
 INFO:root:BLAST db created at /Users/ksb/blastdbs
 ```
 
-Next, blastall will go through each species in your database and blast it against that database. Each hit will then be stored in your MongoDB with some metadata.
+Next, blastall will go through each species in your database and blast it against that database. Each hit will then be stored in your MongoDB with some metadata. This can take a long time - use the `-v` (verbose) flag to get status updates.
 
 ```sh
-$ kv_blast.py cheese1 blastall -b ~/blastdbs
+$ kv_blast.py cheese1 blastall -v -b ~/blastdbs
 INFO:root:blasting Awesomeus speciesus strain A
 INFO:root:Blasting all by all
 INFO:root:Getting Blast Records
@@ -141,7 +141,7 @@ But be careful! If instead your species are "strain_1" and "strain_2", it will t
 Once you've done this, you can export a distance matrix using these ANI calculations. Identical species will have an ANI distance = 0, and anything that is not the same genus will have a distance of 1. I highly recommend doing this to make sure the output is what you expect.
 
 ```sh
-$ kv_distance.py cheese1 -c distance_matrix -o ~/Desktop/dm.csv
+$ kv_distance.py cheese1 distance_matrix -o ~/Desktop/dm.csv
 ```
 
 If ANI is not appropriate, or you have a different way to measure species distance (eg 16S similarity), you can make your own distance_matrix and import it. You have to make sure that the names of columns and rows are identical to the names from the `SOURCE` line of your genbank file (of if there's no `SOURCE` line, the file names). The table should have the structure:

@@ -19,7 +19,7 @@ parser.add_argument("-q", "--quiet", help="Suppress most output", action="store_
 
 parser.add_argument("--identity",
     help="minimum identity for BLAST hits",
-    default="0.99", required=True)
+    default="0.99")
 
 parser.add_argument("-s", "--spacer",
     help="Maximum distance between genes to be considered in the same group",
@@ -66,6 +66,7 @@ else:
 DB = pymongo.MongoClient()[args.mongodb]
 
 if args.command == "groups":
+    logging.info("Getting groups for species in \"()\" database")
     g = hgt_groups(float(args.identity), DB, int(args.length), int(args.spacer),
         float(args.species_distance), args.distance_type)
 
