@@ -46,6 +46,7 @@ def add_contig_data(records, genbank_file):
     :param records: generator - SeqIO parse object
     :rtype generator[dict]: each iteration yields a record (dict) for insertion into MongoDB
     """
+    global species_check_flag
 
     current_species = None
     for contig in records:
@@ -62,7 +63,11 @@ def add_contig_data(records, genbank_file):
             species = f[0]
 
         if not species == current_species:
-            print("Importing {}".format(species))
+            if species_check_flag and species in db["genes"].distinct("species"):
+                logging.error(
+                    "Attempted to import {}, but it's already in database".format(species))
+
+            logging.info("Importing {}".format(species))
             current_species = species
 
         # TODO: append list of gene records contained within contig?

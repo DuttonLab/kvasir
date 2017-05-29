@@ -10,10 +10,12 @@ parser = argparse.ArgumentParser(description='Import genbank files')
 
 parser.add_argument("mongodb", help="The name of MongoDB database")
 parser.add_argument("-i", "--input", help="File or directory to import", required=True)
+parser.add_argument("-f", "--force",
+    help="Import even if species already present in database", action="store_false")
 
-parser.add_argument("-v", "--verbose", help="Display debug status messages", action="store_true")
+parser.add_argument("-v", "--verbose", help="Display info status messages", action="store_true")
 parser.add_argument("-q", "--quiet", help="Suppress most output", action="store_true")
-parser.add_argument("--debug", help="set logging to debug", action="store_true")
+parser.add_argument("--debug", help="Set logging to debug", action="store_true")
 
 parser.add_argument("-l", "--log",
     help="File path for log file")
@@ -41,14 +43,19 @@ success = 0
 INPUT = os.path.abspath(args.input)
 DB = pymongo.MongoClient()[args.mongodb]
 
+global species_check_flag
+if args.force:
+    species_check_flag = True
+else:
+    species_check_flag = False
+
 if os.path.isdir(INPUT):
     for f in os.listdir(INPUT):
-        # TODO: figure out way to throw an error if it looks like the same gene/genome is being imported
         if f.endswith(".gb") or f.endswith(".gbk"):
             logging.info("** Importing {} **".format(f))
             mongo_import_genbank(os.path.join(INPUT, f), DB, "genes")
             success = 1
-elif os.path.isfile:
+elif os.path.isfile(INPUT):
     if INPUT.endswith(".gb") or f.endswith(".gbk"):
         logging.info("** Importing {} **".format(INPUT))
         mongo_import_genbank(INPUT, DB, "genes")
