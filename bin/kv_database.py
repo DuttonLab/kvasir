@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(description='Import genbank files')
 
 parser.add_argument("mongodb", help="The name of MongoDB database")
 parser.add_argument("command", help="Which database command to run",
-    choices=["dedupe", "delete", "list_species"])
+    choices=["delete", "list_species"])
 
 parser.add_argument("-s", "--species", help="Species on which to perform operations", nargs="+")
 
@@ -46,5 +46,3 @@ if args.command == "list_species":
     database.list_species(DB, args.collection, args.species)
 elif args.command == "delete":
     database.delete_species(DB, args.collection, args.species)
-elif args.command == "dedupe":
-    database.dedupe(DB, args.collection)
