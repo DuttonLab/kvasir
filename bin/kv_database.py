@@ -15,7 +15,7 @@ parser.add_argument("command", help="Which database command to run",
 parser.add_argument("-s", "--species", help="Species on which to perform operations", nargs="+")
 
 parser.add_argument("-c", "--collection", help="Which collection to perform operations on",
-    choices=["genes", "blast_results", "species_distance"], default="genes")
+    choices=["genes", "blast_results", "species_distance", "all"], default="genes")
 
 parser.add_argument("-v", "--verbose", help="Display info status messages", action="store_true")
 parser.add_argument("-q", "--quiet", help="Suppress most output", action="store_true")
@@ -25,6 +25,7 @@ parser.add_argument("-l", "--log",
     help="File path for log file")
 
 args = parser.parse_args()
+DB = pymongo.MongoClient()[args.mongodb]
 
 logpath = None
 if args.log:
@@ -42,6 +43,6 @@ else:
     logging.basicConfig(level=logging.WARNING, format="%(asctime)s || %(levelname)s: %(message)s", filename=logpath)
 
 if args.command == "list_species":
-    database.list_species(args.mongodb, args.collection, args.species)
+    database.list_species(DB, args.collection, args.species)
 elif args.command == "delete":
-    database.delete_species(args.mongodb, args.collection, args.species)
+    database.delete_species(DB, args.collection, args.species)

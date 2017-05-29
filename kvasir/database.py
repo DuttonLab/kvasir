@@ -31,6 +31,12 @@ def delete_species(db, collection, species):
 def list_species(db, collection, species=[]):
     species_list = db[collection].distinct("species")
     if species:
-        species_list = set(species).intersect(set(species_list))
-    print("The {} database contains:".format(db))
-    print("\n".join(sorted(species_list)))
+        species_list = set(species).intersection(set(species_list))
+        print("The \"{}\" database contains:".format(db.name))
+        print("\n".join(sorted(species_list)))
+        print("but not:")
+        print("\n".join(sorted(set(species).difference(set(species_list)))))
+    else:
+        print("The \"{}\" database contains:".format(db.name))
+        print("\n".join(sorted(species_list)))
+
