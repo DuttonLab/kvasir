@@ -40,3 +40,50 @@ def list_species(db, collection, species=[]):
         print("The \"{}\" database contains:".format(db.name))
         print("\n".join(sorted(species_list)))
 
+
+def dedupe(db, collection, species=[]):
+    if species:
+        if collection == "genes":
+            records = db[collection].find({"species":{"$in":species})
+        elif collection = "blast_results":
+            records = db[collection].find({"$or":[
+                {"query_species":{"$in":species}},
+                {"subject_species":{"$in":species}}
+                }])
+        else:
+            logging.error("Can only dedupe 'genes' or 'blast_results' collection")
+    else:
+        records = db[collection].find()
+
+    for record in records:
+        if collection == "genes":
+            if "locus_tag" in record:
+                search = {
+                    "species": record["species"]
+                    "locus_tag": record["locus_tag"]
+                    "dna_seq": record["dna_seq"]
+                    }
+            elif record["type"] == "contig":
+                search = {
+                    "species": record["species"]
+                    "contig_id": record["locus_tag"]
+                    "dna_seq": record["dna_seq"]
+                    }
+        elif collection = "blast_result":
+            search = {
+                "$or":[{
+                    "query_species":record["query_species"],
+                    "query":record["query"],
+                    "subject_species":record["subject_species"],
+                    "subject":record["subject"]},
+                    {"query_species":record["subject_species"],
+                    "query":record["subject"],
+                    "subject_species":record["query_species"],
+                    "subject":record["query"]}],
+                "perc_identity": record["perc_identity"],
+                "length": record["length"]
+            }
+
+        search["_id"] = {"$ne": record["_id"]}
+
+        db[collection].delete_many(search)

@@ -46,3 +46,5 @@ if args.command == "list_species":
     database.list_species(DB, args.collection, args.species)
 elif args.command == "delete":
     database.delete_species(DB, args.collection, args.species)
+elif args.command = "dedupe":
+    database.dedupe(DB, args.collection)
