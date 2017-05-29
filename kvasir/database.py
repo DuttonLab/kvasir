@@ -42,16 +42,16 @@ def list_species(db, collection, species=[]):
         print("\n".join(sorted(species_list)))
 
 def list_contigs(db, species=[]):
-    species_list = db[collection].distinct("species")
+    species_list = db["genes"].distinct("species")
+    not_found = None
     if species:
         species_list = set(species).intersection(set(species_list))
-
+        not_found = set(species).difference(set(species_list))
     for sp in sorted(species_list):
         print(sp)
-        for record in db["genes"].find({"species":sp, "type":contig}):
+        for record in db["genes"].find({"species":sp, "type":"contig"}):
             print("    {}".format(record["contig_id"]))
 
-    not_found = set(species).difference(set(species_list))
     if not_found:
         logging.info(
             "Did not find entries for {}:\n     ".format("\n    {}".join(not_found)))
