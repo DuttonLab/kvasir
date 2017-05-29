@@ -26,6 +26,7 @@ def delete_species(db, collection, species):
                         {"species_2":{"$in":species}}]})
     else:
         logging.error("{} is not a valid collection, no action taken".format(collection))
+        raise Exception()
 
 
 def list_species(db, collection, species=[]):
@@ -44,32 +45,35 @@ def list_species(db, collection, species=[]):
 def dedupe(db, collection, species=[]):
     if species:
         if collection == "genes":
-            records = db[collection].find({"species":{"$in":species})
-        elif collection = "blast_results":
+            records = db[collection].find({"species":{"$in":species}})
+        elif collection == "blast_results":
             records = db[collection].find({"$or":[
                 {"query_species":{"$in":species}},
                 {"subject_species":{"$in":species}}
-                }])
+                ]})
         else:
             logging.error("Can only dedupe 'genes' or 'blast_results' collection")
+            raise Exception()
     else:
         records = db[collection].find()
 
+    recno = 0
     for record in records:
+        recno += 1
         if collection == "genes":
             if "locus_tag" in record:
                 search = {
-                    "species": record["species"]
-                    "locus_tag": record["locus_tag"]
+                    "species": record["species"],
+                    "locus_tag": record["locus_tag"],
                     "dna_seq": record["dna_seq"]
                     }
             elif record["type"] == "contig":
                 search = {
-                    "species": record["species"]
-                    "contig_id": record["locus_tag"]
+                    "species": record["species"],
+                    "contig_id": record["contig_id"],
                     "dna_seq": record["dna_seq"]
                     }
-        elif collection = "blast_result":
+        elif collection == "blast_result":
             search = {
                 "$or":[{
                     "query_species":record["query_species"],
@@ -84,6 +88,8 @@ def dedupe(db, collection, species=[]):
                 "length": record["length"]
             }
 
-        search["_id"] = {"$ne": record["_id"]}
+        if recno % 1000 == 0:
+            logging.info("{} records checked".format(recno))
 
+        search["_id"] = {"$ne": record["_id"]}
         db[collection].delete_many(search)
