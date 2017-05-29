@@ -49,9 +49,9 @@ def add_contig_data(records, genbank_file):
 
     current_species = None
     for contig in records:
-        try:
-            species = contig.annotations['source']
-        except KeyError:
+        if "source" in contig.annotations:
+            species = contig.annotations["source"]
+        else:
             # uses filename (without extension) as species name
             f = os.path.splitext(os.path.basename(genbank_file))
             logging.warning('{} in file {} does not have \"source\" attribute, using "{}" as species'.format(
@@ -65,7 +65,7 @@ def add_contig_data(records, genbank_file):
             print("Importing {}".format(species))
             current_species = species
 
-        # ToDo: append list of gene records contained within contig?
+        # TODO: append list of gene records contained within contig?
         contig_record = {
             'type': 'contig',
             'dna_seq': str(contig.seq),
@@ -83,22 +83,23 @@ def add_features(contig, species):
     :param records: generator - SeqIO parse object
     :rtype generator[dict]: each iteration yields a record (dict) for insertion into MongoDB
     """
+    global locus_tag_flag
+
     for feature in contig.features:
 
-        try:
+        if "translation" in feature.qualifiers:
             aa_seq = feature.qualifiers['translation'][0]
-        except KeyError:
+        else:
             aa_seq = None
 
-        try:
+        if "locus_tag" in feature.qualifiers:
             locus_tag = feature.qualifiers['locus_tag'][0]
-        except KeyError:
+        else:
             locus_tag = None
-            global locus_tag_flag
             locus_tag_flag= True
-        try:
+        if "product" in feature.qualifiers:
             annotation = feature.qualifiers['product'][0]
-        except KeyError:
+        else:
             annotation = None
 
         feature_type = None
@@ -110,8 +111,7 @@ def add_features(contig, species):
         else:
             feature_type = feature.type
 
-        # grabs DNA sequence from record object
-        dna_seq = str(feature.extract(contig).seq)
+        dna_seq = str(feature.extract(contig).seq) # grabs DNA sequence from record object
         feature_record = {
             'type': feature_type,
             'dna_seq': dna_seq,
