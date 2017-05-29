@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(description='Import genbank files')
 
 parser.add_argument("mongodb", help="The name of MongoDB database")
 parser.add_argument("command", help="Which database command to run",
-    choices=["delete", "list_species"])
+    choices=["delete", "list_species", "list_contigs"])
 
 parser.add_argument("-s", "--species", help="Species on which to perform operations", nargs="+")
 
