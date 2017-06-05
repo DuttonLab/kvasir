@@ -4,10 +4,19 @@ language: python
 python:
   - "2.7"
   - "3.5"
-
-# command to install dependencies
+before_install:
+  - if [ `uname` = "Linux" ]; then
+      sudo apt-get -qq update;
+      sudo apt-get install -y ncbi-blast+;
+    elif [ `uname` = "Darwin" ]; then
+      brew tap homebrew/science;
+      brew update;
+      brew install blast;
+    fi
+before_script:
+  - export PATH=$HOME/.local/bin:$PATH
 install:
   - pip install .
   - pip install -r requirements.txt
 # command to run tests
-script: pytest tests/basic_tests.py
+script: python -m pytest tests/basic_tests.py
