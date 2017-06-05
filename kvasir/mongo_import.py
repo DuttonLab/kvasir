@@ -20,7 +20,6 @@ def mongo_import_genbank(genbank_file, db, collection):
     """
     for record in parse_genbank(genbank_file):
         logging.debug(record)
-        print(record)
         if record["type"] == "ssu":
             mongo_import_record(record, db, "ssu")
         else:
