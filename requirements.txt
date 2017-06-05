@@ -1,3 +1,4 @@
 pymongo
 BioPython
 pandas
+pytest
