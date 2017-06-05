@@ -55,3 +55,14 @@ def list_contigs(db, species=[]):
     if not_found:
         logging.info(
             "Did not find entries for {}:\n     ".format("\n    {}".join(not_found)))
+
+def delete_loci(db, locus_tag_list):
+    """ Delete all recors in genes and blast_results for given loci
+    :param db: string - MongoDB database name
+    :param collection: string - MongoDB collection name
+    :param locus_tag_list: list - locus tags to be removed (as strings)
+    """
+    for record in db["genes"].find({"locus_tag":{"$in":Set(locus_tag_list)}}):
+        db["genes"].delete_on({"_id":record["_id"])
+        db["blast_results"].delete_many({"subject":str(record["_id"])})
+        db["blast_results"].delete_many({"query":str(record["_id"])})
