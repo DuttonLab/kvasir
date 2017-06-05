@@ -46,7 +46,6 @@ def add_contig_data(records, genbank_file):
     :param records: generator - SeqIO parse object
     :rtype generator[dict]: each iteration yields a record (dict) for insertion into MongoDB
     """
-    global species_check_flag
 
     current_species = None
     for contig in records:
@@ -63,10 +62,6 @@ def add_contig_data(records, genbank_file):
             species = f[0]
 
         if not species == current_species:
-            if species_check_flag and species in db["genes"].distinct("species"):
-                logging.error(
-                    "Attempted to import {}, but it's already in database".format(species))
-
             logging.info("Importing {}".format(species))
             current_species = species
 
@@ -88,7 +83,6 @@ def add_features(contig, species):
     :param records: generator - SeqIO parse object
     :rtype generator[dict]: each iteration yields a record (dict) for insertion into MongoDB
     """
-    global locus_tag_flag
 
     for feature in contig.features:
 
@@ -101,7 +95,6 @@ def add_features(contig, species):
             locus_tag = feature.qualifiers['locus_tag'][0]
         else:
             locus_tag = None
-            locus_tag_flag= True
         if "product" in feature.qualifiers:
             annotation = feature.qualifiers['product'][0]
         else:

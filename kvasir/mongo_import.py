@@ -18,17 +18,13 @@ def mongo_import_genbank(genbank_file, db, collection):
     :param genbank_file: genbank file containing genomic information
     :param collection: Name of collection in MongoDB
     """
-    global locus_tag_flag
-    locus_tag_flag = False
     for record in parse_genbank(genbank_file):
+        logging.debug(record)
+        print(record)
         if record["type"] == "ssu":
-            mongo_import_record(record, "ssu")
+            mongo_import_record(record, db, "ssu")
         else:
             mongo_import_record(record, db, collection)
-    if locus_tag_flag:
-        logging.warning("At least one record in {} did not have a locus tag, this may cause issues".format(
-            genbank_file
-        ))
 
 def mongo_import_distance(sp1, sp2, distance, db, dtype="ssu"):
     """ Add record to MongoDB for species distance (eg 16S or ANI)
