@@ -1,9 +1,15 @@
 import pytest
 import pymongo
 
-def test_mongo():
-    db = pymongo.MongoClient()["db"]
-    db["collection"].insert_one({"key1":"value1", "key2":"value2"})
+def test_record_import():
+    from kvasir import mongo_import
 
-    record = db["collection"].find_one({"key1":"value1"})
-    assert record["key2"] == "value2"
+    db = pymongo.MongoClient()["test_db"]
+    db["collection"].drop()
+
+    mongo_import.mongo_import_record(
+        {"import_key1":"import_value1",
+         "import_key2":"import_value2"}, db, "collection")
+
+    record = db["collection"].find_one({"import_key1":"import_value1"})
+    assert record["import_key2"] == "import_value2"
