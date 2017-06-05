@@ -2,6 +2,14 @@ import logging
 
 
 def delete_species(db, collection, species):
+    """ Delete all records in specified collection for given loci
+    
+    :param db: string - MongoDB database name
+    :param collection: string - MongoDB collection name
+    :param locus_tag_list: list - locus tags to be removed (as strings)
+    """
+
+
     if collection == "genes":
         logging.info("Deleting all gene records for {}".format(species))
         db[collection].delete_many({"species":{"$in":species}})
@@ -29,7 +37,15 @@ def delete_species(db, collection, species):
         raise Exception()
 
 
-def list_species(db, collection, species=[]):
+def list_species(db, species=[]):
+    """ Print name of species in "genes" collection to logger
+    Can be useful to get exact strings for "species" arguments in other database
+    operations.
+
+    :param db: string - MongoDB database name
+    :param species: optional list of species, restricts output to species in list
+    """
+
     species_list = db[collection].distinct("species")
     if species:
         species_list = set(species).intersection(set(species_list))
@@ -42,6 +58,11 @@ def list_species(db, collection, species=[]):
         print("\n".join(sorted(species_list)))
 
 def list_contigs(db, species=[]):
+    """ Print all contigs for each species in "genes" collection to logger
+
+    :param db: string - MongoDB database name
+    :param species: optional list of species, restricts output to species in list
+    """
     species_list = db["genes"].distinct("species")
     not_found = None
     if species:
@@ -57,7 +78,7 @@ def list_contigs(db, species=[]):
             "Did not find entries for {}:\n     ".format("\n    {}".join(not_found)))
 
 def delete_loci(db, locus_tag_list):
-    """ Delete all recors in genes and blast_results for given loci
+    """ Delete all records in genes and blast_results for given loci
     :param db: string - MongoDB database name
     :param collection: string - MongoDB collection name
     :param locus_tag_list: list - locus tags to be removed (as strings)
