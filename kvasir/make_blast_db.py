@@ -3,7 +3,7 @@ from subprocess import Popen, PIPE
 import logging
 
 
-def db_to_fna(db, collection, seqtype="CDS"):  # See comment on `run.py` ln9
+def db_to_fna(db, collection, seqtype="CDS"):
     """
     Takes records of ``"type":seqtype` (like "CDS" or "16s"), writes them to file
     :param db: string - MongoDB database name

@@ -5,6 +5,7 @@ import logging
 def mongo_import_record(record, db, collection):
     """ Insert a single record (dict) into collection
 
+    :param db: pointer to MongoDB database
     :param record: gene record
     :param collection: Name of collection in MongoDB
     """
@@ -13,20 +14,16 @@ def mongo_import_record(record, db, collection):
 def mongo_import_genbank(genbank_file, db, collection):
     """ Parse genbank file and import into MongoDB
 
+    :param db: pointer to MongoDB database
     :param genbank_file: genbank file containing genomic information
-    :param collection:
+    :param collection: Name of collection in MongoDB
     """
-    global locus_tag_flag
-    locus_tag_flag = False
     for record in parse_genbank(genbank_file):
+        logging.debug(record)
         if record["type"] == "ssu":
-            mongo_import_record(record, "ssu")
+            mongo_import_record(record, db, "ssu")
         else:
             mongo_import_record(record, db, collection)
-    if locus_tag_flag:
-        logging.warning("At least one record in {} did not have a locus tag, this may cause issues".format(
-            genbank_file
-        ))
 
 def mongo_import_distance(sp1, sp2, distance, db, dtype="ssu"):
     """ Add record to MongoDB for species distance (eg 16S or ANI)
@@ -38,7 +35,7 @@ def mongo_import_distance(sp1, sp2, distance, db, dtype="ssu"):
     :param sp1: name of one of the species
     :param sp2: name of other species
     :param distance: species distance calculated, between 0 and 1
-    :param db: name of MongoDB database
+    :param db: pointer to MongoDB database
     :param dtype: type of distance calculation. Default = "ssu"
     """
     mongo_import_record({
@@ -61,7 +58,7 @@ def mongo_import_distance_matrix(dm, db, dtype="ssu"):
     records.
 
     :param dm: pandas dataframe containing pairwise species distances
-    :param db: name of MongoDB database
+    :param db: pointer to MongoDB database
     :param dtype: type of distance calculation. Default = "ssu"
     """
     for s1, s2 in product(dm.index, dm.columns):

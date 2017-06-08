@@ -3,7 +3,7 @@ import logging
 
 def delete_species(db, collection, species):
     """ Delete all records in specified collection for given loci
-    
+
     :param db: string - MongoDB database name
     :param collection: string - MongoDB collection name
     :param locus_tag_list: list - locus tags to be removed (as strings)
@@ -46,7 +46,7 @@ def list_species(db, species=[]):
     :param species: optional list of species, restricts output to species in list
     """
 
-    species_list = db[collection].distinct("species")
+    species_list = db["genes"].distinct("species")
     if species:
         species_list = set(species).intersection(set(species_list))
         print("The \"{}\" database contains:".format(db.name))
@@ -56,6 +56,10 @@ def list_species(db, species=[]):
     else:
         print("The \"{}\" database contains:".format(db.name))
         print("\n".join(sorted(species_list)))
+
+    return(sorted(species_list))
+
+
 
 def list_contigs(db, species=[]):
     """ Print all contigs for each species in "genes" collection to logger
@@ -84,6 +88,6 @@ def delete_loci(db, locus_tag_list):
     :param locus_tag_list: list - locus tags to be removed (as strings)
     """
     for record in db["genes"].find({"locus_tag":{"$in":Set(locus_tag_list)}}):
-        db["genes"].delete_on({"_id":record["_id"])
+        db["genes"].delete_one({"_id":record["_id"]})
         db["blast_results"].delete_many({"subject":str(record["_id"])})
         db["blast_results"].delete_many({"query":str(record["_id"])})

@@ -4,4 +4,6 @@
 kvasirHGT.egg-info/*
 build/*
 dist/*
-scratch.*
+scratch*
+
+\.cache/

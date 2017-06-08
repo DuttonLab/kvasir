@@ -11,7 +11,7 @@ setup(
     keywords = ["HGT", "biology", "bacteria", "genomics"],
     url = "http://github.com/kescobo/kvasir",
     download_url = 'https://github.com/kescobo/kvasir/archive/v0.6.7-beta.tar.gz',
-    packages=['kvasir', 'tests'],
+    packages=['kvasir'],
     scripts=[os.path.join('bin', 'kv_blast.py'),
              os.path.join('bin', 'kv_analysis.py'),
              os.path.join('bin', 'kv_import.py'),
