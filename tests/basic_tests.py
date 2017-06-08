@@ -38,13 +38,9 @@ def test_blast_db_creation():
         "type":"CDS",
         "dna_seq":"aaatttggggcccc",
         })
-    db["genes"].insert(
-        {
+    db["genes"].insert({
         "type":"16s",
-        "dna_seq":"acgtactgatgcagct"},
-        {
-        "type":"16s",
-        "dna_seq":"aaatttggggcccc"
+        "dna_seq":"acgtactgatgcagct"
         })
 
     f1 = make_blast_db.db_to_fna(db, "genes")
@@ -52,13 +48,59 @@ def test_blast_db_creation():
     f1.seek(0)
     assert lns[1] == "aaatttggggcccc\n"
 
-
     f2 = make_blast_db.db_to_fna(db, "genes", "16s")
     make_blast_db.make_blast_db(f2.name, "nucl", "./tmp")
 
     assert os.path.isfile("./tmp.nhr")
     assert os.path.isfile("./tmp.nin")
     assert os.path.isfile("./tmp.nsq")
+
+    os.remove("./tmp.nhr")
+    os.remove("./tmp.nin")
+    os.remove("./tmp.nsq")
+
+def test_blast_run():
+    from tempfile import NamedTemporaryFile
+    from kvasir import mongo_import
+    from kvasir import make_blast_db
+    from kvasir import run_blast
+    import os
+
+    db = pymongo.MongoClient()["test_db"]
+    db["genes"].drop()
+
+    mongo_import.mongo_import_genbank("tests/testdata/jb4_partial.gb", db, "genes")
+    mongo_import.mongo_import_genbank("tests/testdata/jb182_partial.gbk", db, "genes")
+
+    f1 = make_blast_db.db_to_fna(db, "genes")
+    make_blast_db.make_blast_db(f1.name, "nucl", "./tmp")
+
+    fasta = NamedTemporaryFile(mode="w+")
+    for record in db["genes"].find({"type": "CDS", "species":"Corynebacterium sp.  JB4"}):
+        fasta.write(">{}\n{}\n".format(
+            record["_id"],
+            record["dna_seq"]
+            )
+        )
+    fasta.seek(0) == 0
+
+
+    blast_results = run_blast.blast_all(fasta, "tmp", perc_identity=0.99)
+    assert blast_results.seek(0) == 0
+    assert blast_results.readline() == '<?xml version="1.0"?>\n'
+    blast_results.seek(0)
+    assert len(list(blast_results)) == 2080
+
+    blast_results.seek(0)
+    r = list(run_blast.parse_blast_results_xml(db, blast_results))
+    assert len(r) == 13
+    r1 = r[0]
+    assert r1["type"] == "blast_result"
+    assert "query" in r1 and "subject" in r1 and "perc_identity" in r1
+    assert "query_species" in r1 and "subject_species" in r1
+
+    for rec in r:
+        assert run_blast.check_species(db, rec["query"], rec["subject"])[0] == False
 
     os.remove("./tmp.nhr")
     os.remove("./tmp.nin")
