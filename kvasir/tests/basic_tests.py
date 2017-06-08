@@ -20,7 +20,7 @@ def test_genbank_import():
     db = pymongo.MongoClient()["test_db"]
     db["genes"].drop()
 
-    mongo_import.mongo_import_genbank("kvtests/testdata/jb4_partial.gb", db, "genes")
+    mongo_import.mongo_import_genbank("kvasir/tests/testdata/jb4_partial.gb", db, "genes")
 
     record = db["genes"].find_one({"locus_tag":"Ga0099666_132","type":"CDS"})
     assert record["annotation"] == "hypothetical protein"
@@ -69,8 +69,8 @@ def test_blast_run():
     db = pymongo.MongoClient()["test_db"]
     db["genes"].drop()
 
-    mongo_import.mongo_import_genbank("kvtests/testdata/jb4_partial.gb", db, "genes")
-    mongo_import.mongo_import_genbank("kvtests/testdata/jb182_partial.gbk", db, "genes")
+    mongo_import.mongo_import_genbank("kvasir/tests/testdata/jb4_partial.gb", db, "genes")
+    mongo_import.mongo_import_genbank("kvasir/tests/testdata/jb182_partial.gbk", db, "genes")
 
     f1 = make_blast_db.db_to_fna(db, "genes")
     make_blast_db.make_blast_db(f1.name, "nucl", "./tmp")
@@ -106,15 +106,20 @@ def test_blast_run():
     os.remove("./tmp.nin")
     os.remove("./tmp.nsq")
 
+
+
 def test_analysis():
-    from kvtests.blast_results import blast_results
+    from kvasir.tests.blast_results import blast_results, genes
     from kvasir.output import hgt_groups, output_groups
     from bson.objectid import ObjectId
+    import os
 
 
     db = pymongo.MongoClient()["test_db"]
+    db["genes"].drop()
     db["blast_results"].drop()
 
+    db["genes"].insert_many(genes)
     db["blast_results"].insert_many(blast_results)
 
     groups = hgt_groups(0.99, db)
@@ -122,4 +127,39 @@ def test_analysis():
     assert len(groups[0]) == 25
 
     s = sorted(groups[0])
-    assert s[0] == ObjectId('5939a639009470375af931c3')
+    assert s[0] == ObjectId('5939bbad00947043daa06288')
+
+    output_groups(groups, "tmp.csv", db)
+
+    with open("tmp.csv", "r") as infile:
+        l = list(infile)
+        assert l[4][0:46] == "0,Arthrobacter sp.  JB182,001,Ga0099663_102740"
+
+    os.remove("./tmp.csv")
+
+
+# from kvasir.tests.blast_results import blast_results, genes
+# from kvasir.output import hgt_groups, output_groups
+# from bson.objectid import ObjectId
+#
+#
+# db = pymongo.MongoClient()["test_db"]
+# db["genes"].drop()
+# db["blast_results"].drop()
+#
+# db["genes"].insert_many(genes)
+# db["blast_results"].insert_many(blast_results)
+#
+# groups = hgt_groups(0.99, db)
+#
+# len(groups)
+# len(groups[0])
+#
+# s = sorted(groups[0])
+# s[0]
+#
+# output_groups(groups, "tmp.csv", db)
+#
+# with open("tmp.csv", "r") as infile:
+#     l = list(infile)
+#     print(l[4][0:46])
