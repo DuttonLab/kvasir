@@ -1,6 +1,7 @@
 import pytest
 import pymongo
 
+
 def test_record_import():
     from kvasir import mongo_import
 
@@ -14,6 +15,7 @@ def test_record_import():
     record = db["collection"].find_one({"import_key1":"import_value1"})
     assert record["import_key2"] == "import_value2"
 
+
 def test_genbank_import():
     from kvasir import mongo_import
 
@@ -26,6 +28,7 @@ def test_genbank_import():
     assert record["annotation"] == "hypothetical protein"
     assert record["aa_seq"] == "MLKEQDRDLESRVWDAQRIYDKAERSLSWAQSTQQSRGVFKKLLHGASDQTKVDELTWELEQAQQVYEDISQQHDALAAELEAQKDTVERLRERDGELEDRMGFLDSMLFLTENGTSPFAEDQPDSFSSSADSYLGYDDSYDMSSSPVFGLSDDSSDGMEL"
     assert record["dna_seq"].lower() == "atgctaaaagagcaagaccgagacctagaatctcgcgtgtgggatgcgcaacgcatctacgacaaagcggagcgcagcctttcgtgggcgcagtcgacgcagcaatcgcgcggggtgtttaagaaacttctccacggagcatctgatcagacaaaggttgatgagcttacctgggaactcgagcaagcgcagcaggtgtatgaagatataagccagcagcatgacgcacttgcagctgaactcgaggcacagaaggacaccgtggagagactgcgtgagcgcgatggcgagctggaagacagaatgggcttcttggattccatgctgtttttgacagaaaacgggacgagtccatttgctgaagatcaaccagattccttttcctcatcagctgatagctacctcggatatgacgatagctatgacatgagtagctctcctgtttttgggcttagcgatgattcatctgatggaatggaactctaa"
+
 
 def test_blast_db_creation():
     from kvasir import make_blast_db
@@ -59,18 +62,19 @@ def test_blast_db_creation():
     os.remove("./tmp.nin")
     os.remove("./tmp.nsq")
 
+
 def test_blast_run():
     from tempfile import NamedTemporaryFile
     from kvasir import mongo_import
     from kvasir import make_blast_db
     from kvasir import run_blast
+    from kvasir.tests.blast_results import genes
     import os
 
     db = pymongo.MongoClient()["test_db"]
     db["genes"].drop()
 
-    mongo_import.mongo_import_genbank("kvasir/tests/testdata/jb4_partial.gb", db, "genes")
-    mongo_import.mongo_import_genbank("kvasir/tests/testdata/jb182_partial.gbk", db, "genes")
+    db["genes"].insert_many(genes)
 
     f1 = make_blast_db.db_to_fna(db, "genes")
     make_blast_db.make_blast_db(f1.name, "nucl", "./tmp")
@@ -89,7 +93,7 @@ def test_blast_run():
     blast_results.seek(0)
     assert blast_results.readline() == '<?xml version="1.0"?>\n'
     blast_results.seek(0)
-    assert 2080 >= len(list(blast_results)) > 2075
+    assert len(list(blast_results)) == 999
 
     blast_results.seek(0)
     r = list(run_blast.parse_blast_results_xml(db, blast_results))
@@ -105,7 +109,6 @@ def test_blast_run():
     os.remove("./tmp.nhr")
     os.remove("./tmp.nin")
     os.remove("./tmp.nsq")
-
 
 
 def test_analysis():
@@ -138,28 +141,26 @@ def test_analysis():
     os.remove("./tmp.csv")
 
 
-# from kvasir.tests.blast_results import blast_results, genes
-# from kvasir.output import hgt_groups, output_groups
-# from bson.objectid import ObjectId
-#
-#
-# db = pymongo.MongoClient()["test_db"]
-# db["genes"].drop()
-# db["blast_results"].drop()
-#
-# db["genes"].insert_many(genes)
-# db["blast_results"].insert_many(blast_results)
-#
-# groups = hgt_groups(0.99, db)
-#
-# len(groups)
-# len(groups[0])
-#
-# s = sorted(groups[0])
-# s[0]
-#
-# output_groups(groups, "tmp.csv", db)
-#
-# with open("tmp.csv", "r") as infile:
-#     l = list(infile)
-#     print(l[4][0:46])
+def test_database_operations():
+    from kvasir.tests.blast_results import blast_results, genes
+    from bson.objectid import ObjectId
+    from kvasir import database
+
+    db = pymongo.MongoClient()["test_db"]
+    db["genes"].drop()
+    db["blast_results"].drop()
+
+    db["genes"].insert_many(genes)
+    db["blast_results"].insert_many(blast_results)
+
+    assert database.list_species(db)[0] == 'Arthrobacter sp.  JB182'
+
+    database.delete_species(db, "genes", ["Arthrobacter sp.  JB182"])
+    assert database.list_species(db)[0] == 'Corynebacterium sp.  JB4'
+
+
+    assert db["blast_results"].find_one({
+        "query":"5939bbad00947043daa062a4"})["subject"] == '5939bbb300947043daa06896'
+    database.delete_species(db, "blast_results", ["Arthrobacter sp.  JB182"])
+    assert db["blast_results"].find_one({
+        "query":"5939bbad00947043daa062a4"}) == None
