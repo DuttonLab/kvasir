@@ -46,6 +46,236 @@
 <h1>Welcome to kvasirHGT’s documentation!<a class="headerlink" href="#welcome-to-kvasirhgt-s-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
+<p><em>Identification of horizontal gene transfer between sequenced microbial genomes</em></p>
+<p><a class="reference external" href="https://en.wikipedia.org/wiki/Kvasir">Kvasir</a> is a Norse god associated with
+fermented beverages. According to Wikipedia,</p>
+<blockquote>
+<div>Extremely wise, Kvasir traveled far and wide, teaching and spreading knowledge.
+This continued until the dwarfs Fjalar and Galar killed Kvasir and drained him
+of his blood. The two mixed his blood with honey, resulting in the Mead of
+Poetry, a mead which imbues the drinker with skaldship and wisdom, and the
+spread of which eventually resulted in the introduction of poetry to mankind.</div></blockquote>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>The easiest way to use Kvasir is to install it from pypi:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>$ pip install kvasirHGT
+</pre></div>
+</div>
+<p>This should add the necessary scripts to your <code class="docutils literal"><span class="pre">PATH</span></code>.</p>
+<p>You will also need install the other python Dependencies (biopython, pandas,
+pymongo), and
+<a class="reference external" href="https://www.mongodb.com/download-center?jmp=nav#community)">mongodb</a></p>
+</div>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="mongod">
+<h3>Mongod<a class="headerlink" href="#mongod" title="Permalink to this headline">¶</a></h3>
+<p>Kvasir uses a <a class="reference external" href="https://www.mongodb.com/)">MongoDB</a> database to store genome and
+HGT information, so you’ll need to install
+<a class="reference external" href="https://www.mongodb.com/download-center?jmp=nav#community)">mongodb</a> and
+<a class="reference external" href="https://api.mongodb.com/python/current/installation.html)">PyMongo</a> before doing
+anything.</p>
+<p>MongoDB will build a database and index on your local system, so you should make
+a folder to put them in. You’ll never have to interact with the folder manually,
+so I just put it in a hidden folder in my home directory.</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>$ mkdir ~/.mongo_databases
+</pre></div>
+</div>
+<p>Before you run any commands with kvasir, you need to launch a local MongoDB
+server using the <code class="docutils literal"><span class="pre">mongod</span></code> command:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>$ mongod --dbpath ~/.mongo_databases
+</pre></div>
+</div>
+</div>
+<div class="section" id="adding-genomes">
+<h3>Adding Genomes<a class="headerlink" href="#adding-genomes" title="Permalink to this headline">¶</a></h3>
+<p>Kvasir can import genomes in
+<a class="reference external" href="https://www.ncbi.nlm.nih.gov/Sitemap/samplerecord.html)">Genbank</a> format. You
+can pass either a single file, or a folder with many genbank files. Only files
+with extensions <code class="docutils literal"><span class="pre">.gb</span></code> or <code class="docutils literal"><span class="pre">.gbk</span></code> will be imported.</p>
+<p>Each genome set should have a unique name - this will be the first argument for
+every script. For the following examples, I’ll be looking at cheese genomes and
+the set will have the name <code class="docutils literal"><span class="pre">cheese1</span></code></p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>$ kv_import.py cheese1 -i path/to/genbank/files
+</pre></div>
+</div>
+<p>I haven’t yet built a way to check if you’re trying to import the same genome
+multiple times, so use with caution! If you’re not sure if you’ve already
+imported a file, you can query your MongoDB with the species name (see below for
+info on what is used as the species name). If you’re not sure if you’ve imported
+<em>Awesomeus speciesus strain A</em>, launch python, and try the following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pymongo</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">()[</span><span class="s2">&quot;cheese1&quot;</span><span class="p">]</span> <span class="c1"># substitute &quot;cheese1&quot; for the name of your genome set</span>
+<span class="n">db</span><span class="p">[</span><span class="s2">&quot;genes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">find_one</span><span class="p">({</span><span class="s2">&quot;species&quot;</span><span class="p">:</span><span class="s2">&quot;Awesomeus speciesus strain A&quot;</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>If nothing is returned, then you haven’t imported it yet. The text has to be
+exact though. If you’re not sure, you can also get a list of all the species
+with any genes in the database:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">db</span><span class="p">[</span><span class="s2">&quot;genes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">distinct</span><span class="p">(</span><span class="s2">&quot;species&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>A note on Genbank formats</strong></p>
+<p>If your files aren’t formatted correctly, you ~~may~~ will have issues. At one
+point, I tried to write in a way to accommodate all kinds of messed up formats,
+but it’s just not worth it. So check your genomes with care.</p>
+<p>In particular, be sure that each contig in the genome has a unique id (that’s
+the first field in the <code class="docutils literal"><span class="pre">LOCUS</span></code> line). Kvasir uses this to determine which genes
+are located near each other, if there are duplicates, it may think that genes on
+separate contigs are next to each other. Each gene should also have a unique
+<code class="docutils literal"><span class="pre">locus_tag</span></code> field.</p>
+<p>Most genbank files have a <code class="docutils literal"><span class="pre">SOURCE</span></code> identifier, which contains the genus, species
+and strain that a particular contig comes from. This is what kvasir will use to
+identify genes from the same species. If your genbank file doesn’t have this,
+kvasir will use the name of the genbank file as the name of the species - but be
+careful! A single genbank file can contain contigs from multiple species - if
+your files are organized this way, make sure that they have a <code class="docutils literal"><span class="pre">SOURCE</span></code> field.</p>
+<p>At some point, I’ll write a convenience script to check through your genomes to
+make sure that they’ll work. But until then - use with caution.</p>
+</div>
+<div class="section" id="blast-searching">
+<h3>BLAST Searching<a class="headerlink" href="#blast-searching" title="Permalink to this headline">¶</a></h3>
+<p>To make the next part work you need one more thing - the
+<a class="reference external" href="https://www.ncbi.nlm.nih.gov/books/NBK279671/)">BLAST+</a> command line tools. This
+needs to be installed and accessible from your <code class="docutils literal"><span class="pre">$PATH</span></code>. In other words, you
+should be able to run <code class="docutils literal"><span class="pre">which</span> <span class="pre">blastn</span></code> and get a path spit back at you. If not -
+do some googling. I can’t help you.</p>
+<p>Assuming this is working (you’ve still got <code class="docutils literal"><span class="pre">mongod</span></code> running right?), it’s time
+to start blasting. There are a couple of commands in the <code class="docutils literal"><span class="pre">blast.py</span></code> script.
+First, you’ve gotta make a blast database with all of the the genes in your
+database using <code class="docutils literal"><span class="pre">makedb</span></code>. This command will make 3 files, in the current
+directory by default, or in the directory you specify with <code class="docutils literal"><span class="pre">-b</span></code></p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>$ kv_blast.py cheese1 makedb -v -b ~/blastdbs
+INFO:root:making BLAST database with protein coding sequences from cheese1 at /Users/ksb/blastdbs
+INFO:root:BLAST db created at /Users/ksb/blastdbs
+</pre></div>
+</div>
+<p>Next, blastall will go through each species in your database and blast it
+against that database. Each hit will then be stored in your MongoDB with some
+metadata. This can take a long time - use the <code class="docutils literal"><span class="pre">-v</span></code> (verbose) flag to get status
+updates.</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>$ kv_blast.py cheese1 blastall -v -b ~/blastdbs
+INFO:root:blasting Awesomeus speciesus strain A
+INFO:root:Blasting all by all
+INFO:root:Getting Blast Records
+INFO:root:---&gt; <span class="m">500</span> blast records retrieved
+...
+</pre></div>
+</div>
+<p>In this case - I’ve put in a check so if you run this a second time, it will
+skip blasting any species that already have hits found in the database. You can
+use the <code class="docutils literal"><span class="pre">-f</span></code> flag to override this, but I wouldn’t do that, because then you’ll
+have a bunch of duplicates. If you made a mistake and want to re-run it, I
+suggest clearing out the <code class="docutils literal"><span class="pre">blast_results</span></code> collection of your database. In python:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pymongo</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">MongoClient</span><span class="p">()[</span><span class="s2">&quot;cheese1&quot;</span><span class="p">]</span> <span class="c1"># substitute &quot;cheese1&quot; for the name of your genome set</span>
+<span class="n">db</span><span class="p">[</span><span class="s2">&quot;blast_results&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">delete_many</span><span class="p">({</span><span class="s2">&quot;query_species&quot;</span><span class="p">:</span><span class="s2">&quot;Awesomeus speciesus strain A&quot;</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>… or if you want to remove all blast results and start over:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">db</span><span class="p">[</span><span class="s2">&quot;blast_results&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">drop</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Eventually, I will add a tool so that you can just add a single species or a
+group of new species and blast them separately, but for now, you’ll have to
+start from scratch each time.</p>
+</div>
+<div class="section" id="analysis">
+<h3>Analysis<a class="headerlink" href="#analysis" title="Permalink to this headline">¶</a></h3>
+<p>If your genome set contains only one example of any given genus, you’re in luck!
+At this step, you can run the HGT analysis, which will look for all protein
+coding genes that are &gt;99% identical, and put them into groups (see below). If
+you have groups of genomes that are in the same genus, however, it’s worth
+verifying that they are not too closely related.</p>
+<p><strong>Dealing with closely related genomes</strong></p>
+<p>There are a few ways to approach this, and in kvasir they’re unified under the
+idea of “species distance” and there are some useful functions <code class="docutils literal"><span class="pre">bin/kv_distance.py</span></code>.</p>
+<p>If the genbank files you imported have a <code class="docutils literal"><span class="pre">SOURCE</span></code> line for the name of your
+organism, and it’s formatted as <code class="docutils literal"><span class="pre">&lt;genus&gt;</span> <span class="pre">&lt;species&gt;</span> <span class="pre">&lt;strain&gt;</span></code>, you can use the
+script to calculate the distance based on Average Nucleotide Identity (ANI).
+This is calculated using a ruby script from <a class="reference external" href="https://github.com/lmrodriguezr/enveomics/blob/master/Scripts/ani.rb)">enveomics</a>.
+Measuring ANI using this method is only appropriate for closely related genomes,
+and as it stands, the script grabs all species in your MongoDB and calls the ANI
+script on pairs that have the same genus.</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>$ kv_distance.py cheese1 ani
+</pre></div>
+</div>
+<p>This script pulls species from the MongoDB and then looks for all pairs of names
+to see if they’re the same genus. It does that a bit naively, using
+<code class="docutils literal"><span class="pre">split()[0].split(&quot;_&quot;)[0]</span></code>, which will split the species name at spaces or <code class="docutils literal"><span class="pre">_</span></code>,
+and then take the first thing. So if you’re looking at “Awesomeus speciesus
+strain A”, this command will check if you have anything else with “Awesomeus” as
+the genus, like “Awesomeus_speciesus_strain_B”, and will calculate the ANI
+between them and add them to a “species_distance” database in the MongoDB.</p>
+<p>But be careful! If instead your species are “strain_1” and “strain_2”, it will
+think they both have the genus “strain”, whether or not they’re related at all.</p>
+<p>Once you’ve done this, you can export a distance matrix using these ANI
+calculations. Identical species will have an ANI distance = 0, and anything that
+is not the same genus will have a distance of 1. I highly recommend doing this
+to make sure the output is what you expect.</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>$ kv_distance.py cheese1 distance_matrix -o ~/Desktop/dm.csv
+</pre></div>
+</div>
+<p>If ANI is not appropriate, or you have a different way to measure species
+distance (eg 16S similarity), you can make your own distance_matrix and import
+it. You have to make sure that the names of columns and rows are identical to
+the names from the <code class="docutils literal"><span class="pre">SOURCE</span></code> line of your genbank file (of if there’s no <code class="docutils literal"><span class="pre">SOURCE</span></code>
+line, the file names). The table should have the structure:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">&#160;</th>
+<th class="head">Awesomeus speciesus strain A</th>
+<th class="head">Awesomeus_speciesus_strain_B</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Awesomeus speciesus strain A</td>
+<td>0</td>
+<td>0.1</td>
+</tr>
+<tr class="row-odd"><td>Awesomeus_speciesus_strain_B</td>
+<td>0.1</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Assuming this is saved in a file <code class="docutils literal"><span class="pre">~/Desktop/ssu_dm.csv</span></code>, you can do:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>$ kv_distance.py cheese1 distance_matrix -i ~/Desktop/ssu_dm.csv -t ssu
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">-t</span></code> parameter is the “distance type”, which can be anything you want. The
+ANI script above uses <code class="docutils literal"><span class="pre">-t</span> <span class="pre">ani</span></code> by default. If you want to get your ssu distance
+matrix out at a different time, use:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>$ kv_distance.py cheese1 distance_matrix -o ~/Desktop/returned_ssu_dm.csv -t ssu
+</pre></div>
+</div>
+<p>Be sure your distance is actually a distance, and is between 0:1. So if two species
+have a 16S gene that is 85% identical, the distance should be 0.15.</p>
+<p>In the next section, the default is to not use the species distance parameter or
+more precisely, the minimum distance (<code class="docutils literal"><span class="pre">min_dist</span></code>) parameter is set to 0. If you
+have closely related species, but don’t set this, it will look like you have a
+lot more HGT than you actually do. In the paper, for ANI we used <code class="docutils literal"><span class="pre">min_dist</span> <span class="pre">=</span>
+<span class="pre">0.11</span></code>.</p>
+<p><strong>Getting HGT groups</strong></p>
+<p>Now the fun stuff!</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>$ kv_analysis.py cheese1 groups -o ~/Desktop/groups.csv
+</pre></div>
+</div>
+<p>This could take some time, depending on the number of species and how much HGT
+there is.</p>
+<p>You can also tweak some parameters like minimum size of a protein coding
+sequence, distance between genes to be considered the same group, minimum
+identity to be considered HGT, and minimum species distance with various flags.
+Try using <code class="docutils literal"><span class="pre">kv_analysis.py</span> <span class="pre">-h</span></code> to see what options you have.</p>
+<p>Eventually, there will be more options for analysis, but that’s all for the
+moment.</p>
+</div>
+</div>
 </div>
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
@@ -64,7 +294,17 @@
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Welcome to kvasirHGT’s documentation!</a></li>
+<li><a class="reference internal" href="#">Welcome to kvasirHGT’s documentation!</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#usage">Usage</a><ul>
+<li><a class="reference internal" href="#mongod">Mongod</a></li>
+<li><a class="reference internal" href="#adding-genomes">Adding Genomes</a></li>
+<li><a class="reference internal" href="#blast-searching">BLAST Searching</a></li>
+<li><a class="reference internal" href="#analysis">Analysis</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 <div class="relations">
@@ -77,7 +317,7 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/index.md.txt"
+      <li><a href="_sources/index.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -103,7 +343,7 @@
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |
-      <a href="_sources/index.md.txt"
+      <a href="_sources/index.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

@@ -147,9 +147,9 @@ First, you've gotta make a blast database with all of the the genes in your
 database using ``makedb``. This command will make 3 files, in the current
 directory by default, or in the directory you specify with ``-b``
 
-.. code-block::
+.. code-block:: sh
 
-    # kv_blast.py cheese1 makedb -v -b ~/blastdbs
+    $ kv_blast.py cheese1 makedb -v -b ~/blastdbs
     INFO:root:making BLAST database with protein coding sequences from cheese1 at /Users/ksb/blastdbs
     INFO:root:BLAST db created at /Users/ksb/blastdbs
 
@@ -243,12 +243,11 @@ it. You have to make sure that the names of columns and rows are identical to
 the names from the ``SOURCE`` line of your genbank file (of if there's no ``SOURCE``
 line, the file names). The table should have the structure:
 
-=============================  ============================  ============================
-                               Awesomeus speciesus strain A  Awesomeus_speciesus_strain_B
-=============================  ============================  ============================
-Awesomeus speciesus strain A   0                             0.1
-Awesomeus_speciesus_strain_B   0.1                           0
-=============================  ============================  ============================
+.. csv-table::
+   :header: "", "Awesomeus speciesus strain A", "Awesomeus_speciesus_strain_B"
+
+   "Awesomeus speciesus strain A",   0, 0.1
+   "Awesomeus_speciesus_strain_B", 0.1, 0
 
 Assuming this is saved in a file ``~/Desktop/ssu_dm.csv``, you can do:
 
