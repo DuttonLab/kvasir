@@ -2,11 +2,15 @@ import logging
 
 
 def delete_species(db, collection, species):
-    """ Delete all records in specified collection for given loci
+    """Delete all records in specified collection for given loci
 
-    :param db: string - MongoDB database name
-    :param collection: string - MongoDB collection name
-    :param locus_tag_list: list - locus tags to be removed (as strings)
+    Args:
+      db: pointer to MongoDB
+      collection (Str): MongoDB collection name
+      species (Str): name of species to delete
+
+    Returns:
+      Nothing
     """
 
 
@@ -38,12 +42,16 @@ def delete_species(db, collection, species):
 
 
 def list_species(db, species=[]):
-    """ Print name of species in "genes" collection to logger
+    """Print name of species in "genes" collection to logger
     Can be useful to get exact strings for "species" arguments in other database
     operations.
 
-    :param db: string - MongoDB database name
-    :param species: optional list of species, restricts output to species in list
+    Args:
+      db: Pointer to MongoDB
+      species: optional list of species, restricts output to species in list (Default value = [])
+
+    Returns:
+      Nothing
     """
 
     species_list = db["genes"].distinct("species")
@@ -60,12 +68,15 @@ def list_species(db, species=[]):
     return(sorted(species_list))
 
 
-
 def list_contigs(db, species=[]):
-    """ Print all contigs for each species in "genes" collection to logger
+    """Print all contigs for each species in "genes" collection to logger
 
-    :param db: string - MongoDB database name
-    :param species: optional list of species, restricts output to species in list
+    Args:
+      db: Pointer to MongoDB
+      species: optional list of species, restricts output to species in list (Default value = [])
+
+    Returns:
+      Nothing
     """
     species_list = db["genes"].distinct("species")
     not_found = None
@@ -81,11 +92,16 @@ def list_contigs(db, species=[]):
         logging.info(
             "Did not find entries for {}:\n     ".format("\n    {}".join(not_found)))
 
+
 def delete_loci(db, locus_tag_list):
-    """ Delete all records in genes and blast_results for given loci
-    :param db: string - MongoDB database name
-    :param collection: string - MongoDB collection name
-    :param locus_tag_list: list - locus tags to be removed (as strings)
+    """Delete all records in genes and blast_results for given loci
+
+    Args:
+      db: Pointer to MongoDB
+      locus_tag_list (List): locus tags to be removed (as strings)
+
+    Returns:
+      Nothing
     """
     for record in db["genes"].find({"locus_tag":{"$in":Set(locus_tag_list)}}):
         db["genes"].delete_one({"_id":record["_id"]})

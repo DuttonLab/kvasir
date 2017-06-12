@@ -8,9 +8,15 @@ import os
 
 def blast_all(query_fasta, blast_db, perc_identity=.95):
     """BLAST `query_fasta` against a database
-    :param query_fasta: open fasta file object
-    :param blast_db: string - path to blast database
-    :return: temporary xml file with blast results
+
+    Args:
+      query_fasta: open fasta file object
+      blast_db (Str): path to blast database
+      perc_identity (Float): minimum perc_identity for hits (Default value = .95)
+
+    Returns:
+      temporary xml file with blast results
+
     """
     tmp_results = NamedTemporaryFile(mode="w+")
     logging.info("Blasting all by all")
@@ -28,9 +34,15 @@ def blast_all(query_fasta, blast_db, perc_identity=.95):
 
 
 def parse_blast_results_xml(db, results_file, seqtype="CDS"):
-    """ Parse and insert results of BLAST
+    """Parse and insert results of BLAST
 
-    :param results_file: blast results in xml format
+    Args:
+      db: Pointer to MongoDB
+      results_file: blast results in xml format
+      seqtype (Str): type of sequence to extract (Default value = "CDS")
+
+    Returns:
+
     """
     counter = 1
     logging.info("Getting Blast Records")
@@ -69,15 +81,19 @@ def parse_blast_results_xml(db, results_file, seqtype="CDS"):
 
 
 def check_blast_pair(db, query, subject):
-    """ Check database for the presence of a blast result for given pair of record '_id's
+    """Check database for the presence of a blast result for given pair of record '_id's
 
     Since blasting seq1 vs seq2 should return the same results as seq2 vs seq1 and we don't want to duplicate data, this
     checks in order to determine whether to import or not. Can also be used to get database entry for any gene pair when
     you know the "_id" value of each.
 
-    :param query:
-    :param subject:
-    :rtype: MongoDB record (dict) or None
+    Args:
+      db: Pointer to MongoDB
+      query (Str): `_id` for query in string format
+      subject (Str): `_id` for subject in string format
+
+    Returns:
+      If a record exists, returns blast record. If not, returns `None`
     """
     collection = db["blast_results"]
     query_id, subject_id = ObjectId(query), ObjectId(subject)
@@ -92,8 +108,16 @@ def check_blast_pair(db, query, subject):
 
 
 def check_species(db, query, subject):
-    """ Check to ensure species are not the same
+    """Check to ensure species are not the same
     - Defaults to checking names (hits from same species are discarded).
+
+    Args:
+      db: pointer to MongoDB
+      query (Str): `_id` for query in string format
+      subject (Str): `_id` for subject in string format
+
+    Returns:
+      Bool - `True` if query and subject are from the same species. Else `False`.
     """
     collection = db["genes"]
     query_id, subject_id = ObjectId(query), ObjectId(subject)

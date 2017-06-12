@@ -5,10 +5,13 @@ import logging
 
 
 def check_16S(feature):
-    """
-    Check if rRNA feature is a 16s gene
-    :param feature: Biopython genbank feature
-    :rtype Boolean: True if annotation indicates 16s and length >700
+    """Check if rRNA feature is a 16s gene
+
+    Args:
+      feature: Biopython genbank feature
+
+    Returns:
+      Bool
     """
     if feature.type == 'rRNA':
         try:
@@ -25,11 +28,15 @@ def check_16S(feature):
 
 
 def parse_genbank(genbank_file):
-    """ Generator yielding contig and gene records
+    """Generator yielding contig and gene records
 
     Retrieves data from a genbank file to prepare for import to MongoDB
-    :param genbank_file: a file ending with ".gb" or ".gbk" that contains genomic information
-    :rtype generator[dict]: each iteration yields a record (dict) for insertion into MongoDB
+
+    Args:
+      genbank_file: path to a file ending with ".gb" or ".gbk" that contains genomic information
+
+    Returns:
+      generator - each round yields dictionary with a contig record
     """
     with open(genbank_file, 'r') as in_handle:
         records = SeqIO.parse(in_handle, 'gb')
@@ -40,11 +47,15 @@ def parse_genbank(genbank_file):
 
 
 def add_contig_data(records, genbank_file):
-    """
-    Called by `parse_genbank()` - yields contig record, and then individual gene records
+    """Called by `parse_genbank()` - yields contig record, and then individual gene records
     for each gene within a contig.
-    :param records: generator - SeqIO parse object
-    :rtype generator[dict]: each iteration yields a record (dict) for insertion into MongoDB
+
+    Args:
+      records: generator - SeqIO parse object
+      genbank_file: open file handle for genbank file
+
+    Returns:
+      generator - yields contig and gene records (as Dicts)
     """
 
     current_species = None
@@ -78,10 +89,14 @@ def add_contig_data(records, genbank_file):
             yield feature
 
 def add_features(contig, species):
-    """
-    Called by `add_contig_data()` - yields individual gene records for each gene within a contig.
-    :param records: generator - SeqIO parse object
-    :rtype generator[dict]: each iteration yields a record (dict) for insertion into MongoDB
+    """Called by `add_contig_data()` - yields individual gene records for each gene within a contig.
+
+    Args:
+      contig: SeqIO contig record
+      species: name of species
+
+    Returns:
+      generator (Dict) - gene records for import to MongoDB
     """
 
     for feature in contig.features:
