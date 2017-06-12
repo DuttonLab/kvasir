@@ -5,16 +5,22 @@ from kvasir.distance import get_distance_matrix
 
 
 def get_hits_from_species(species, minimum_identity, db, minimum_length=100, minimum_species_distance=0, dm=None):
-    """ Generator yielding blast hits for a speices >= certain length and >= certain identity
+    """Generator yielding blast hits for a speices >= certain length and >= certain identity
 
     If a gene has multiple hits, there will be duplicates. Use `set()` to remove
     duplicates.
 
-    :param minimum_identity: lowest value of perc_identity to consider (0.0 : 1.0)
-    :type minimum_identity: Float
-    :param minimum_length: minimum length of blast hit
-    :type minimum_length: Int
-    :rtype generator: _id each hit
+    Args:
+      species (Str): name of species
+      minimum_identity (Float): lowest value of perc_identity to consider (0.0 : 1.0)
+      db: pointer to MongoDB
+      minimum_length (Int): minimum length of blast hit in bp (Default value = 100)
+      minimum_species_distance (Float, optional): Set to constrain comparisons. Eg. a value of  0.1 will exclude species that have greater than 90\% identity (Default value = 0). Requires distance matrix (`dm` argument)
+      dm (DataFrame): distance matrix containing
+
+    Returns:
+      Generator - each round yields `_id` value (in ObjectId format) for a blast_results hit
+
     """
     logging.info("=> Getting blast hits for {}".format(species))
     if minimum_species_distance:
@@ -36,11 +42,20 @@ def get_hits_from_species(species, minimum_identity, db, minimum_length=100, min
 
 
 def get_islands(species, minimum_identity, db, minimum_length=100, dist_between_hits=3000, minimum_species_distance=0, dm=None):
-    """ Get blast hits within species that are within x base pairs of each other
-    :param minimum_identity:
-    :param minimum_length:
-    :param dist_between_hits: number of base-pairs between hits considered significant
-    :return:
+    """Get blast hits within species that are within x base pairs of each other
+
+    Args:
+      species (Str): name of species
+      minimum_identity (Float): lowest value of perc_identity to consider (0.0 : 1.0)
+      db: pointer to MongoDB
+      minimum_length (Int): minimum length of blast hit in bp (Default value = 100)
+      dist_between_hits (Int): maximum distance (in bp) between hits to be considered part of the same island (Default value = 3000)
+      minimum_species_distance (Float, optional): Set to constrain comparisons. Eg. a value of  0.1 will exclude species that have greater than 90\% identity (Default value = 0). Requires species distance collection
+      dm (Str, optional): type of distance value to use (Default value = None)
+
+    Returns:
+        List of lists - each sublist contains `_id` values (as ObjectId) for a gene in `genes` collection from a single island.
+
     """
     logging.debug("=> Getting islands from {}".format(species))
     hits = get_hits_from_species(
@@ -68,7 +83,7 @@ def get_islands(species, minimum_identity, db, minimum_length=100, dist_between_
 
 
 def collapse(list_of_iterables):
-    """ Reduces list of any iterable that can be converted to a set to non-redundant list of lists
+    """Reduces list of any iterable that can be converted to a set to non-redundant list of lists
 
     Combines iterables with identical elements and returns list of lists.
     **Example input**: [[1,2,3],[3,4],[5,6,7],[1,8,9,10],[11],[11,12],[13],[5,12]]
@@ -76,7 +91,11 @@ def collapse(list_of_iterables):
 
     from stackoverflow user YXD: http://stackoverflow.com/questions/30917226/collapse-list-of-lists-to-eliminate-redundancy
 
-    :param list_of_iterables: list containing any iterables (tuples, lists etc) that can be converted to a set
+    Args:
+      list_of_iterables: list containing any iterables (tuples, lists etc) that can be converted to a set
+
+    Returns:
+      List of lists without overlap in contents.
     """
     result = []
     for l in list_of_iterables:
@@ -96,11 +115,18 @@ def collapse(list_of_iterables):
     return sorted(result, key=len, reverse=True)
 
 
-def find_all_hits(some_id, db, minimum_identity, minimum_length=100, minimum_species_distance=0):
-    """ Generator yielding blast hits
+def find_all_hits(some_id, db, minimum_identity, minimum_length=100):
+    """Generator yielding blast hits
 
-    :param some_id: ObjectID
-    :return: generator
+    Args:
+      some_id: ObjectId
+      db: pointer to MongoDB
+      minimum_identity (Float): lowest value of perc_identity to consider (0.0 : 1.0)
+      minimum_length (Int): minimum length of blast hit in bp (Default value = 100)
+      minimum_species_distance (Float, optional): Set to constrain comparisons. Eg. a value of  0.1 will exclude species that have greater than 90\% identity (Default value = 0). Requires species distance collection
+    Returns:
+      generator - each round returns an `ObjectId` for a gene in `genes` collection
+
     """
     # since we don't know order of insert, check both
     as_query = {"type": "blast_result", "query": some_id}
@@ -122,9 +148,18 @@ def find_all_hits(some_id, db, minimum_identity, minimum_length=100, minimum_spe
 
 
 def hgt_groups(minimum_identity, db, minimum_length=100, dist_between_hits=3000, minimum_species_distance=0, dtype="ani"):
-    """
-    Returns mutilspecies groups of genes as list of lists.
+    """Returns mutilspecies groups of genes as list of lists.
 
+    Args:
+      minimum_identity (Float): lowest value of perc_identity to consider (0.0 : 1.0)
+      db: pointer to MongoDB
+      minimum_length (Int): minimum length of blast hit in bp (Default value = 100)
+      dist_between_hits (Int): maximum distance (in bp) between hits to be considered part of the same island (Default value = 3000)
+      minimum_species_distance (Float, optional): Set to constrain comparisons. Eg. a value of  0.1 will exclude species that have greater than 90\% identity (Default value = 0). Requires species distance collection
+      dtype (Str, optional): type of distance value to use (Default value = ani). Can use `None` if minimum_species_distance == 0
+
+    Returns:
+      list of lists - each sublist is a group containing gene `_id`s
     """
     if minimum_species_distance:
         logging.debug("    > getting distance matrix")
@@ -155,10 +190,18 @@ def hgt_groups(minimum_identity, db, minimum_length=100, dist_between_hits=3000,
     return groups
 
 def output_groups(groups_list, output_file, db, min_group_size=2):
-    """
-    Returns .csv file with information for each CDS in an HGT group
+    """Returns .csv file with information for each CDS in an HGT group
 
     - Optional: set minimum number of CDS to be considered a group
+
+    Args:
+      groups_list: param output_file:
+      output_file (Str): Path to output_file
+      db: pointer to MongoDB
+      min_group_size (Int): (Default value = 2)
+
+    Returns:
+      None. Makes a file at path `output_file`
     """
     df_columns = ['species','group','locus_tag','contig','start','end','strand','annotation','id', 'dna_seq']
     df = pd.DataFrame(columns=df_columns)

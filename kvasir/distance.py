@@ -7,13 +7,17 @@ from tempfile import NamedTemporaryFile
 
 
 def get_ani(species_1, species_2, db):
-    """ Get ANI for pair of species in database
+    """Get ANI for pair of species in database
     Note: this ANI calculation is totally unreliable for distantly related
     species. Use only for pairs of genomes in the same genus.
 
-    :param species_1: string name of a species in MongoDB
-    :param species_2: string name of a species in MongoDB
-    :param db: MongoDB pointer
+    Args:
+      species_1: string name of a species in MongoDB
+      species_2: string name of a species in MongoDB
+      db: MongoDB pointer
+
+    Returns:
+      Nothing
     """
     modpath = os.path.dirname(os.path.realpath(__file__))
     logging.info("Getting ANI for\n    {}\n    {}".format(species_1, species_2))
@@ -44,6 +48,15 @@ def get_ani(species_1, species_2, db):
 
 
 def get_distance_matrix(db, dtype="ani"):
+    """Get DataFrame containing specified distance matrix
+
+    Args:
+      db: Pointer to MongoDB
+      dtype (Str): Type of distance to export (Default value = "ani")
+
+    Returns:
+      Distance matrix (DataFrame)
+    """
     species = db["genes"].distinct("species")
     dm = pd.DataFrame([[1 for s in species] for s in species], index=species, columns=species)
     for s in species:
