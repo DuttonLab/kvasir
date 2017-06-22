@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import pymongo
 import argparse
 import os
@@ -51,17 +50,32 @@ if args.log:
     logpath = os.path.abspath(args.log)
     if os.path.isdir(logpath):
         logpath = os.path.join(logpath, "kvasir.log")
-
-if args.debug:
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s || %(levelname)s: %(message)s", filename=logpath)
-elif args.verbose:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s || %(levelname)s: %(message)s", filename=logpath)
-elif args.quiet:
-    logging.basicConfig(level=logging.ERROR, format="%(asctime)s || %(levelname)s: %(message)s", filename=logpath)
 else:
-    logging.basicConfig(level=logging.WARNING, format="%(asctime)s || %(levelname)s: %(message)s", filename=logpath)
+    logpath = ("kvasir.log")
 
+logger = logging.getLogger("Analysis") # create logger
+sh = logging.StreamHandler()
+fh = logging.FileHandler(logpath)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d,%H:%M:%S')
+sh.setFormatter(formatter)
+fh.setFormatter(formatter)
 
+# set level based on args
+if args.debug:
+    sh.setLevel(logging.DEBUG)
+    fh.setLevel(logging.DEBUG)
+elif args.verbose:
+    sh.setLevel(logging.INFO)
+    fh.setLevel(logging.INFO)
+elif args.quiet:
+    sh.setLevel(logging.ERROR)
+    fh.setLevel(logging.ERROR)
+else:
+    sh.setLevel(logging.WARNING)
+    fh.setLevel(logging.WARNING)
+
+logger.addHandler(sh) # add handler to logger
+logger.addHandler(fh)
 
 DB = pymongo.MongoClient()[args.mongodb]
 

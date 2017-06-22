@@ -1,6 +1,5 @@
 from settings import *
 import sys
-sys.path.append('src/')
 from DataImport.mongo_import import mongo_import_genbank
 from FindHGT.make_blast_db import make_blast_db, db_to_fna
 from FindHGT.run_blast import blast_all, parse_blast_results_xml
@@ -9,6 +8,8 @@ from Analysis import output
 from tempfile import NamedTemporaryFile
 import os
 
+logger = logging.getLogger(__name__)
+logger.propagate = True # passes up to parent logger
 
 def import_data():
     for f in os.listdir(INPUT):

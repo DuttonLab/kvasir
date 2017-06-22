@@ -5,6 +5,8 @@ import pandas as pd
 from itertools import combinations
 from tempfile import NamedTemporaryFile
 
+logger = logging.getLogger(__name__)
+logger.propagate = True # passes up to parent logger
 
 def get_ani(species_1, species_2, db):
     """Get ANI for pair of species in database
@@ -20,7 +22,7 @@ def get_ani(species_1, species_2, db):
       Nothing
     """
     modpath = os.path.dirname(os.path.realpath(__file__))
-    logging.info("Getting ANI for\n    {}\n    {}".format(species_1, species_2))
+    logger.info("Getting ANI for\n    {}\n    {}".format(species_1, species_2))
     f1 = NamedTemporaryFile(mode="w+")
     f2 = NamedTemporaryFile(mode="w+")
     for contig in db["genes"].find({"type":"contig", "species":species_1}):
@@ -34,15 +36,15 @@ def get_ani(species_1, species_2, db):
                 "-2", f2.name
                 ], stdout=PIPE).communicate()[0]
 
-    logging.debug("ani for {} and {}".format(species_1, species_2))
-    logging.debug("ani variable: {} | variable type: {}".format(ani, type(ani)))
+    logger.debug("ani for {} and {}".format(species_1, species_2))
+    logger.debug("ani variable: {} | variable type: {}".format(ani, type(ani)))
 
     if ani:
-        logging.info(
+        logger.info(
             "Compared {} and {}, ANI = {}".format(species_1, species_2, ani))
         return float(ani) / 100
     else:
-        logging.warning(
+        logger.warning(
             "Tried to compare {} and {}, but got no ANI. Returning 0".format(species_1, species_2))
         return 0
 

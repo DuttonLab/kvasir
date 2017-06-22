@@ -3,6 +3,8 @@ import logging
 from bson.objectid import ObjectId
 from kvasir.distance import get_distance_matrix
 
+logger = logging.getLogger(__name__)
+logger.propagate = True # passes up to parent logger
 
 def get_hits_from_species(species, minimum_identity, db, minimum_length=100, minimum_species_distance=0, dm=None):
     """Generator yielding blast hits for a speices >= certain length and >= certain identity
@@ -22,22 +24,22 @@ def get_hits_from_species(species, minimum_identity, db, minimum_length=100, min
       Generator - each round yields `_id` value (in ObjectId format) for a blast_results hit
 
     """
-    logging.info("=> Getting blast hits for {}".format(species))
+    logger.info("=> Getting blast hits for {}".format(species))
     if minimum_species_distance:
-        logging.debug("   > using distance matrix".format(species))
+        logger.debug("   > using distance matrix".format(species))
 
     for record in db['blast_results'].find(
             {"$or":[{"query_species": species},{"subject_species":species}],
              'perc_identity': {'$gte': minimum_identity},
              'length'       : {'$gte': minimum_length},
             }):
-        logging.debug("     > Found hit in {}:".format(species))
+        logger.debug("     > Found hit in {}:".format(species))
         if not minimum_species_distance or dm.loc[record["query_species"], record["subject_species"]] > minimum_species_distance:
             if record["query_species"] == species:
-                logging.debug("       > {}".format(record["query"]))
+                logger.debug("       > {}".format(record["query"]))
                 yield ObjectId(record["query"])
             elif record["subject_species"] == species:
-                logging.debug("       > {}".format(record["subject"]))
+                logger.debug("       > {}".format(record["subject"]))
                 yield ObjectId(record["subject"])
 
 
@@ -57,7 +59,7 @@ def get_islands(species, minimum_identity, db, minimum_length=100, dist_between_
         List of lists - each sublist contains `_id` values (as ObjectId) for a gene in `genes` collection from a single island.
 
     """
-    logging.debug("=> Getting islands from {}".format(species))
+    logger.debug("=> Getting islands from {}".format(species))
     hits = get_hits_from_species(
         species, minimum_identity, db,
         minimum_length, minimum_species_distance, dm
@@ -69,7 +71,7 @@ def get_islands(species, minimum_identity, db, minimum_length=100, dist_between_
 
     last = {"contig":None, "end":0}
 
-    logging.debug("   > got hits, building islands".format(species))
+    logger.debug("   > got hits, building islands".format(species))
     for hit in hit_list:
         loc = hit["location"]
         if loc["contig"] == last["contig"] and loc["start"] - last["end"] <= dist_between_hits:
@@ -78,7 +80,7 @@ def get_islands(species, minimum_identity, db, minimum_length=100, dist_between_
             islands.append([hit["_id"]])
         last = loc
 
-    logging.debug("    > got islands, delivering".format(species))
+    logger.debug("    > got islands, delivering".format(species))
     return islands
 
 
@@ -162,7 +164,7 @@ def hgt_groups(minimum_identity, db, minimum_length=100, dist_between_hits=3000,
       list of lists - each sublist is a group containing gene `_id`s
     """
     if minimum_species_distance:
-        logging.debug("    > getting distance matrix")
+        logger.debug("    > getting distance matrix")
         dm = get_distance_matrix(db, dtype)
     else:
         dm = None
@@ -171,7 +173,7 @@ def hgt_groups(minimum_identity, db, minimum_length=100, dist_between_hits=3000,
     for species in db["genes"].distinct("species"):
         islands = get_islands(species, minimum_identity, db, minimum_length, dist_between_hits, minimum_species_distance, dm)
         recorded = []
-        logging.debug("     > got islands, updating groups")
+        logger.debug("     > got islands, updating groups")
         for gindx, g in enumerate(groups):
             groupids=list(map(str, g))
             for iindx, i in enumerate(islands):
@@ -179,14 +181,14 @@ def hgt_groups(minimum_identity, db, minimum_length=100, dist_between_hits=3000,
                 if db["blast_results"].find_one({"$or":[
                         {"query":{"$in":groupids},"subject":{"$in":islids}},
                         {"subject":{"$in":groupids},"query":{"$in":islids}}]}):
-                    logging.debug("     > hit found for group {} and island {}".format(gindx, iindx))
+                    logger.debug("     > hit found for group {} and island {}".format(gindx, iindx))
                     groups[gindx].update(i)
                     recorded.append(iindx)
         for iindx in range(len(islands)):
             if not iindx in recorded:
                 groups.append(set(islands[iindx]))
         groups = collapse(groups)
-    logging.info("=> Found {} groups".format(len(groups)))
+    logger.info("=> Found {} groups".format(len(groups)))
     return groups
 
 def output_groups(groups_list, output_file, db, min_group_size=2):
@@ -229,8 +231,8 @@ def output_groups(groups_list, output_file, db, min_group_size=2):
                         ]], columns = df_columns)
                     df=df.append(newrow)
                 else:
-                    logging.warning("No database entry found for {}".format(entry))
+                    logger.warning("No database entry found for {}".format(entry))
 
     df = df.sort_values(["group", "species", "contig", "start"])
-    logging.info("Creating file at {}".format(output_file))
+    logger.info("Creating file at {}".format(output_file))
     df.to_csv(output_file, columns=df_columns)

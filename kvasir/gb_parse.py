@@ -3,6 +3,8 @@ import os
 from re import search
 import logging
 
+logger = logging.getLogger(__name__)
+logger.propagate = True # passes up to parent logger
 
 def check_16S(feature):
     """Check if rRNA feature is a 16s gene
@@ -65,7 +67,7 @@ def add_contig_data(records, genbank_file):
         else:
             # uses filename (without extension) as species name
             f = os.path.splitext(os.path.basename(genbank_file))
-            logging.warning('{} in file {} does not have \"source\" attribute, using "{}" as species'.format(
+            logger.warning('{} in file {} does not have \"source\" attribute, using "{}" as species'.format(
                 contig.id,
                 genbank_file,
                 f[0]
@@ -73,7 +75,7 @@ def add_contig_data(records, genbank_file):
             species = f[0]
 
         if not species == current_species:
-            logging.info("Importing {}".format(species))
+            logger.info("Importing {}".format(species))
             current_species = species
 
         # TODO: append list of gene records contained within contig?

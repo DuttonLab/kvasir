@@ -2,6 +2,9 @@ from kvasir.gb_parse import parse_genbank
 from itertools import product
 import logging
 
+logger = logging.getLogger(__name__)
+logger.propagate = True # passes up to parent logger
+
 def mongo_import_record(record, db, collection):
     """Insert a single record (dict) into collection
 
@@ -27,7 +30,7 @@ def mongo_import_genbank(genbank_file, db, collection):
 
     """
     for record in parse_genbank(genbank_file):
-        logging.debug(record)
+        logger.debug(record)
         if record["type"] == "ssu":
             mongo_import_record(record, db, "ssu")
         else:
@@ -35,7 +38,7 @@ def mongo_import_genbank(genbank_file, db, collection):
 
 def mongo_import_distance(sp1, sp2, distance, db, dtype="ssu"):
     """Add record to MongoDB for species distance (eg 16S or ANI)
-    
+
     Value for `distance` should be a float between 0:1, where identical species
     have distance == 0. For example, if ANI is calculated, `distance` should be
     1 - ANI.
@@ -60,11 +63,11 @@ def mongo_import_distance(sp1, sp2, distance, db, dtype="ssu"):
 
 def mongo_import_distance_matrix(dm, db, dtype="ssu"):
     """Add records to MongoDB for species distance (eg 16S or ANI) from distance matrix
-    
+
     Value for `distance` should be a float between 0:1, where identical species
     have distance == 0. For example, if ANI is calculated, `distance` should be
     1 - ANI.
-    
+
     NOTE: species names in index and columns should match species in database.
     If they don't, they will sill be imported, but won't be matched to existing
     records.
@@ -82,6 +85,6 @@ def mongo_import_distance_matrix(dm, db, dtype="ssu"):
             pass
         else:
             d = dm.loc[s1, s2]
-            logging.debug(d)
-            logging.debug(type(d))
+            logger.debug(d)
+            logger.debug(type(d))
             mongo_import_distance(s1, s2, d, db, dtype)

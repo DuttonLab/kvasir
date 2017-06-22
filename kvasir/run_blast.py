@@ -5,6 +5,8 @@ from Bio.Blast import NCBIXML
 import logging
 import os
 
+logger = logging.getLogger(__name__)
+logger.propagate = True # passes up to parent logger
 
 def blast_all(query_fasta, blast_db, perc_identity=.95):
     """BLAST `query_fasta` against a database
@@ -19,7 +21,7 @@ def blast_all(query_fasta, blast_db, perc_identity=.95):
 
     """
     tmp_results = NamedTemporaryFile(mode="w+")
-    logging.info("Blasting all by all")
+    logger.info("Blasting all by all")
     Popen(
         ['blastn',
          '-query', query_fasta.name,
@@ -45,7 +47,7 @@ def parse_blast_results_xml(db, results_file, seqtype="CDS"):
 
     """
     counter = 1
-    logging.info("Getting Blast Records")
+    logger.info("Getting Blast Records")
     try:
         for blast_record in NCBIXML.parse(results_file):
 
@@ -74,10 +76,10 @@ def parse_blast_results_xml(db, results_file, seqtype="CDS"):
                         "e-value": hsp.expect
                         }
 
-        logging.info("---> {} blast records retrieved".format(counter))
+        logger.info("---> {} blast records retrieved".format(counter))
 
     except ValueError:
-        logging.warning("No hits for {}".format("species"))
+        logger.warning("No hits for {}".format("species"))
 
 
 def check_blast_pair(db, query, subject):
@@ -133,5 +135,5 @@ def check_species(db, query, subject):
         else:
             return False, species1, species2
     except:
-        logging.warning("Something went wrong when checking species")
+        logger.warning("Something went wrong when checking species")
         return False, "", ""
