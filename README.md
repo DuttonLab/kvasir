@@ -3,6 +3,7 @@
 [![DOI](https://zenodo.org/badge/22309/kescobo/kvasir.svg)](https://zenodo.org/badge/latestdoi/22309/kescobo/kvasir)
 [![Join the chat at https://gitter.im/kescobo/kvasir](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/kescobo/kvasir?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Documentation Status](https://readthedocs.org/projects/kvasir/badge/?version=latest)](http://kvasir.readthedocs.io/en/latest/?badge=latest)
+[![Build Status](https://travis-ci.org/kescobo/kvasir.svg?branch=master)](https://travis-ci.org/kescobo/kvasir)
 
 Dependencies:
 * Python 2.7 or 3.6
@@ -35,4 +36,4 @@ The easiest way to use Kvasir is to install it from pypi:
 $ pip install kvasirHGT
 ```
 
-Take a look [at the docs](http://kvasir.readthedocs.io/en/latest/) for usage information. 
+Take a look [at the docs](http://kvasir.readthedocs.io/en/latest/) for usage information.
